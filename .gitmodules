@@ -1,0 +1,9 @@
+[submodule "third_party/voyager"]
+	path = third_party/voyager
+	url = git://github.com/QiumingLu/voyager.git
+[submodule "third_party/leveldb"]
+	path = third_party/leveldb
+	url = git://github.com/google/leveldb.git
+[submodule "third_party/protobuf"]
+	path = third_party/protobuf
+	url = git://github.com/google/protobuf.git
