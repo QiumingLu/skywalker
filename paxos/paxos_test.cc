@@ -5,10 +5,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "voyager/util/string_util.h"
-#include "voyager/paxos/node.h"
-#include "voyager/paxos/options.h"
-#include "voyager/paxos/nodeinfo.h"
+#include <voyager/util/string_util.h>
+#include "skywalker/node.h"
+#include "skywalker/options.h"
+#include "skywalker/nodeinfo.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {
@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  voyager::paxos::Options options;
+  skywalker::Options options;
   options.log_storage_path = std::string(path);
   options.log_sync = true;
   options.sync_interval = 1;
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 
   std::vector<std::string> my;
   voyager::SplitStringUsing(std::string(argv[1]), ":", &my);
-  voyager::paxos::NodeInfo my_node_info(my[0], atoi(&*(my[1].begin())));
+  skywalker::NodeInfo my_node_info(my[0], atoi(&*(my[1].begin())));
   options.node_info = my_node_info;
 
   std::vector<std::string> others;
@@ -39,13 +39,13 @@ int main(int argc, char** argv) {
        it != others.end(); ++it) {
     std::vector<std::string> other;
     voyager::SplitStringUsing(*it, ":", &other);
-    voyager::paxos::NodeInfo other_node_info(other[0],
+    skywalker::NodeInfo other_node_info(other[0],
                                              atoi(&*(other[1].begin())));
     options.all_other_nodes.push_back(other_node_info);
   }
 
-  voyager::paxos::Node* node = nullptr;
-  bool res = voyager::paxos::Node::Start(options, &node);
+  skywalker::Node* node = nullptr;
+  bool res = skywalker::Node::Start(options, &node);
 
   std::string value;
   while (res) {

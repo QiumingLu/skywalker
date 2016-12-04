@@ -1,10 +1,9 @@
-#include "voyager/paxos/acceptor.h"
-#include "voyager/paxos/config.h"
-#include "voyager/paxos/instance.h"
-#include "voyager/util/logging.h"
+#include "paxos/acceptor.h"
+#include "paxos/config.h"
+#include "paxos/instance.h"
+#include "skywalker/logging.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Acceptor::Acceptor(Config* config, Instance* instance)
     : log_sync_count_(0),
@@ -22,15 +21,15 @@ bool Acceptor::Init() {
   }
 
   instance_id_ = instance_id;
-  VOYAGER_LOG(DEBUG) << "Acceptor::Init - now instance_id=" << instance_id_;
+  Log(LOG_DEBUG, "Acceptor::Init - now instance_id=%" PRIu64".", instance_id_);
   return true;
 }
 
 void Acceptor::OnPrepare(const PaxosMessage& msg) {
-  VOYAGER_LOG(DEBUG) << "Acceptor::OnPrepare - receive a new message, "
-                     << "which node_id=" << msg.node_id()
-                     << ", instance_id=" << msg.instance_id()
-                     << ", proposal_id=" << msg.proposal_id();
+  Log(LOG_DEBUG, 
+      "Acceptor::OnPrepare - receive a new message, "
+      "which node_id=%" PRIu64", instance_id=%" PRIu64", proposal_id=%" PRIu64".",
+      msg.node_id(), msg.instance_id(), msg.proposal_id());
   PaxosMessage* reply_msg = new PaxosMessage();
   reply_msg->set_type(PREPARE_REPLY);
   reply_msg->set_node_id(config_->GetNodeId());
@@ -48,8 +47,9 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     promised_ballot_ =  b;
     int ret = WriteToDB(instance_id_, 0);
     if (ret != 0) {
-      VOYAGER_LOG(ERROR) << "Acceptor::OnPrepare - write instance_id_ = "
-                         << instance_id_ << " to db failed.";
+      Log(LOG_ERROR, 
+          "Acceptor::OnPrepare - write instance_id_ = %" PRIu64" to db failed.",
+          instance_id_);
     }
   } else {
     reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
@@ -66,10 +66,10 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
 }
 
 void Acceptor::OnAccpet(const PaxosMessage& msg) {
-  VOYAGER_LOG(DEBUG) << "Acceptor::OnAccpet - receive a new message, "
-                     << "which node_id=" << msg.node_id()
-                     << ", instance_id=" << msg.instance_id()
-                     << ", proposal_id=" << msg.proposal_id();
+  Log(LOG_DEBUG, 
+      "Acceptor::OnAccpet - receive a new message, "
+      "which node_id=%" PRIu64", instance_id=%" PRIu64", proposal_id=%" PRIu64".",
+      msg.node_id(), msg.instance_id(), msg.proposal_id());
 
   PaxosMessage* reply_msg = new PaxosMessage();
   reply_msg->set_type(ACCEPT_REPLY);
@@ -84,8 +84,9 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
     accepted_value_ = msg.value();
     int ret = WriteToDB(instance_id_, 0);
     if (ret != 0) {
-      VOYAGER_LOG(ERROR) << "Acceptor::OnAccpet - write instance_id_ = "
-                         << instance_id_ << " to db failed.";
+      Log(LOG_ERROR, 
+          "Acceptor::OnAccpet - write instance_id=%" PRIu64" to db failed.",
+          instance_id_);
     }
 
   } else {
@@ -158,5 +159,4 @@ int Acceptor::WriteToDB(uint64_t instance_id, uint32_t last_checksum) {
   return ret;
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

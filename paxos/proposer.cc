@@ -1,10 +1,9 @@
-#include "voyager/paxos/proposer.h"
-#include "voyager/paxos/config.h"
-#include "voyager/paxos/instance.h"
-#include "voyager/util/logging.h"
+#include "paxos/proposer.h"
+#include "paxos/config.h"
+#include "paxos/instance.h"
+#include "skywalker/logging.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Proposer::Proposer(Config* config, Instance* instance)
     : config_(config),
@@ -55,11 +54,12 @@ void Proposer::Prepare(bool need_new_ballot) {
 
   counter_.StartNewRound();
 
-  VOYAGER_LOG(DEBUG) << "Proposer::Prepare - start a new prepare, now "
-                     << "node_id=" << config_->GetNodeId()
-                     << ", instance_id=" << instance_id_
-                     << ", proposal_id_=" << proposal_id_
-                     << ", value=" << value_;
+  Log(LOG_DEBUG, 
+      "Proposer::Prepare - start a new prepare, now "
+      "node_id=%" PRIu64", instance_id=%" PRIu64", "
+      "proposal_id=%" PRIu64", value=%s.",
+      config_->GetNodeId(), instance_id_, 
+      proposal_id_, value_.c_str());
 
   Content* content = messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessage(content);
@@ -68,13 +68,13 @@ void Proposer::Prepare(bool need_new_ballot) {
 }
 
 void Proposer::OnPrepareReply(const PaxosMessage& msg) {
-  VOYAGER_LOG(DEBUG) << "Proposer::OnPrepareReply - receive the prepare reply,"
-                     << " which node_id=" << msg.node_id()
-                     << ", proposal_id=" << msg.proposal_id()
-                     << ", reject_for_promised_id=" << msg.reject_for_promised_id()
-                     << ", pre_accepted_id=" << msg.pre_accepted_id()
-                     << ", pre_accepted_node_id=" << msg.pre_accepted_node_id()
-                     << ", value=" << msg.value();
+  Log(LOG_DEBUG, 
+      "Proposer::OnPrepareReply - receive the prepare reply, "
+      "which node_id=%" PRIu64" , proposal_id=%" PRIu64", "
+      "reject_for_promised_id=%" PRIu64", "
+      "pre_accepted_id=%" PRIu64", pre_accepted_node_id=%" PRIu64", value=%s.",
+      msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id(), 
+      msg.pre_accepted_id(), msg.pre_accepted_node_id(), msg.value().c_str());
   if (preparing_) {
     if (msg.proposal_id() == proposal_id_) {
       counter_.AddReceivedNode(msg.node_id());
@@ -95,24 +95,24 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
       }
 
       if (counter_.IsPassedOnThisRound()) {
-        VOYAGER_LOG(DEBUG) << "Proposer::OnPrepareReply - Prepare pass.";
+        Log(LOG_DEBUG, "Proposer::OnPrepareReply - Prepare pass.");
         skip_prepare_ = true;
         Accept();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
-        VOYAGER_LOG(DEBUG) << "Proposer::OnPrepareReply - Prepare not pass,"
-                           << "reprepare 300ms later.";
+        Log(LOG_DEBUG,
+            "Proposer::OnPrepareReply - Prepare not pass, reprepare 300ms later.");
       }
     }
   }
 }
 
 void Proposer::Accept() {
-  VOYAGER_LOG(DEBUG) << "Proposer::Accept - start to accept, now "
-                     << "node_id=" << config_->GetNodeId()
-                     << ", instance_id=" << instance_id_
-                     << ", proposal_id_=" << proposal_id_
-                     << ", value=" << value_;
+  Log(LOG_DEBUG,
+      "Proposer::Accept - start to accept, "
+      "now node_id=%" PRIu64", instance_id=%" PRIu64", "
+      "proposal_id=%" PRIu64", value=%s.",
+      config_->GetNodeId(), instance_id_, proposal_id_, value_.c_str());
 
   preparing_ = false;
   accepting_ = true;
@@ -133,11 +133,12 @@ void Proposer::Accept() {
 }
 
 void Proposer::OnAccpetReply(const PaxosMessage& msg) {
-  VOYAGER_LOG(DEBUG) << "Proposer::OnAccpetReply - receive the accept reply,"
-                     << " which node_id=" << msg.node_id()
-                     << ", proposal_id=" << msg.proposal_id()
-                     << ", reject_for_promised_id="
-                     << msg.reject_for_promised_id();
+  Log(LOG_DEBUG,
+      "Proposer::OnAccpetReply - receive the accept reply, "
+      "which node_id=%" PRIu64", "
+      "proposal_id=%" PRIu64", "
+      "reject_for_promised_id=%" PRIu64".",
+      msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id());
 
   if (accepting_) {
     if (msg.proposal_id() == proposal_id_) {
@@ -154,13 +155,13 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
       }
 
       if (counter_.IsPassedOnThisRound()) {
-        VOYAGER_LOG(DEBUG) << "Proposer::OnAccpetReply - Accept pass.";
+        Log(LOG_DEBUG, "Proposer::OnAccpetReply - Accept pass.");
         accepting_ = false;
         NewChosenValue();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
-        VOYAGER_LOG(DEBUG) << "Proposer::OnAccpetReply - Accept not pass,"
-                           << " reprepare 300ms later.";
+        Log(LOG_DEBUG,
+            "Proposer::OnAccpetReply - Accept not pass, reprepare 300ms later.");
       }
     }
   }
@@ -187,5 +188,4 @@ void Proposer::NextInstance() {
   counter_.StartNewRound();
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

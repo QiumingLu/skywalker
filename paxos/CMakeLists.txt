@@ -56,9 +56,9 @@ set (paxos_SRCS
 
 add_library(skywalker_paxos ${paxos_SRCS})
 
-target_link_libraries(skywalker_paxos skywalker_proto voyager_http protobuf leveldb)
+target_link_libraries(skywalker_paxos skywalker_proto skywalker_http protobuf leveldb)
 
-install(TARGETS voyager_paxos DESTINATION lib)
+install(TARGETS skywalker_paxos DESTINATION lib)
 
 set(HEADERS
   options.h
@@ -66,7 +66,7 @@ set(HEADERS
   node.h
   )
 
-install(FILES ${HEADERS} DESTINATION include/voyager/paxos)
+install(FILES ${HEADERS} DESTINATION include/skywalker/paxos)
 
 if (NOT CMAKE_BUILD_NO_EXAMPLES)
     add_subdirectory(tests)

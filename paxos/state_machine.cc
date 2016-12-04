@@ -1,7 +1,6 @@
-#include "voyager/paxos/state_machine.h"
+#include "skywalker/state_machine.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 StateMachine::StateMachine() {
 }
@@ -9,5 +8,4 @@ StateMachine::StateMachine() {
 StateMachine::~StateMachine() {
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

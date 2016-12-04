@@ -1,8 +1,7 @@
-#include "voyager/paxos/counter.h"
-#include "voyager/paxos/config.h"
+#include "paxos/counter.h"
+#include "paxos/config.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Counter::Counter(const Config* config) : config_(config) {
 }
@@ -43,5 +42,4 @@ void Counter::StartNewRound() {
   promisors_or_acceptors_.clear();
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

@@ -1,15 +1,14 @@
-#ifndef VOYAGER_PAXOS_GROUP_H_
-#define VOYAGER_PAXOS_GROUP_H_
+#ifndef SKYWALKER_PAXOS_GROUP_H_
+#define SKYWALKER_PAXOS_GROUP_H_
 
-#include "voyager/paxos/config.h"
-#include "voyager/paxos/instance.h"
-#include "voyager/paxos/state_machine.h"
-#include "voyager/paxos/options.h"
-#include "voyager/paxos/paxos.pb.h"
-#include "voyager/util/slice.h"
+#include "paxos/config.h"
+#include "paxos/instance.h"
+#include "paxos/paxos.pb.h"
+#include "skywalker/state_machine.h"
+#include "skywalker/options.h"
+#include "skywalker/slice.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Network;
 
@@ -36,7 +35,6 @@ class Group {
   void operator=(const Group&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_GROUP_H_
+#endif  // SKYWALKER_PAXOS_GROUP_H_

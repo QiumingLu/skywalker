@@ -1,12 +1,11 @@
-#ifndef VOYAGER_PAXOS_STORAGE_DB_H_
-#define VOYAGER_PAXOS_STORAGE_DB_H_
+#ifndef SKYWALKER_PAXOS_STORAGE_DB_H_
+#define SKYWALKER_PAXOS_STORAGE_DB_H_
 
 #include <stdint.h>
 #include <string>
 #include <leveldb/db.h>
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 struct WriteOptions {
   bool sync;
@@ -50,7 +49,6 @@ class DB {
   void operator=(const DB&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_STORAGE_DB_H_
+#endif  // SKYWALKER_PAXOS_STORAGE_DB_H_

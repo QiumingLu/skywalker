@@ -1,8 +1,7 @@
-#ifndef VOYAGER_PAXOS_CHECKPONIT_MANAGER_H_
-#define VOYAGER_PAXOS_CHECKPONIT_MANAGER_H_
+#ifndef SKYWALKER_PAXOS_CHECKPONIT_MANAGER_H_
+#define SKYWALKER_PAXOS_CHECKPONIT_MANAGER_H_
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class CheckpointManager {
  public:
@@ -13,7 +12,6 @@ class CheckpointManager {
   void operator=(const CheckpointManager&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_CHECKPONIT_MANAGER_H_
+#endif  // SKYWALKER_PAXOS_CHECKPONIT_MANAGER_H_

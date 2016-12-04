@@ -1,8 +1,6 @@
-#include "voyager/paxos/network/network.h"
-#include "voyager/core/buffer.h"
+#include "network/network.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Network::Network(const NodeInfo& my)
     : addr_(my.GetIP(), my.GetPort()),
@@ -17,8 +15,8 @@ Network::~Network() {
 
 void Network::StartServer(const std::function<void (const Slice&) >& cb) {
   loop_ = bg_loop_.Loop();
-  server_ = new TcpServer(loop_, addr_);
-  server_->SetMessageCallback([cb](const TcpConnectionPtr&, Buffer* buf) {
+  server_ = new voyager::TcpServer(loop_, addr_);
+  server_->SetMessageCallback([cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
     Slice s(buf->Peek(), buf->ReadableSize());
     if (!s.empty() && s.size() > sizeof(int)) {
       cb(s);
@@ -33,12 +31,12 @@ void Network::StopServer() {
 }
 
 void Network::SendMessage(const NodeInfo& other, const Slice& message) {
-  SockAddr addr(other.GetIP(), other.GetPort());
+  voyager::SockAddr addr(other.GetIP(), other.GetPort());
   std::string* s = new std::string(message.data(), message.size());
   loop_->RunInLoop(std::bind(&Network::SendMessageInLoop, this, addr, s));
 }
 
-void Network::SendMessageInLoop(const SockAddr& addr,
+void Network::SendMessageInLoop(const voyager::SockAddr& addr,
                                 std::string* s) {
   std::string ipbuf(addr.Ipbuf());
   auto it = connection_map_.find(ipbuf);
@@ -46,8 +44,8 @@ void Network::SendMessageInLoop(const SockAddr& addr,
     it->second->SendMessage(*s);
     delete s;
   } else {
-    TcpClient* client(new TcpClient(loop_, addr));
-    client->SetConnectionCallback([this, ipbuf, s](const TcpConnectionPtr& p) {
+    voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
+    client->SetConnectionCallback([this, ipbuf, s](const voyager::TcpConnectionPtr& p) {
       connection_map_[ipbuf] = p;
       p->SendMessage(*s);
       delete s;
@@ -59,7 +57,7 @@ void Network::SendMessageInLoop(const SockAddr& addr,
     });
 
     client->SetCloseCallback(
-        [this, ipbuf, client](const TcpConnectionPtr& p) {
+        [this, ipbuf, client](const voyager::TcpConnectionPtr& p) {
       connection_map_.erase(ipbuf);
       delete client;
     });
@@ -68,5 +66,4 @@ void Network::SendMessageInLoop(const SockAddr& addr,
   }
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

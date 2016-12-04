@@ -1,11 +1,10 @@
-#ifndef VOYAGER_PAXOS_COUNTER_H_
-#define VOYAGER_PAXOS_COUNTER_H_
+#ifndef SKYWALKER_PAXOS_COUNTER_H_
+#define SKYWALKER_PAXOS_COUNTER_H_
 
 #include <stdint.h>
 #include <set>
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Config;
 
@@ -31,7 +30,6 @@ class Counter {
   std::set<uint64_t> promisors_or_acceptors_;
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_COUNTER_H_
+#endif  // SKYWALKER_PAXOS_COUNTER_H_

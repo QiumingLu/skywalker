@@ -1,15 +1,21 @@
-#include "voyager/paxos/state_machine_factory.h"
+#include "paxos/state_machine_factory.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
-StateMachineFactory::StateMachineFactory(size_t group_idx)
-    : group_idx_(group_idx) {
+StateMachineFactory::StateMachineFactory() {
+}
+
+StateMachineFactory::~StateMachineFactory() {
+}
+
+bool StateMachineFactory::Execute(uint64_t instance_id,
+                                  const std::string& value, 
+                                  MachineContext* context) {
+  return true;
 }
 
 void StateMachineFactory::PackPaxosValue(const Slice& s, int sm_id,
                                          std::string* res) {
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

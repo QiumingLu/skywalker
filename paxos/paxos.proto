@@ -1,5 +1,5 @@
 syntax = "proto3";
-package voyager.paxos;
+package skywalker;
 
 enum MessageType {
   PROPOSER_SEND_NEW_VALUE = 0;

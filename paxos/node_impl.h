@@ -1,17 +1,16 @@
-#ifndef VOYAGER_PAXOS_NODE_IMPL_H_
-#define VOYAGER_PAXOS_NODE_IMPL_H_
+#ifndef SKYWALKER_PAXOS_NODE_IMPL_H_
+#define SKYWALKER_PAXOS_NODE_IMPL_H_
 
 #include <stdint.h>
 #include <map>
 
-#include "voyager/paxos/node.h"
-#include "voyager/paxos/group.h"
-#include "voyager/paxos/options.h"
-#include "voyager/paxos/network/network.h"
-#include "voyager/util/slice.h"
+#include "paxos/group.h"
+#include "network/network.h"
+#include "skywalker/slice.h"
+#include "skywalker/options.h"
+#include "skywalker/node.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class NodeImpl : public Node {
  public:
@@ -38,7 +37,6 @@ class NodeImpl : public Node {
   void operator=(const NodeImpl&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_NODE_IMPL_H_
+#endif  // SKYWALKER_PAXOS_NODE_IMPL_H_

@@ -1,9 +1,8 @@
-#include "voyager/paxos/state_machine_impl.h"
-#include "voyager/paxos/config.h"
-#include "voyager/util/logging.h"
+#include "paxos/state_machine_impl.h"
+#include "paxos/config.h"
+#include "skywalker/logging.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 StateMachineImpl::StateMachineImpl(Config* config)
     : config_(config) {
@@ -35,8 +34,9 @@ bool StateMachineImpl::Init() {
   if (success == 0) {
     res = variables_.ParseFromString(s);
     if (!res) {
-      VOYAGER_LOG(ERROR) << "StateMachineImpl::Init - "
-                         << "variables_.ParseFromArray failed, s = " << s;
+      Log(LOG_ERROR, 
+          "StateMachineImpl::Init - variables_.ParseFromArray failed, s=%s.",
+          s.c_str());
       return res;
     }
     membership.clear();
@@ -51,5 +51,4 @@ bool StateMachineImpl::Init() {
   return res;
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

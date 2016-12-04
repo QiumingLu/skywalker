@@ -1,21 +1,20 @@
-#ifndef VOYAGER_PAXOS_RUNLOOP_H_
-#define VOYAGER_PAXOS_RUNLOOP_H_
+#ifndef SKYWALKER_PAXOS_RUNLOOP_H_
+#define SKYWALKER_PAXOS_RUNLOOP_H_
 
 #include <deque>
 
-#include "voyager/paxos/paxos.pb.h"
-#include "voyager/port/thread.h"
-#include "voyager/port/mutex.h"
-#include "voyager/util/slice.h"
+#include "paxos/paxos.pb.h"
+#include "skywalker/slice.h"
+#include "util/thread.h"
+#include "util/mutex.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Instance;
 
 class RunLoop {
  public:
-  RunLoop(Instance* instance, const std::string& name = std::string());
+  RunLoop(Instance* instance);
   ~RunLoop();
 
   void Loop();
@@ -25,14 +24,15 @@ class RunLoop {
   void NewContent(Content* content);
 
  private:
+  static void* StartRunLoop(void* data);
   void ThreadFunc();
 
   bool exit_;
   Instance* instance_;
-  port::Thread thread_;
+  Thread thread_;
 
-  port::Mutex mutex_;
-  port::Condition cond_;
+  Mutex mutex_;
+  Condition cond_;
   Slice value_;
   std::deque<Content*> contents_;
 
@@ -41,7 +41,6 @@ class RunLoop {
   void operator=(const RunLoop&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_RUNLOOP_H_
+#endif  // SKYWALKER_PAXOS_RUNLOOP_H_

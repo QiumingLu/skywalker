@@ -1,8 +1,7 @@
-#include "voyager/paxos/group.h"
-#include "voyager/util/logging.h"
+#include "paxos/group.h"
+#include "util/logger.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Group::Group(uint32_t group_id, const Options& options, Network* network)
     : config_(group_id, options, network),
@@ -27,5 +26,4 @@ void Group::OnReceiveContent(Content* content) {
   instance_.OnReceiveContent(content);
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

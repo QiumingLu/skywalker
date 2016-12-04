@@ -1,9 +1,8 @@
-#include "voyager/paxos/network/messager.h"
-#include "voyager/paxos/config.h"
-#include "voyager/util/logging.h"
+#include "network/messager.h"
+#include "paxos/config.h"
+#include "skywalker/logging.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Messager::Messager(Config* config, Network* network)
     : config_(config),
@@ -28,8 +27,7 @@ void Messager::SendMessage(uint64_t node_id, Content* content) {
   if (res) {
     network_->SendMessage(NodeInfo(node_id), s);
   } else {
-    VOYAGER_LOG(ERROR) << "Messager::SendMessage - "
-                       << "content SerializeToString error.";
+    Log(LOG_ERROR, "Messager::SendMessage - content.SerializeToString error.");
   }
 }
 
@@ -44,8 +42,8 @@ void Messager::BroadcastMessage(Content* content) {
       }
     }
   } else {
-    VOYAGER_LOG(ERROR) << "Messager::BroadcastMessage - "
-                       << "content SerializeToString error.";
+    Log(LOG_ERROR,
+        "Messager::BroadcastMessage - content.SerializeToString error.");
   }
 }
 
@@ -59,10 +57,9 @@ void Messager::BroadcastMessageToFollower(Content* content) {
       network_->SendMessage(f, s);
     }
   } else {
-    VOYAGER_LOG(ERROR) << "Messager::BroadcastMessageToFollower - "
-                       << "content SerializeToString error.";
+    Log(LOG_ERROR,
+        "Messager::BroadcastMessageToFollower - content.SerializeToString error.");
   }
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

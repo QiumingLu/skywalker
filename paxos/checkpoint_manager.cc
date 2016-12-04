@@ -1,10 +1,8 @@
-#include "voyager/paxos/checkpoint_manager.h"
+#include "paxos/checkpoint_manager.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 CheckpointManager::CheckpointManager() {
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

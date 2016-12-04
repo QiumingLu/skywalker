@@ -1,11 +1,10 @@
-#ifndef VOYAGER_PAXOS_NODEINFO_H_
-#define VOYAGER_PAXOS_NODEINFO_H_
+#ifndef SKYWALKER_INCLUDE_NODEINFO_H_
+#define SKYWALKER_INCLUDE_NODEINFO_H_
 
 #include <stdint.h>
 #include <string>
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class NodeInfo {
  public:
@@ -27,7 +26,6 @@ class NodeInfo {
   uint16_t port_;
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_NODEINFO_H_
+#endif  // SKYWALKER_INCLUDE_NODEINFO_H_

@@ -1,18 +1,17 @@
-#ifndef VOYAGER_PAXOS_INSTANCE_H_
-#define VOYAGER_PAXOS_INSTANCE_H_
+#ifndef SKYWALKER_PAXOS_INSTANCE_H_
+#define SKYWALKER_PAXOS_INSTANCE_H_
 
-#include "voyager/paxos/acceptor.h"
-#include "voyager/paxos/learner.h"
-#include "voyager/paxos/proposer.h"
-#include "voyager/paxos/runloop.h"
-#include "voyager/paxos/transfer.h"
-#include "voyager/paxos/state_machine.h"
-#include "voyager/paxos/paxos.pb.h"
-#include "voyager/port/mutex.h"
-#include "voyager/util/slice.h"
+#include "paxos/acceptor.h"
+#include "paxos/learner.h"
+#include "paxos/proposer.h"
+#include "paxos/runloop.h"
+#include "paxos/transfer.h"
+#include "paxos/paxos.pb.h"
+#include "skywalker/slice.h"
+#include "skywalker/state_machine.h"
+#include "util/mutex.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Config;
 
@@ -52,7 +51,7 @@ class Instance {
   Learner learner_;
   Proposer proposer_;
   RunLoop loop_;
-  port::Mutex mutex_;
+  Mutex mutex_;
   Transfer transfer_;
 
   // No copying allowed
@@ -60,7 +59,6 @@ class Instance {
   void operator=(const Instance&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_INSTANCE_H_
+#endif  // SKYWALKER_PAXOS_INSTANCE_H_

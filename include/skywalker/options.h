@@ -1,13 +1,12 @@
-#ifndef VOYAGER_PAXOS_OPTIONS_H_
-#define VOYAGER_PAXOS_OPTIONS_H_
+#ifndef SKYWALKER_INCLUDE_OPTIONS_H_
+#define SKYWALKER_INCLUDE_OPTIONS_H_
 
 #include <string>
 #include <vector>
 
-#include "voyager/paxos/nodeinfo.h"
+#include "skywalker/nodeinfo.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 struct Options {
   std::string log_storage_path;
@@ -19,7 +18,6 @@ struct Options {
   std::vector<NodeInfo> follow_nodes;
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif   // VOYAGER_PAXOS_OPTIONS_H_
+#endif   // SKYWALKER_INCLUDE_OPTIONS_H_

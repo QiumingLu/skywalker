@@ -1,17 +1,22 @@
-#include "voyager/paxos/runloop.h"
+#include "paxos/runloop.h"
 
 #include <functional>
-#include <stdio.h>
-#include "voyager/paxos/instance.h"
-#include "voyager/port/mutexlock.h"
 
-namespace voyager {
-namespace paxos {
+#include "paxos/instance.h"
+#include "util/mutexlock.h"
 
-RunLoop::RunLoop(Instance* instance, const std::string& name)
+namespace skywalker {
+
+void* RunLoop::StartRunLoop(void* data) {
+  RunLoop* loop = reinterpret_cast<RunLoop*>(data);
+  loop->ThreadFunc();
+  return nullptr;
+}
+
+RunLoop::RunLoop(Instance* instance)
     : exit_(false),
       instance_(instance),
-      thread_(std::bind(&RunLoop::ThreadFunc, this), name),
+      thread_(),
       mutex_(),
       cond_(&mutex_),
       value_() {
@@ -26,7 +31,7 @@ RunLoop::~RunLoop() {
 
 void RunLoop::Loop() {
   assert(!thread_.Started());
-  thread_.Start();
+  thread_.Start(&RunLoop::StartRunLoop, this);
 }
 
 void RunLoop::Exit() {
@@ -34,13 +39,13 @@ void RunLoop::Exit() {
 }
 
 void RunLoop::NewValue(const Slice& value) {
-  port::MutexLock lock(&mutex_);
+  MutexLock lock(&mutex_);
   value_ = value;
   cond_.Signal();
 }
 
 void RunLoop::NewContent(Content* content) {
-  port::MutexLock lock(&mutex_);
+  MutexLock lock(&mutex_);
   contents_.push_back(content);
   cond_.Signal();
 }
@@ -50,7 +55,7 @@ void RunLoop::ThreadFunc() {
   while(!exit_) {
     Content* content = nullptr;
     {
-      port::MutexLock lock(&mutex_);
+      MutexLock lock(&mutex_);
       while (contents_.empty() && value_.empty() ) {
         cond_.Wait();
       }
@@ -72,5 +77,4 @@ void RunLoop::ThreadFunc() {
   }
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

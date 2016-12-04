@@ -1,14 +1,13 @@
-#ifndef VOYAGER_PAXOS_TRANSFER_H_
-#define VOYAGER_PAXOS_TRANSFER_H_
+#ifndef SKYWALKER_PAXOS_TRANSFER_H_
+#define SKYWALKER_PAXOS_TRANSFER_H_
 
-#include "voyager/paxos/config.h"
-#include "voyager/paxos/runloop.h"
-#include "voyager/paxos/state_machine.h"
-#include "voyager/port/mutex.h"
-#include "voyager/util/slice.h"
+#include "paxos/config.h"
+#include "paxos/runloop.h"
+#include "skywalker/slice.h"
+#include "skywalker/state_machine.h"
+#include "util/mutex.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Transfer {
  public:
@@ -29,8 +28,8 @@ class Transfer {
  private:
   Config* config_;
   RunLoop* loop_;
-  port::Mutex mutex_;
-  port::Condition cond_;
+  Mutex mutex_;
+  Condition cond_;
   bool transfer_end_;
   uint64_t instance_id_;
   Slice value_;
@@ -42,7 +41,6 @@ class Transfer {
   void operator=(const Transfer&);
 };
 
-}  // namespace voyager
-}  // namespace paxos
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_TRANSFER_H_
+#endif  // SKYWALKER_PAXOS_TRANSFER_H_

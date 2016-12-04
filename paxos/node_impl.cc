@@ -1,11 +1,9 @@
-#include "voyager/paxos/node_impl.h"
-#include "voyager/paxos/nodeinfo.h"
-#include "voyager/paxos/paxos.pb.h"
-#include "voyager/util/logging.h"
-#include "voyager/util/stl_util.h"
+#include "paxos/node_impl.h"
+#include "paxos/paxos.pb.h"
+#include "skywalker/nodeinfo.h"
+#include "skywalker/logging.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 NodeImpl::NodeImpl(const Options& options)
     : options_(options),
@@ -13,7 +11,10 @@ NodeImpl::NodeImpl(const Options& options)
 }
 
 NodeImpl::~NodeImpl() {
-  STLDeleteValues(&groups_);
+  for (std::map<uint32_t, Group*>::iterator it = groups_.begin(); 
+       it != groups_.end(); ++it) {
+    delete it->second;
+  }
 }
 
 bool NodeImpl::StartWorking() {
@@ -27,11 +28,11 @@ bool NodeImpl::StartWorking() {
       return ret;
     }
   }
-  VOYAGER_LOG(DEBUG) << "Node::Start - " << "Group Start Successfully!";
+  Log(LOG_DEBUG, "Node::Start - Group Start Successfully!");
 
   network_.StartServer(
       std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
-  VOYAGER_LOG(DEBUG) << "Node::Start - " << "Network StartServer Successfully!";
+  Log(LOG_DEBUG, "Node::Start - Network StartServer Successfully!");
 
   return ret;
 }
@@ -46,16 +47,17 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   Content* content = new Content();
   content->ParseFromArray(s.data(), static_cast<int>(s.size()));
 
-  VOYAGER_LOG(DEBUG) << "NodeImpl::OnReceiveMessage - New Content, which "
-                     << "content_type=" << content->type()
-                     << ", group_id=" << content->group_id()
-                     << ", version=" << content->version();
+  Log(LOG_DEBUG, 
+      "NodeImpl::OnReceiveMessage - New Content, "
+      "which content_type=%d, group_id=%" PRIu32", version=%" PRIu32".",
+      content->type(), content->group_id(), content->version());
 
   if (groups_.find(content->group_id()) != groups_.end()) {
     groups_[content->group_id()]->OnReceiveContent(content);
   } else {
-    VOYAGER_LOG(ERROR) << "NodeImpl::OnReceiveMessage - group_id="
-                       << content->group_id() << " is not right!";
+    Log(LOG_ERROR, 
+        "NodeImpl::OnReceiveMessage - group_id=%" PRIu32" is not right!",
+        content->group_id());
   }
 }
 
@@ -71,5 +73,4 @@ bool Node::Start(const Options& options, Node** nodeptr) {
   return ret;
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

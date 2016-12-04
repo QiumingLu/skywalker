@@ -1,10 +1,9 @@
-#include "voyager/paxos/learner.h"
-#include "voyager/paxos/config.h"
-#include "voyager/paxos/instance.h"
-#include "voyager/util/logging.h"
+#include "paxos/learner.h"
+#include "paxos/config.h"
+#include "paxos/instance.h"
+#include "skywalker/logging.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
     : config_(config),
@@ -29,12 +28,12 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
     learned_value_ = acceptor_->GetAcceptedValue();
     has_learned_ = true;
     BroadcastMessageToFollower();
-    VOYAGER_LOG(DEBUG) << "Learner::OnNewChosenValue - learn a new chosen value,"
-                       << " which node_id=" << msg.node_id()
-                       << ", proposal_id=" << msg.proposal_id()
-                       << ", and now learn's instance_id_=" << instance_id_
-                       << ", learned_value_=" << learned_value_;
-
+    Log(LOG_DEBUG,
+        "Learner::OnNewChosenValue - learn a new chosen value, "
+        "which node_id=%" PRIu64", proposal_id=%" PRIu64", "
+        "and now learn's instance_id_=%" PRIu64" , learned_value_=%s.",
+        msg.node_id(), msg.proposal_id(), 
+        instance_id_, learned_value_.c_str());
   }
 }
 
@@ -171,5 +170,4 @@ void Learner::SetHightestInstanceId(uint64_t instance_id,
   }
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

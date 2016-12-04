@@ -1,7 +1,6 @@
-#include "voyager/paxos/config.h"
+#include "paxos/config.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Config::Config(uint32_t group_id, const Options& options, Network* network)
     : group_id_(group_id),
@@ -45,5 +44,4 @@ bool Config::IsValidNodeId(uint64_t node_id) const {
   return true;
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

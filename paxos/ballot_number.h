@@ -1,10 +1,9 @@
-#ifndef VOYAGER_PAXOS_BALLOT_NUMBER_H_
-#define VOYAGER_PAXOS_BALLOT_NUMBER_H_
+#ifndef SKYWALKER_PAXOS_BALLOT_NUMBER_H_
+#define SKYWALKER_PAXOS_BALLOT_NUMBER_H_
 
 #include <stdint.h>
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class BallotNumber {
  public:
@@ -54,7 +53,6 @@ class BallotNumber {
   uint64_t node_id_;
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_BALLOT_NUMBER_H_
+#endif  // SKYWALKER_PAXOS_BALLOT_NUMBER_H_

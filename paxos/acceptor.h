@@ -1,13 +1,12 @@
-#ifndef VOYAGER_PAXOS_ACCEPTOR_H_
-#define VOYAGER_PAXOS_ACCEPTOR_H_
+#ifndef SKYWALKER_PAXOS_ACCEPTOR_H_
+#define SKYWALKER_PAXOS_ACCEPTOR_H_
 
 #include <string>
 
-#include "voyager/paxos/ballot_number.h"
-#include "voyager/paxos/paxos.pb.h"
+#include "paxos/ballot_number.h"
+#include "paxos/paxos.pb.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Config;
 class Instance;
@@ -53,7 +52,6 @@ class Acceptor {
   void operator=(const Acceptor&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_ACCEPTOR_H_
+#endif  // SKYWALKER_PAXOS_ACCEPTOR_H_

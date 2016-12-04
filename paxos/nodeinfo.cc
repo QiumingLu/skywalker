@@ -1,12 +1,11 @@
-#include "voyager/paxos/nodeinfo.h"
+#include "skywalker/nodeinfo.h"
 
 #include <assert.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 NodeInfo::NodeInfo()
     : node_id_(0), ip_(), port_(-1) {
@@ -35,5 +34,4 @@ void NodeInfo::ParseNodeId() {
   ip_ = std::string(inet_ntoa(addr));
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

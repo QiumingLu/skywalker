@@ -1,13 +1,12 @@
-#ifndef VOYAGER_PAXOS_NETWORK_MESSAGER_H_
-#define VOYAGER_PAXOS_NETWORK_MESSAGER_H_
+#ifndef SKYWALKER_NETWORK_MESSAGER_H_
+#define SKYWALKER_NETWORK_MESSAGER_H_
 
 #include <string>
 
-#include "voyager/paxos/paxos.pb.h"
-#include "voyager/paxos/network/network.h"
+#include "network/network.h"
+#include "paxos/paxos.pb.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Config;
 
@@ -32,7 +31,6 @@ class Messager {
   void operator=(const Messager&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_NETWORK_MESSAGER_H_
+#endif  // SKYWALKER_NETWORK_MESSAGER_H_

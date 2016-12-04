@@ -1,12 +1,11 @@
-#ifndef VOYAGER_PAXOS_LEARNER_H_
-#define VOYAGER_PAXOS_LEARNER_H_
+#ifndef SKYWALKER_PAXOS_LEARNER_H_
+#define SKYWALKER_PAXOS_LEARNER_H_
 
 #include <stdint.h>
-#include "voyager/paxos/acceptor.h"
-#include "voyager/paxos/paxos.pb.h"
+#include "paxos/acceptor.h"
+#include "paxos/paxos.pb.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Config;
 class Instance;
@@ -61,7 +60,6 @@ class Learner {
   void operator=(const Learner&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_LEARNER_H_
+#endif  // SKYWALKER_PAXOS_LEARNER_H_

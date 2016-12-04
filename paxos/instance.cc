@@ -1,9 +1,8 @@
-#include "voyager/paxos/instance.h"
-#include "voyager/port/mutexlock.h"
-#include "voyager/util/logging.h"
+#include "paxos/instance.h"
+#include "util/mutexlock.h"
+#include "skywalker/logging.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Instance::Instance(Config* config)
     : config_(config),
@@ -22,7 +21,7 @@ Instance::~Instance() {
 bool Instance::Init() {
   bool ret = acceptor_.Init();
   if (!ret) {
-    VOYAGER_LOG(ERROR) << "Instance::Init - Acceptor init fail.";
+    Log(LOG_ERROR, "Instance::Init - Acceptor init fail.");
     return ret;
   }
   uint64_t now_instance_id = acceptor_.GetInstanceId();
@@ -39,7 +38,7 @@ bool Instance::Init() {
 bool Instance::OnReceiveValue(const Slice& value,
                               MachineContext* context,
                               uint64_t* new_instance_id) {
-  port::MutexLock lock(&mutex_);
+  MutexLock lock(&mutex_);
   return transfer_.NewValue(value, context, new_instance_id);
 }
 
@@ -88,10 +87,11 @@ void Instance::ProposerHandleMessage(const PaxosMessage& msg) {
       proposer_.OnAccpetReply(msg);
     }
   } else {
-    VOYAGER_LOG(DEBUG) << "Instance::ProposerHandleMessage - "
-                       << "now proposer.instance_id=" << proposer_.GetInstanceId()
-                       << ", but msg.instance_id="  << msg.instance_id()
-                       << " they are not same, so skip this msg";
+    Log(LOG_DEBUG,
+        "Instance::ProposerHandleMessage - "
+        "now proposer.instance_id=%" PRIu64", but msg.instance_id=%" PRIu64", "
+        "they are not same, so skip this msg",
+        proposer_.GetInstanceId(), msg.instance_id());
   }
 }
 
@@ -129,8 +129,7 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
       learner_.OnComfirmAskForLearn(msg);
       break;
     default:
-      VOYAGER_LOG(ERROR) << "Instance::LearnerHandleMessage - "
-                         << "Invalid message type.";
+      Log(LOG_ERROR, "Instance::LearnerHandleMessage - Invalid message type.");
       break;
   }
   if (learner_.HasLearned()) {
@@ -157,10 +156,14 @@ void Instance::NextInstance() {
   acceptor_.NextInstance();
   proposer_.NextInstance();
   learner_.NextInstance();
-  VOYAGER_LOG(INFO) << "Instance::NextInstance - New instance is starting,"
-                    << " Now proposer.instance_id=" << proposer_.GetInstanceId()
-                    << ", acceptor.instance_id=" << acceptor_.GetInstanceId()
-                    << ", learner.instance_id=" << learner_.GetInstanceId();
+  Log(LOG_INFO, 
+      "Instance::NextInstance - New instance is starting, "
+      "Now proposer.instance_id=%" PRIu64", "
+      "acceptor.instance_id=%" PRIu64", "
+      "learner.instance_id=%" PRIu64".",
+      proposer_.GetInstanceId(), 
+      acceptor_.GetInstanceId(), 
+      learner_.GetInstanceId());
 }
 
 bool Instance::MachineExecute(uint64_t instance_id, const Slice& value,
@@ -168,5 +171,4 @@ bool Instance::MachineExecute(uint64_t instance_id, const Slice& value,
   return true;
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

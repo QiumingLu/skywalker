@@ -1,11 +1,10 @@
-#ifndef VOYAGER_PAXOS_STATE_MACHINE_H_
-#define VOYAGER_PAXOS_STATE_MACHINE_H_
+#ifndef SKYWALKER_STATE_MACHINE_H_
+#define SKYWALKER_STATE_MACHINE_H_
 
 #include <stdint.h>
 #include <string>
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 struct MachineContext {
   uint32_t machine_id;
@@ -30,7 +29,6 @@ class StateMachine {
   void operator=(const StateMachine&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_STATE_MACHINE_H_
+#endif  // SKYWALKER_STATE_MACHINE_H_

@@ -1,15 +1,14 @@
-#ifndef VOYAGER_PAXOS_PROPOSER_H_
-#define VOYAGER_PAXOS_PROPOSER_H_
+#ifndef SKYWALKER_PAXOS_PROPOSER_H_
+#define SKYWALKER_PAXOS_PROPOSER_H_
 
 #include <string>
 
-#include "voyager/paxos/ballot_number.h"
-#include "voyager/paxos/counter.h"
-#include "voyager/paxos/paxos.pb.h"
-#include "voyager/util/slice.h"
+#include "paxos/ballot_number.h"
+#include "paxos/counter.h"
+#include "paxos/paxos.pb.h"
+#include "skywalker/slice.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Config;
 class Instance;
@@ -61,7 +60,6 @@ class Proposer {
   void operator=(const Proposer&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_PROPOSER_H_
+#endif  // SKYWALKER_PAXOS_PROPOSER_H_

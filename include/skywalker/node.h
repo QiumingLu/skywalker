@@ -1,13 +1,12 @@
-#ifndef VOYAGER_PAXOS_NODE_H_
-#define VOYAGER_PAXOS_NODE_H_
+#ifndef SKYWALKER_INCLUDE_NODE_H_
+#define SKYWALKER_INCLUDE_NODE_H_
 
 #include <stdint.h>
 
-#include "voyager/paxos/options.h"
-#include "voyager/util/slice.h"
+#include "skywalker/options.h"
+#include "skywalker/slice.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Node {
  public:
@@ -27,7 +26,6 @@ class Node {
   void operator=(const Node&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_NODE_H_
+#endif  // SKYWALKER_INCLUDE_NODE_H_

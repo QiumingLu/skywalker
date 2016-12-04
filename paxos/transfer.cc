@@ -1,9 +1,8 @@
-#include "voyager/paxos/transfer.h"
-#include "voyager/port/mutexlock.h"
-#include "voyager/util/logging.h"
+#include "paxos/transfer.h"
+#include "util/mutexlock.h"
+#include "skywalker/logging.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 Transfer::Transfer(Config* config, RunLoop* loop)
     : config_(config),
@@ -29,7 +28,7 @@ bool Transfer::NewValue(const Slice& value,
   bool res = true;
   bool wait = true;
 
-  port::MutexLock lock(&mutex_);
+  MutexLock lock(&mutex_);
   while (!transfer_end_ && wait) {
     res = cond_.Wait(5000);
     wait = false;
@@ -39,14 +38,14 @@ bool Transfer::NewValue(const Slice& value,
       *new_instance_id = instance_id_;
     }
   } else {
-    VOYAGER_LOG(INFO) << "Transfer::NewValue - handle new value("
-                      << value <<") timeout.";
+    Log(LOG_INFO, 
+        "Transfer::NewValue - handle new value(%s) timeout.", value.data());
   }
   return success_;
 }
 
 void Transfer::SetNowInstanceId(uint64_t instance_id) {
-  port::MutexLock lock(&mutex_);
+  MutexLock lock(&mutex_);
   instance_id_ = instance_id;
 }
 
@@ -65,7 +64,7 @@ bool Transfer::IsMyProposal(uint64_t instance_id,
 void Transfer::SetResult(bool success, uint64_t instance_id,
                          const Slice& value) {
   if(instance_id_ == instance_id) {
-    port::MutexLock lock(&mutex_);
+    MutexLock lock(&mutex_);
     success_ = success;
     if (value_ != value) {
       success_ = false;
@@ -75,5 +74,4 @@ void Transfer::SetResult(bool success, uint64_t instance_id,
   }
 }
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker

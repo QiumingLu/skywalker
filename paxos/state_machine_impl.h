@@ -1,11 +1,10 @@
-#ifndef VOYAGER_PAXOS_STATE_MACHINE_IMPL_H_
-#define VOYAGER_PAXOS_STATE_MACHINE_IMPL_H_
+#ifndef SKYWALKER_PAXOS_STATE_MACHINE_IMPL_H_
+#define SKYWALKER_PAXOS_STATE_MACHINE_IMPL_H_
 
-#include "voyager/paxos/state_machine.h"
-#include "voyager/paxos/paxos.pb.h"
+#include "skywalker/state_machine.h"
+#include "paxos/paxos.pb.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Config;
 
@@ -30,7 +29,6 @@ class StateMachineImpl : public StateMachine {
   void operator=(const StateMachineImpl&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_STATE_MACHINE_IMPL_H_
+#endif  // SKYWALKER_PAXOS_STATE_MACHINE_IMPL_H_

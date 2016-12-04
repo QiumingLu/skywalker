@@ -1,19 +1,18 @@
-#ifndef VOYAGER_PAXOS_CONFIG_H_
-#define VOYAGER_PAXOS_CONFIG_H_
+#ifndef SKYWALKER_PAXOS_CONFIG_H_
+#define SKYWALKER_PAXOS_CONFIG_H_
 
 #include <stdint.h>
 #include <stddef.h>
 #include <set>
 #include <vector>
 
-#include "voyager/paxos/nodeinfo.h"
-#include "voyager/paxos/options.h"
-#include "voyager/paxos/network/messager.h"
-#include "voyager/paxos/storage/db.h"
-#include "voyager/paxos/state_machine_impl.h"
+#include "network/messager.h"
+#include "storage/db.h"
+#include "paxos/state_machine_impl.h"
+#include "skywalker/nodeinfo.h"
+#include "skywalker/options.h"
 
-namespace voyager {
-namespace paxos {
+namespace skywalker {
 
 class Config {
  public:
@@ -63,7 +62,6 @@ class Config {
   void operator=(const Config&);
 };
 
-}  // namespace paxos
-}  // namespace voyager
+}  // namespace skywalker
 
-#endif  // VOYAGER_PAXOS_CONFIG_H_
+#endif  // SKYWALKER_PAXOS_CONFIG_H_
