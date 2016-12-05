@@ -39,7 +39,7 @@ bool Transfer::NewValue(const Slice& value,
     }
   } else {
     Log(LOG_INFO, 
-        "Transfer::NewValue - handle new value(%s) timeout.", value.data());
+        "Transfer::NewValue - handle new value(%s) timeout.\n", value.data());
   }
   return success_;
 }

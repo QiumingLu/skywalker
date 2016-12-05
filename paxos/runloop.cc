@@ -1,7 +1,5 @@
 #include "paxos/runloop.h"
 
-#include <functional>
-
 #include "paxos/instance.h"
 #include "util/mutexlock.h"
 

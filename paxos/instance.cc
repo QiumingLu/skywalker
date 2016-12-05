@@ -21,7 +21,7 @@ Instance::~Instance() {
 bool Instance::Init() {
   bool ret = acceptor_.Init();
   if (!ret) {
-    Log(LOG_ERROR, "Instance::Init - Acceptor init fail.");
+    Log(LOG_ERROR, "Instance::Init - Acceptor init fail.\n");
     return ret;
   }
   uint64_t now_instance_id = acceptor_.GetInstanceId();
@@ -90,7 +90,7 @@ void Instance::ProposerHandleMessage(const PaxosMessage& msg) {
     Log(LOG_DEBUG,
         "Instance::ProposerHandleMessage - "
         "now proposer.instance_id=%" PRIu64", but msg.instance_id=%" PRIu64", "
-        "they are not same, so skip this msg",
+        "they are not same, so skip this msg\n",
         proposer_.GetInstanceId(), msg.instance_id());
   }
 }
@@ -129,7 +129,7 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
       learner_.OnComfirmAskForLearn(msg);
       break;
     default:
-      Log(LOG_ERROR, "Instance::LearnerHandleMessage - Invalid message type.");
+      Log(LOG_ERROR, "Instance::LearnerHandleMessage - Invalid message type.\n");
       break;
   }
   if (learner_.HasLearned()) {

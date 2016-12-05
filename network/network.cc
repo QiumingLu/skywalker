@@ -44,7 +44,7 @@ void Network::SendMessage(const std::vector<NodeInfo>& nodes,
       }
     } else {
       Log(LOG_ERROR,
-          "Network::SendMessage - Content.SerializeToString error.");
+          "Network::SendMessage - Content.SerializeToString error.\n");
     }
   });
 }

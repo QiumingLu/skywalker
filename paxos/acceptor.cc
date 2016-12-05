@@ -50,7 +50,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     int ret = WriteToDB(instance_id_, 0);
     if (ret != 0) {
       Log(LOG_ERROR,
-          "Acceptor::OnPrepare - write instance_id_ = %" PRIu64" to db failed.",
+          "Acceptor::OnPrepare - write instance_id_ = %" PRIu64" to db failed.\n",
           instance_id_);
     }
   } else {
@@ -88,7 +88,7 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
     int ret = WriteToDB(instance_id_, 0);
     if (ret != 0) {
       Log(LOG_ERROR,
-          "Acceptor::OnAccpet - write instance_id=%" PRIu64" to db failed.",
+          "Acceptor::OnAccpet - write instance_id=%" PRIu64" to db failed.\n",
           instance_id_);
     }
 
