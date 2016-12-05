@@ -1,4 +1,4 @@
-#include "paxos/state_machine_impl.h"
+#include "machine/state_machine_impl.h"
 #include "paxos/config.h"
 #include "skywalker/logging.h"
 
@@ -29,23 +29,23 @@ bool StateMachineImpl::Init() {
   int success = config_->GetDB()->GetSystemVariables(&s);
   if (success != 0 && success != 1) { return false; }
 
-  std::set<uint64_t>& membership = config_->MemberShip();
+  std::set<NodeInfo>& membership = config_->MemberShip();
 
   if (success == 0) {
     res = variables_.ParseFromString(s);
     if (!res) {
-      Log(LOG_ERROR, 
-          "StateMachineImpl::Init - variables_.ParseFromArray failed, s=%s.",
+      Log(LOG_ERROR,
+          "StateMachineImpl::Init - variables.ParseFromArray failed, s=%s.",
           s.c_str());
       return res;
     }
     membership.clear();
     for (int i = 0; i < variables_.membership_size(); ++i) {
-      membership.insert(variables_.membership(i));
+      membership.insert(NodeInfo(variables_.membership(i)));
     }
   } else {
     for (auto m : membership) {
-      variables_.add_membership(m);
+      variables_.add_membership(m.GetNodeId());
     }
   }
   return res;

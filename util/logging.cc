@@ -10,7 +10,7 @@ namespace skywalker {
 
 void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
   static const char* loglevel_names[] = {
-     "DEBUG", "INFO ", "WARN ", "ERROR", "FATAL" };
+     "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
 
   char buffer[500];
   for (int i = 0; i < 2; ++i) {
@@ -32,7 +32,7 @@ void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
     struct tm t;
     localtime_r(&seconds, &t);
     p += snprintf(p, limit - p,
-                  "[%04d/%02d/%02d-%02d:%02d:%02d.%06d][%s %s:%d]",
+                  "[%04d/%02d/%02d-%02d:%02d:%02d.%06d][%s] ",
                   t.tm_year + 1900,
                   t.tm_mon + 1,
                   t.tm_mday,
@@ -40,9 +40,7 @@ void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
                   t.tm_min,
                   t.tm_sec,
                   static_cast<int>(now_tv.tv_usec),
-                  loglevel_names[level],
-                  __FILE__,
-                  __LINE__);
+                  loglevel_names[level]);
 
     if (p < limit) {
       va_list backup_ap;
@@ -66,7 +64,7 @@ void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
     assert(p <= limit);
 
     if (level >= LOG_DEBUG) {
-      fprintf(stderr, "%s", p);
+      fprintf(stderr, "%s", base);
     }
 
     if (base != buffer) {

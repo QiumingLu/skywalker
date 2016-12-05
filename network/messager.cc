@@ -9,57 +9,41 @@ Messager::Messager(Config* config, Network* network)
       network_(network) {
 }
 
-Content* Messager::PackMessage(ContentType type,
-                               PaxosMessage* pmsg,
-                               CheckPointMessage* cmsg) {
-  Content* content = new Content();
-  content->set_type(type);
-  content->set_group_id(config_->GetGroupId());
-  content->set_version(1);
-  content->set_allocated_paxos_msg(pmsg);
-  content->set_allocated_checkpoint_msg(cmsg);
-  return content;
+std::shared_ptr<Content> Messager::PackMessage(ContentType type,
+                                               PaxosMessage* pmsg,
+                                               CheckPointMessage* cmsg) {
+  std::shared_ptr<Content> content_ptr(new Content());
+  content_ptr->set_type(type);
+  content_ptr->set_group_id(config_->GetGroupId());
+  content_ptr->set_version(1);
+  content_ptr->set_allocated_paxos_msg(pmsg);
+  content_ptr->set_allocated_checkpoint_msg(cmsg);
+  return content_ptr;
 }
 
-void Messager::SendMessage(uint64_t node_id, Content* content) {
-  std::string s;
-  bool res = content->SerializeToString(&s);
-  if (res) {
-    network_->SendMessage(NodeInfo(node_id), s);
-  } else {
-    Log(LOG_ERROR, "Messager::SendMessage - content.SerializeToString error.");
-  }
+void Messager::SendMessage(uint64_t node_id,
+                           const std::shared_ptr<Content>& content_ptr) {
+  std::vector<NodeInfo> nodes;
+  nodes.push_back(NodeInfo(node_id));
+  network_->SendMessage(nodes, content_ptr);
 }
 
-void Messager::BroadcastMessage(Content* content) {
-  std::string s;
-  bool res = content->SerializeToString(&s);
-  if (res) {
-    std::set<uint64_t>& membership = config_->MemberShip();
-    for (auto m : membership) {
-      if (m != config_->GetNodeId()) {
-        network_->SendMessage(NodeInfo(m), s);
-      }
+void Messager::BroadcastMessage(const std::shared_ptr<Content>& content_ptr) {
+  const std::set<NodeInfo>& membership = config_->MemberShip();
+  std::vector<NodeInfo> nodes;
+  for (auto m : membership) {
+    if (m.GetNodeId() != config_->GetNodeId()) {
+      nodes.push_back(m);
     }
-  } else {
-    Log(LOG_ERROR,
-        "Messager::BroadcastMessage - content.SerializeToString error.");
   }
+  network_->SendMessage(nodes, content_ptr);
 }
 
 
-void Messager::BroadcastMessageToFollower(Content* content) {
-  std::string s;
-  bool res = content->SerializeToString(&s);
-  if (res) {
-    std::vector<NodeInfo>& follow_nodes(config_->FollowNodes());
-    for (auto f : follow_nodes) {
-      network_->SendMessage(f, s);
-    }
-  } else {
-    Log(LOG_ERROR,
-        "Messager::BroadcastMessageToFollower - content.SerializeToString error.");
-  }
+void Messager::BroadcastMessageToFollower(
+    const std::shared_ptr<Content>& content_ptr) {
+  const std::vector<NodeInfo>& follow_nodes = config_->FollowNodes();
+  network_->SendMessage(follow_nodes, content_ptr);
 }
 
 }  // namespace skywalker

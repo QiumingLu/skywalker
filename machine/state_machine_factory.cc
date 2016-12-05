@@ -1,4 +1,4 @@
-#include "paxos/state_machine_factory.h"
+#include "machine/state_machine_factory.h"
 
 namespace skywalker {
 
@@ -9,7 +9,7 @@ StateMachineFactory::~StateMachineFactory() {
 }
 
 bool StateMachineFactory::Execute(uint64_t instance_id,
-                                  const std::string& value, 
+                                  const std::string& value,
                                   MachineContext* context) {
   return true;
 }

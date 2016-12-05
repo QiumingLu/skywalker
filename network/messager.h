@@ -1,6 +1,7 @@
 #ifndef SKYWALKER_NETWORK_MESSAGER_H_
 #define SKYWALKER_NETWORK_MESSAGER_H_
 
+#include <memory>
 #include <string>
 
 #include "network/network.h"
@@ -14,13 +15,15 @@ class Messager {
  public:
   Messager(Config* config, Network* network);
 
-  void SendMessage(uint64_t node_id, Content* content);
-  void BroadcastMessage(Content* content);
-  void BroadcastMessageToFollower(Content* content);
+  void SendMessage(uint64_t node_id,
+                   const std::shared_ptr<Content>& content_ptr);
+  void BroadcastMessage(const std::shared_ptr<Content>& content_ptr);
+  void BroadcastMessageToFollower(
+      const std::shared_ptr<Content>& content_ptr);
 
-  Content* PackMessage(ContentType type,
-                       PaxosMessage* pmsg,
-                       CheckPointMessage* cmsg);
+  std::shared_ptr<Content> PackMessage(ContentType type,
+                                       PaxosMessage* pmsg,
+                                       CheckPointMessage* cmsg);
 
  private:
   Config* config_;

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <voyager/util/string_util.h>
+#include <voyager/util/logging.h>
 #include "skywalker/node.h"
 #include "skywalker/options.h"
 #include "skywalker/nodeinfo.h"
@@ -21,6 +22,8 @@ int main(int argc, char** argv) {
     printf("getcwd error\n");
     return -1;
   }
+
+  voyager::SetLogHandler(nullptr);
 
   skywalker::Options options;
   options.log_storage_path = std::string(path);

@@ -156,13 +156,13 @@ void Instance::NextInstance() {
   acceptor_.NextInstance();
   proposer_.NextInstance();
   learner_.NextInstance();
-  Log(LOG_INFO, 
+  Log(LOG_INFO,
       "Instance::NextInstance - New instance is starting, "
       "Now proposer.instance_id=%" PRIu64", "
       "acceptor.instance_id=%" PRIu64", "
-      "learner.instance_id=%" PRIu64".",
-      proposer_.GetInstanceId(), 
-      acceptor_.GetInstanceId(), 
+      "learner.instance_id=%" PRIu64".\n",
+      proposer_.GetInstanceId(),
+      acceptor_.GetInstanceId(),
       learner_.GetInstanceId());
 }
 

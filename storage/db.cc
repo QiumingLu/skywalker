@@ -27,7 +27,7 @@ int DB::Open(uint32_t group_id, const std::string& name) {
   options.write_buffer_size = 1024 * 1024 + group_id * 10 * 1024;
   leveldb::Status status = leveldb::DB::Open(options, name, &db_);
   if (!status.ok()) {
-    Log(LOG_ERROR, "DB::Open - %s", status.ToString().c_str());
+    Log(LOG_ERROR, "DB::Open - %s\n", status.ToString().c_str());
     return -1;
   }
   return 0;
@@ -42,7 +42,7 @@ int DB::Put(const WriteOptions& options,
   op.sync = options.sync;
   leveldb::Status status = db_->Put(op, key, value);
   if (!status.ok()) {
-    Log(LOG_ERROR, "DB::Put - %s", status.ToString().c_str());
+    Log(LOG_ERROR, "DB::Put - %s\n", status.ToString().c_str());
     return -1;
   }
   return 0;
@@ -55,7 +55,7 @@ int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
   op.sync = options.sync;
   leveldb::Status status = db_->Delete(op, key);
   if (!status.ok()) {
-    Log(LOG_ERROR, "DB::Delete - %s", status.ToString().c_str());
+    Log(LOG_ERROR, "DB::Delete - %s\n", status.ToString().c_str());
     return -1;
   }
   return 0;
@@ -71,7 +71,7 @@ int DB::Get(uint64_t instance_id, std::string* value) {
       ret = 1;
     } else {
       ret = -1;
-      Log(LOG_ERROR, "DB::Get - %s", status.ToString().c_str());
+      Log(LOG_ERROR, "DB::Get - %s\n", status.ToString().c_str());
     }
   }
   return ret;

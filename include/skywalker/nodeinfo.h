@@ -26,6 +26,18 @@ class NodeInfo {
   uint16_t port_;
 };
 
+inline bool operator==(const NodeInfo& x, const NodeInfo& y) {
+  return x.GetNodeId() == y.GetNodeId();
+}
+
+inline bool operator<(const NodeInfo& x, const NodeInfo& y) {
+  return x.GetNodeId() < y.GetNodeId();
+}
+
+inline bool operator>(const NodeInfo& x, const NodeInfo& y) {
+  return x.GetNodeId() > y.GetNodeId();
+}
+
 }  // namespace skywalker
 
 #endif  // SKYWALKER_INCLUDE_NODEINFO_H_

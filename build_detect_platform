@@ -30,7 +30,7 @@ fi
 
 COMMON_FLAGS=
 PLATFORM_CCFLAGS=
-PLATFORM_CXXFLAGS="-std=c++11 -Wall -Wextra -Werror -Wconversion -Wno-unused-parameter -Wold-style-cast -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -march=native -rdynamic"
+PLATFORM_CXXFLAGS="-std=c++11 -Wall -Wextra -Wno-unused-parameter -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -march=native"
 PLATFORM_LDFLAGS=
 PLATFORM_LIBS=
 
@@ -87,7 +87,7 @@ esac
 
 $PREFIX/third_party/protobuf/bin/protoc -I$PREFIX/paxos --cpp_out=$PREFIX/paxos $PREFIX/paxos/paxos.proto
 
-DIRS="$PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util"
+DIRS="$PREFIX/machine $PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util"
 
 set -f 
 PRUNE_TEST="-name *test*.cc -prune"

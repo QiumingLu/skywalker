@@ -1,4 +1,5 @@
 #include "network/network.h"
+#include "skywalker/logging.h"
 
 namespace skywalker {
 
@@ -16,7 +17,8 @@ Network::~Network() {
 void Network::StartServer(const std::function<void (const Slice&) >& cb) {
   loop_ = bg_loop_.Loop();
   server_ = new voyager::TcpServer(loop_, addr_);
-  server_->SetMessageCallback([cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
+  server_->SetMessageCallback(
+      [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
     Slice s(buf->Peek(), buf->ReadableSize());
     if (!s.empty() && s.size() > sizeof(int)) {
       cb(s);
@@ -30,30 +32,39 @@ void Network::StopServer() {
   loop_->Exit();
 }
 
-void Network::SendMessage(const NodeInfo& other, const Slice& message) {
-  voyager::SockAddr addr(other.GetIP(), other.GetPort());
-  std::string* s = new std::string(message.data(), message.size());
-  loop_->RunInLoop(std::bind(&Network::SendMessageInLoop, this, addr, s));
+void Network::SendMessage(const std::vector<NodeInfo>& nodes,
+                          const std::shared_ptr<Content>& content_ptr) {
+  loop_->RunInLoop([this, nodes, content_ptr] () {
+    std::string s;
+    bool res = content_ptr->SerializeToString(&s);
+    if (res) {
+      for (auto n : nodes) {
+        voyager::SockAddr addr(n.GetIP(), n.GetPort());
+        SendMessageInLoop(addr, s);
+      }
+    } else {
+      Log(LOG_ERROR,
+          "Network::SendMessage - Content.SerializeToString error.");
+    }
+  });
 }
 
 void Network::SendMessageInLoop(const voyager::SockAddr& addr,
-                                std::string* s) {
+                                const std::string& s) {
   std::string ipbuf(addr.Ipbuf());
   auto it = connection_map_.find(ipbuf);
   if (it != connection_map_.end()) {
-    it->second->SendMessage(*s);
-    delete s;
+    it->second->SendMessage(s);
   } else {
     voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
-    client->SetConnectionCallback([this, ipbuf, s](const voyager::TcpConnectionPtr& p) {
+    client->SetConnectionCallback(
+        [this, ipbuf, s](const voyager::TcpConnectionPtr& p) {
       connection_map_[ipbuf] = p;
-      p->SendMessage(*s);
-      delete s;
+      p->SendMessage(s);
     });
 
-    client->SetConnectFailureCallback([this, client, s]() {
+    client->SetConnectFailureCallback([this, client]() {
       delete client;
-      delete s;
     });
 
     client->SetCloseCallback(

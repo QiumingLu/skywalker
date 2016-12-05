@@ -1,5 +1,5 @@
-#ifndef SKYWALKER_PAXOS_STATE_MACHINE_IMPL_H_
-#define SKYWALKER_PAXOS_STATE_MACHINE_IMPL_H_
+#ifndef SKYWALKER_MACHINE_STATE_MACHINE_IMPL_H_
+#define SKYWALKER_MACHINE_STATE_MACHINE_IMPL_H_
 
 #include "skywalker/state_machine.h"
 #include "paxos/paxos.pb.h"
@@ -31,4 +31,4 @@ class StateMachineImpl : public StateMachine {
 
 }  // namespace skywalker
 
-#endif  // SKYWALKER_PAXOS_STATE_MACHINE_IMPL_H_
+#endif  // SKYWALKER_MACHINE_STATE_MACHINE_IMPL_H_

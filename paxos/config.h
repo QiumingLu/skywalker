@@ -8,7 +8,7 @@
 
 #include "network/messager.h"
 #include "storage/db.h"
-#include "paxos/state_machine_impl.h"
+#include "machine/state_machine_impl.h"
 #include "skywalker/nodeinfo.h"
 #include "skywalker/options.h"
 
@@ -37,8 +37,10 @@ class Config {
     return (membership_.size() / 2 + 1);
   }
 
-  std::set<uint64_t>& MemberShip() { return membership_; }
-  std::vector<NodeInfo>& FollowNodes() { return follow_nodes_; }
+  std::set<NodeInfo>& MemberShip() { return membership_; }
+  const std::set<NodeInfo>& MemberShip() const { return membership_; }
+
+  const std::vector<NodeInfo>& FollowNodes() const { return follow_nodes_; }
 
   bool IsValidNodeId(uint64_t node_id) const;
 
@@ -50,7 +52,7 @@ class Config {
   bool log_sync_;
   uint32_t sync_interval_;
 
-  std::set<uint64_t> membership_;
+  std::set<NodeInfo> membership_;
   std::vector<NodeInfo> follow_nodes_;
 
   DB* db_;

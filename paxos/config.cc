@@ -20,9 +20,9 @@ Config::Config(uint32_t group_id, const Options& options, Network* network)
   snprintf(name, sizeof(name), "%sg%d", temp.c_str(), group_id);
   log_storage_path_ = std::string(name);
 
-  membership_.insert(node_id_);
+  membership_.insert(NodeInfo(node_id_));
   for (auto node : options.all_other_nodes) {
-    membership_.insert(node.GetNodeId());
+    membership_.insert(node);
   }
 }
 

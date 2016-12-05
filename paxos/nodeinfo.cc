@@ -22,7 +22,7 @@ NodeInfo::NodeInfo(const std::string& ip, uint16_t port)
 }
 
 void NodeInfo::MakeNodeId() {
-  uint64_t ip = static_cast<uint64_t>(inet_addr(ip_.c_str()));
+  uint64_t ip = static_cast<uint64_t>(::inet_addr(ip_.c_str()));
   assert(ip != -1);
   node_id_ = (ip << 32) | port_;
 }

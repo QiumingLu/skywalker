@@ -46,8 +46,10 @@ bool Condition::Wait(uint64_t millisecond) {
   struct timeval now;
   struct timespec outtime;
   gettimeofday(&now, nullptr);
-  outtime.tv_sec = now.tv_sec + millisecond / 1000;
-  outtime.tv_nsec = now.tv_usec * 1000 + (millisecond % 1000) * 1000 * 1000;
+  outtime.tv_sec = now.tv_sec + static_cast<time_t>(millisecond / 1000);
+  outtime.tv_nsec =
+      now.tv_usec * 1000 +
+      static_cast<suseconds_t>((millisecond % 1000) * 1000 * 1000);
   outtime.tv_sec += outtime.tv_nsec / (1000 * 1000 * 1000);
   outtime.tv_nsec %= (1000 * 1000 * 1000);
   int ret = pthread_cond_timedwait(&cond_, &mutex_->mutex_, &outtime);

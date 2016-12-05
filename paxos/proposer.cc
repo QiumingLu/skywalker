@@ -54,27 +54,30 @@ void Proposer::Prepare(bool need_new_ballot) {
 
   counter_.StartNewRound();
 
-  Log(LOG_DEBUG, 
+  Log(LOG_DEBUG,
       "Proposer::Prepare - start a new prepare, now "
       "node_id=%" PRIu64", instance_id=%" PRIu64", "
-      "proposal_id=%" PRIu64", value=%s.",
-      config_->GetNodeId(), instance_id_, 
+      "proposal_id=%" PRIu64", value=%s.\n",
+      config_->GetNodeId(), instance_id_,
       proposal_id_, value_.c_str());
 
-  Content* content = messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
-  messager_->BroadcastMessage(content);
-  instance_->HandlePaxosMessage(*msg);
-  delete content;
+  std::shared_ptr<Content> content_ptr =
+      messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
+  messager_->BroadcastMessage(content_ptr);
+  instance_->HandlePaxosMessage(content_ptr->paxos_msg());
 }
 
 void Proposer::OnPrepareReply(const PaxosMessage& msg) {
-  Log(LOG_DEBUG, 
+  Log(LOG_DEBUG,
       "Proposer::OnPrepareReply - receive the prepare reply, "
-      "which node_id=%" PRIu64" , proposal_id=%" PRIu64", "
+      "which node_id=%" PRIu64", proposal_id=%" PRIu64", "
       "reject_for_promised_id=%" PRIu64", "
-      "pre_accepted_id=%" PRIu64", pre_accepted_node_id=%" PRIu64", value=%s.",
-      msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id(), 
-      msg.pre_accepted_id(), msg.pre_accepted_node_id(), msg.value().c_str());
+      "pre_accepted_id=%" PRIu64", pre_accepted_node_id=%" PRIu64", "
+      "value=%s.\n",
+      msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id(),
+      msg.pre_accepted_id(), msg.pre_accepted_node_id(),
+      msg.value().c_str());
+
   if (preparing_) {
     if (msg.proposal_id() == proposal_id_) {
       counter_.AddReceivedNode(msg.node_id());
@@ -101,7 +104,8 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
         Log(LOG_DEBUG,
-            "Proposer::OnPrepareReply - Prepare not pass, reprepare 300ms later.");
+            "Proposer::OnPrepareReply - "
+            "Prepare not pass, reprepare 300ms later.");
       }
     }
   }
@@ -111,7 +115,7 @@ void Proposer::Accept() {
   Log(LOG_DEBUG,
       "Proposer::Accept - start to accept, "
       "now node_id=%" PRIu64", instance_id=%" PRIu64", "
-      "proposal_id=%" PRIu64", value=%s.",
+      "proposal_id=%" PRIu64", value=%s.\n",
       config_->GetNodeId(), instance_id_, proposal_id_, value_.c_str());
 
   preparing_ = false;
@@ -126,10 +130,10 @@ void Proposer::Accept() {
 
   counter_.StartNewRound();
 
-  Content* content = messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
-  messager_->BroadcastMessage(content);
-  instance_->HandlePaxosMessage(*msg);
-  delete content;
+  std::shared_ptr<Content> content_ptr =
+      messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
+  messager_->BroadcastMessage(content_ptr);
+  instance_->HandlePaxosMessage(content_ptr->paxos_msg());
 }
 
 void Proposer::OnAccpetReply(const PaxosMessage& msg) {
@@ -137,7 +141,7 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
       "Proposer::OnAccpetReply - receive the accept reply, "
       "which node_id=%" PRIu64", "
       "proposal_id=%" PRIu64", "
-      "reject_for_promised_id=%" PRIu64".",
+      "reject_for_promised_id=%" PRIu64".\n",
       msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id());
 
   if (accepting_) {
@@ -173,10 +177,10 @@ void Proposer::NewChosenValue() {
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   msg->set_proposal_id(proposal_id_);
-  Content* content = messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
-  messager_->BroadcastMessage(content);
-  instance_->HandlePaxosMessage(*msg);
-  delete content;
+  std::shared_ptr<Content> content_ptr =
+      messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
+  messager_->BroadcastMessage(content_ptr);
+  instance_->HandlePaxosMessage(content_ptr->paxos_msg());
 }
 
 void Proposer::NextInstance() {

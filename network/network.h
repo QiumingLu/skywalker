@@ -3,6 +3,8 @@
 
 #include <functional>
 #include <map>
+#include <memory>
+#include <vector>
 
 #include <voyager/core/bg_eventloop.h>
 #include <voyager/core/eventloop.h>
@@ -13,8 +15,7 @@
 
 #include "skywalker/nodeinfo.h"
 #include "skywalker/slice.h"
-
-
+#include "paxos/paxos.pb.h"
 
 namespace skywalker {
 
@@ -26,10 +27,11 @@ class Network {
   void StartServer(const std::function<void (const Slice& s)>& cb);
   void StopServer();
 
-  void SendMessage(const NodeInfo& other, const Slice& message);
+  void SendMessage(const std::vector<NodeInfo>& nodes,
+                   const std::shared_ptr<Content>& content_ptr);
 
  private:
-  void SendMessageInLoop(const voyager::SockAddr& addr, std::string* s);
+  void SendMessageInLoop(const voyager::SockAddr& addr, const std::string& s);
 
   voyager::SockAddr addr_;
   voyager::BGEventLoop bg_loop_;

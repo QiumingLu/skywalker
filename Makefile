@@ -63,6 +63,9 @@ clean:
 $(STATIC_OUTDIR):
 	mkdir $@
 
+$(STATIC_OUTDIR)/machine: | $(STATIC_OUTDIR)
+	mkdir $@
+
 $(STATIC_OUTDIR)/network: | $(STATIC_OUTDIR)
 	mkdir $@
 
@@ -77,6 +80,7 @@ $(STATIC_OUTDIR)/util: | $(STATIC_OUTDIR)
 
 .PHONY: STATIC_OBJDIRS
 STATIC_OBJDIRS: \
+  $(STATIC_OUTDIR)/machine \
   $(STATIC_OUTDIR)/network \
   $(STATIC_OUTDIR)/storage \
   $(STATIC_OUTDIR)/paxos \
@@ -95,7 +99,7 @@ $(STATIC_OUTDIR)/paxos_test:paxos/paxos_test.cc $(STATIC_LIBOBJECTS)
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) paxos/paxos_test.cc $(STATIC_LIBOBJECTS) -o $@ $(LIBS)
 
 $(STATIC_OUTDIR)/%.o: %.cc 
-	$(CXX) $(CXXFLAGS) -Wno-conversion -c $< -o $@ 
+	$(CXX) $(CXXFLAGS) -c $< -o $@ 
 
 $(STATIC_OUTDIR)/%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

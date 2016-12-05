@@ -21,14 +21,16 @@ bool Acceptor::Init() {
   }
 
   instance_id_ = instance_id;
-  Log(LOG_DEBUG, "Acceptor::Init - now instance_id=%" PRIu64".", instance_id_);
+  Log(LOG_DEBUG,
+      "Acceptor::Init - now instance_id=%" PRIu64".\n", instance_id_);
   return true;
 }
 
 void Acceptor::OnPrepare(const PaxosMessage& msg) {
-  Log(LOG_DEBUG, 
+  Log(LOG_DEBUG,
       "Acceptor::OnPrepare - receive a new message, "
-      "which node_id=%" PRIu64", instance_id=%" PRIu64", proposal_id=%" PRIu64".",
+      "which node_id=%" PRIu64", instance_id=%" PRIu64", "
+      "proposal_id=%" PRIu64".\n",
       msg.node_id(), msg.instance_id(), msg.proposal_id());
   PaxosMessage* reply_msg = new PaxosMessage();
   reply_msg->set_type(PREPARE_REPLY);
@@ -47,7 +49,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     promised_ballot_ =  b;
     int ret = WriteToDB(instance_id_, 0);
     if (ret != 0) {
-      Log(LOG_ERROR, 
+      Log(LOG_ERROR,
           "Acceptor::OnPrepare - write instance_id_ = %" PRIu64" to db failed.",
           instance_id_);
     }
@@ -59,16 +61,17 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     instance_->HandlePaxosMessage(*reply_msg);
     delete reply_msg;
   } else {
-    Content* content = messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
-    config_->GetMessager()->SendMessage(msg.node_id(), content);
-    delete content;
+    std::shared_ptr<Content> content_ptr =
+        messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
+    messager_->SendMessage(msg.node_id(), content_ptr);
   }
 }
 
 void Acceptor::OnAccpet(const PaxosMessage& msg) {
-  Log(LOG_DEBUG, 
+  Log(LOG_DEBUG,
       "Acceptor::OnAccpet - receive a new message, "
-      "which node_id=%" PRIu64", instance_id=%" PRIu64", proposal_id=%" PRIu64".",
+      "which node_id=%" PRIu64", instance_id=%" PRIu64", "
+      "proposal_id=%" PRIu64".\n",
       msg.node_id(), msg.instance_id(), msg.proposal_id());
 
   PaxosMessage* reply_msg = new PaxosMessage();
@@ -84,7 +87,7 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
     accepted_value_ = msg.value();
     int ret = WriteToDB(instance_id_, 0);
     if (ret != 0) {
-      Log(LOG_ERROR, 
+      Log(LOG_ERROR,
           "Acceptor::OnAccpet - write instance_id=%" PRIu64" to db failed.",
           instance_id_);
     }
@@ -97,9 +100,9 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
     instance_->HandlePaxosMessage(*reply_msg);
     delete reply_msg;
   } else {
-    Content* content = messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
-    messager_->SendMessage(msg.node_id(), content);
-    delete content;
+    std::shared_ptr<Content> content_ptr =
+        messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
+    messager_->SendMessage(msg.node_id(), content_ptr);
   }
 }
 

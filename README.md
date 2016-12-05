@@ -18,7 +18,7 @@ libleveldb.a建立一个软链，SkyWalker通过lib这个目录来寻址静态�
 (2) Protobuf编译
 进入third_party/protobuf目录。 
 执行 ./autogen.sh   
-执行 ./configure --disable-shared --prefix=[当前目录绝对路径], 这一步CXXFLAGS和--prefix都必须设置对。 
+执行 ./configure --disable-shared --prefix=[当前目录绝对路径], 这一步--prefix必须设置对。 
 执行 make && make install
 编译完成后检查是否在当前目录成功生成bin,include,lib三个子目录。
 
