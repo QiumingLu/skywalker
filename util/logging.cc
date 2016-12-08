@@ -8,7 +8,8 @@
 
 namespace skywalker {
 
-void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
+void DefaultLogHandler(LogLevel level, const char* filename, int line,
+                       const char* format, va_list ap) {
   static const char* loglevel_names[] = {
      "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
 
@@ -32,7 +33,7 @@ void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
     struct tm t;
     localtime_r(&seconds, &t);
     p += snprintf(p, limit - p,
-                  "[%04d/%02d/%02d-%02d:%02d:%02d.%06d][%s] ",
+                  "[%04d/%02d/%02d-%02d:%02d:%02d.%06d][%s %s:%d] ",
                   t.tm_year + 1900,
                   t.tm_mon + 1,
                   t.tm_mday,
@@ -40,7 +41,9 @@ void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
                   t.tm_min,
                   t.tm_sec,
                   static_cast<int>(now_tv.tv_usec),
-                  loglevel_names[level]);
+                  loglevel_names[level],
+                  filename,
+                  line);
 
     if (p < limit) {
       va_list backup_ap;
@@ -63,7 +66,7 @@ void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
 
     assert(p <= limit);
 
-    if (level >= LOG_DEBUG) {
+    if (level >= LOGLEVEL_DEBUG) {
       fprintf(stderr, "%s", base);
     }
 
@@ -73,21 +76,23 @@ void DefaultLogHandler(LogLevel level, const char* format, va_list ap) {
     break;
   }
 
-  if (level == LOG_FATAL) {
+  if (level == LOGLEVEL_FATAL) {
     abort();
   }
 }
 
-void NullLogHandler(LogLevel /* level */,
+void NullLogHandler(LogLevel /* level */, 
+                    const char* /* filename */, int /* line */,
                     const char* /* format */, va_list /* ap */) {
 }
 
 static LogHandler* log_handler_ = &DefaultLogHandler;
 
-void Log(LogLevel level, const char* format, ...) {
+void Log(LogLevel level, const char* filename, int line,
+         const char* format, ...) {
   va_list ap;
   va_start(ap, format);
-  log_handler_(level, format, ap);
+  log_handler_(level, filename, line, format, ap);
   va_end(ap);
 }
 

@@ -35,7 +35,7 @@ void Thread::Join() {
 
 void Thread::PthreadCall(const char* label, int result) {
   if (result != 0) {
-    Log(LOG_FATAL, "%s: %s\n", label, strerror(result));
+    SWLog(FATAL, "%s: %s\n", label, strerror(result));
   }
 }
 

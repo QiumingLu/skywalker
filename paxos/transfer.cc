@@ -38,8 +38,8 @@ bool Transfer::NewValue(const Slice& value,
       *new_instance_id = instance_id_;
     }
   } else {
-    Log(LOG_INFO, 
-        "Transfer::NewValue - handle new value(%s) timeout.\n", value.data());
+    SWLog(INFO, 
+          "Transfer::NewValue - handle new value(%s) timeout.\n", value.data());
   }
   return success_;
 }

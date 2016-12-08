@@ -43,8 +43,8 @@ void Network::SendMessage(const std::vector<NodeInfo>& nodes,
         SendMessageInLoop(addr, s);
       }
     } else {
-      Log(LOG_ERROR,
-          "Network::SendMessage - Content.SerializeToString error.\n");
+      SWLog(ERROR,
+            "Network::SendMessage - Content.SerializeToString error.\n");
     }
   });
 }

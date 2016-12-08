@@ -34,9 +34,9 @@ bool StateMachineImpl::Init() {
   if (success == 0) {
     res = variables_.ParseFromString(s);
     if (!res) {
-      Log(LOG_ERROR,
-          "StateMachineImpl::Init - variables.ParseFromArray failed, s=%s.",
-          s.c_str());
+      SWLog(ERROR,
+            "StateMachineImpl::Init - variables.ParseFromArray failed, s=%s.",
+            s.c_str());
       return res;
     }
     membership.clear();

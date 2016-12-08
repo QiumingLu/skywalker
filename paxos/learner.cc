@@ -26,12 +26,12 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
       learned_value_ = acceptor_->GetAcceptedValue();
       has_learned_ = true;
       BroadcastMessageToFollower();
-      Log(LOG_DEBUG,
-          "Learner::OnNewChosenValue - learn a new chosen value, "
-          "which node_id=%" PRIu64", proposal_id=%" PRIu64", "
-          "and now learn's instance_id_=%" PRIu64", learned_value_=%s.\n",
-          msg.node_id(), msg.proposal_id(),
-          instance_id_, learned_value_.c_str());
+      SWLog(DEBUG,
+            "Learner::OnNewChosenValue - learn a new chosen value, "
+            "which node_id=%" PRIu64", proposal_id=%" PRIu64", "
+            "and now learn's instance_id_=%" PRIu64", learned_value_=%s.\n",
+            msg.node_id(), msg.proposal_id(),
+            instance_id_, learned_value_.c_str());
     }
   }
 }

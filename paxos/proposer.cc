@@ -54,12 +54,12 @@ void Proposer::Prepare(bool need_new_ballot) {
 
   counter_.StartNewRound();
 
-  Log(LOG_DEBUG,
-      "Proposer::Prepare - start a new prepare, now "
-      "node_id=%" PRIu64", instance_id=%" PRIu64", "
-      "proposal_id=%" PRIu64", value=%s.\n",
-      config_->GetNodeId(), instance_id_,
-      proposal_id_, value_.c_str());
+  SWLog(DEBUG,
+        "Proposer::Prepare - start a new prepare, now "
+        "node_id=%" PRIu64", instance_id=%" PRIu64", "
+        "proposal_id=%" PRIu64", value=%s.\n",
+        config_->GetNodeId(), instance_id_,
+        proposal_id_, value_.c_str());
 
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
@@ -68,15 +68,15 @@ void Proposer::Prepare(bool need_new_ballot) {
 }
 
 void Proposer::OnPrepareReply(const PaxosMessage& msg) {
-  Log(LOG_DEBUG,
-      "Proposer::OnPrepareReply - receive the prepare reply, "
-      "which node_id=%" PRIu64", proposal_id=%" PRIu64", "
-      "reject_for_promised_id=%" PRIu64", "
-      "pre_accepted_id=%" PRIu64", pre_accepted_node_id=%" PRIu64", "
-      "value=%s.\n",
-      msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id(),
-      msg.pre_accepted_id(), msg.pre_accepted_node_id(),
-      msg.value().c_str());
+  SWLog(DEBUG,
+        "Proposer::OnPrepareReply - receive the prepare reply, "
+        "which node_id=%" PRIu64", proposal_id=%" PRIu64", "
+        "reject_for_promised_id=%" PRIu64", "
+        "pre_accepted_id=%" PRIu64", pre_accepted_node_id=%" PRIu64", "
+        "value=%s.\n",
+        msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id(),
+        msg.pre_accepted_id(), msg.pre_accepted_node_id(),
+        msg.value().c_str());
 
   if (preparing_) {
     if (msg.proposal_id() == proposal_id_) {
@@ -98,25 +98,24 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
       }
 
       if (counter_.IsPassedOnThisRound()) {
-        Log(LOG_DEBUG, "Proposer::OnPrepareReply - Prepare pass.");
+        SWLog(DEBUG, "Proposer::OnPrepareReply - Prepare pass.");
         skip_prepare_ = true;
         Accept();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
-        Log(LOG_DEBUG,
-            "Proposer::OnPrepareReply - "
-            "Prepare not pass, reprepare 300ms later.");
+        SWLog(DEBUG,
+              "Proposer::OnPrepareReply - Prepare not pass, reprepare 300ms later.");
       }
     }
   }
 }
 
 void Proposer::Accept() {
-  Log(LOG_DEBUG,
-      "Proposer::Accept - start to accept, "
-      "now node_id=%" PRIu64", instance_id=%" PRIu64", "
-      "proposal_id=%" PRIu64", value=%s.\n",
-      config_->GetNodeId(), instance_id_, proposal_id_, value_.c_str());
+  SWLog(DEBUG,
+        "Proposer::Accept - start to accept, "
+        "now node_id=%" PRIu64", instance_id=%" PRIu64", "
+        "proposal_id=%" PRIu64", value=%s.\n",
+        config_->GetNodeId(), instance_id_, proposal_id_, value_.c_str());
 
   preparing_ = false;
   accepting_ = true;
@@ -137,12 +136,12 @@ void Proposer::Accept() {
 }
 
 void Proposer::OnAccpetReply(const PaxosMessage& msg) {
-  Log(LOG_DEBUG,
-      "Proposer::OnAccpetReply - receive the accept reply, "
-      "which node_id=%" PRIu64", "
-      "proposal_id=%" PRIu64", "
-      "reject_for_promised_id=%" PRIu64".\n",
-      msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id());
+  SWLog(DEBUG,
+        "Proposer::OnAccpetReply - receive the accept reply, "
+        "which node_id=%" PRIu64", "
+        "proposal_id=%" PRIu64", "
+        "reject_for_promised_id=%" PRIu64".\n",
+        msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id());
 
   if (accepting_) {
     if (msg.proposal_id() == proposal_id_) {
@@ -159,13 +158,12 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
       }
 
       if (counter_.IsPassedOnThisRound()) {
-        Log(LOG_DEBUG, "Proposer::OnAccpetReply - Accept pass.");
+        SWLog(DEBUG, "Proposer::OnAccpetReply - Accept pass.");
         accepting_ = false;
         NewChosenValue();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
-        Log(LOG_DEBUG,
-            "Proposer::OnAccpetReply - Accept not pass, reprepare 300ms later.");
+        SWLog(DEBUG, "Proposer::OnAccpetReply - Accept not pass, reprepare 300ms later.");
       }
     }
   }

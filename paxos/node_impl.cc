@@ -28,11 +28,11 @@ bool NodeImpl::StartWorking() {
       return ret;
     }
   }
-  Log(LOG_DEBUG, "Node::Start - Group Start Successfully!\n");
+  SWLog(DEBUG, "Node::Start - Group Start Successfully!\n");
 
   network_.StartServer(
       std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
-  Log(LOG_DEBUG, "Node::Start - Network StartServer Successfully!\n");
+  SWLog(DEBUG, "Node::Start - Network StartServer Successfully!\n");
 
   return ret;
 }
@@ -47,17 +47,17 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   Content* content = new Content();
   content->ParseFromArray(s.data(), static_cast<int>(s.size()));
 
-  Log(LOG_DEBUG, 
-      "NodeImpl::OnReceiveMessage - New Content, "
-      "which content_type=%d, group_id=%" PRIu32", version=%" PRIu32".\n",
-      content->type(), content->group_id(), content->version());
+  SWLog(DEBUG, 
+        "NodeImpl::OnReceiveMessage - New Content, "
+        "which content_type=%d, group_id=%" PRIu32", version=%" PRIu32".\n",
+        content->type(), content->group_id(), content->version());
 
   if (groups_.find(content->group_id()) != groups_.end()) {
     groups_[content->group_id()]->OnReceiveContent(content);
   } else {
-    Log(LOG_ERROR, 
-        "NodeImpl::OnReceiveMessage - group_id=%" PRIu32" is not right!\n",
-        content->group_id());
+    SWLog(ERROR, 
+          "NodeImpl::OnReceiveMessage - group_id=%" PRIu32" is not right!\n",
+          content->group_id());
   }
 }
 

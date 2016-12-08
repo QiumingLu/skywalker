@@ -21,7 +21,7 @@ Instance::~Instance() {
 bool Instance::Init() {
   bool ret = acceptor_.Init();
   if (!ret) {
-    Log(LOG_ERROR, "Instance::Init - Acceptor init fail.\n");
+    SWLog(ERROR, "Instance::Init - Acceptor init fail.\n");
     return ret;
   }
   uint64_t now_instance_id = acceptor_.GetInstanceId();
@@ -87,11 +87,11 @@ void Instance::ProposerHandleMessage(const PaxosMessage& msg) {
       proposer_.OnAccpetReply(msg);
     }
   } else {
-    Log(LOG_DEBUG,
-        "Instance::ProposerHandleMessage - "
-        "now proposer.instance_id=%" PRIu64", but msg.instance_id=%" PRIu64", "
-        "they are not same, so skip this msg\n",
-        proposer_.GetInstanceId(), msg.instance_id());
+    SWLog(DEBUG,
+          "Instance::ProposerHandleMessage - "
+          "now proposer.instance_id=%" PRIu64", but msg.instance_id=%" PRIu64", "
+          "they are not same, so skip this msg\n",
+          proposer_.GetInstanceId(), msg.instance_id());
   }
 }
 
@@ -129,7 +129,7 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
       learner_.OnComfirmAskForLearn(msg);
       break;
     default:
-      Log(LOG_ERROR, "Instance::LearnerHandleMessage - Invalid message type.\n");
+      SWLog(ERROR, "Instance::LearnerHandleMessage - Invalid message type.\n");
       break;
   }
   if (learner_.HasLearned()) {
@@ -156,14 +156,14 @@ void Instance::NextInstance() {
   acceptor_.NextInstance();
   proposer_.NextInstance();
   learner_.NextInstance();
-  Log(LOG_INFO,
-      "Instance::NextInstance - New instance is starting, "
-      "Now proposer.instance_id=%" PRIu64", "
-      "acceptor.instance_id=%" PRIu64", "
-      "learner.instance_id=%" PRIu64".\n",
-      proposer_.GetInstanceId(),
-      acceptor_.GetInstanceId(),
-      learner_.GetInstanceId());
+  SWLog(INFO,
+        "Instance::NextInstance - New instance is starting, "
+        "Now proposer.instance_id=%" PRIu64", "
+        "acceptor.instance_id=%" PRIu64", "
+        "learner.instance_id=%" PRIu64".\n",
+        proposer_.GetInstanceId(),
+        acceptor_.GetInstanceId(),
+        learner_.GetInstanceId());
 }
 
 bool Instance::MachineExecute(uint64_t instance_id, const Slice& value,
