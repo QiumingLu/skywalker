@@ -31,13 +31,13 @@ class Network {
                    const std::shared_ptr<Content>& content_ptr);
 
  private:
-  void SendMessageInLoop(const voyager::SockAddr& addr, const std::string& s);
+  void SendMessageInLoop(const NodeInfo& node, const std::string& s);
 
   voyager::SockAddr addr_;
   voyager::BGEventLoop bg_loop_;
   voyager::EventLoop* loop_;
   voyager::TcpServer* server_;
-  std::map<std::string, voyager::TcpConnectionPtr> connection_map_;
+  std::map<uint64_t, voyager::TcpConnectionPtr> connection_map_;
 
   // No copying allowed
   Network(const Network&);

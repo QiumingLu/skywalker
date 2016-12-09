@@ -98,13 +98,14 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
       }
 
       if (counter_.IsPassedOnThisRound()) {
-        SWLog(DEBUG, "Proposer::OnPrepareReply - Prepare pass.");
+        SWLog(DEBUG, "Proposer::OnPrepareReply - Prepare pass.\n");
         skip_prepare_ = true;
         Accept();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
         SWLog(DEBUG,
-              "Proposer::OnPrepareReply - Prepare not pass, reprepare 300ms later.");
+              "Proposer::OnPrepareReply - "
+              "Prepare not pass, reprepare 300ms later.\n");
       }
     }
   }
@@ -158,12 +159,14 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
       }
 
       if (counter_.IsPassedOnThisRound()) {
-        SWLog(DEBUG, "Proposer::OnAccpetReply - Accept pass.");
+        SWLog(DEBUG, "Proposer::OnAccpetReply - Accept pass.\n");
         accepting_ = false;
         NewChosenValue();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
-        SWLog(DEBUG, "Proposer::OnAccpetReply - Accept not pass, reprepare 300ms later.");
+        SWLog(DEBUG,
+              "Proposer::OnAccpetReply - "
+              "Accept not pass, reprepare 300ms later.\n");
       }
     }
   }

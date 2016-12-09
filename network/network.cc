@@ -39,8 +39,7 @@ void Network::SendMessage(const std::vector<NodeInfo>& nodes,
     bool res = content_ptr->SerializeToString(&s);
     if (res) {
       for (auto n : nodes) {
-        voyager::SockAddr addr(n.GetIP(), n.GetPort());
-        SendMessageInLoop(addr, s);
+        SendMessageInLoop(n, s);
       }
     } else {
       SWLog(ERROR,
@@ -49,17 +48,18 @@ void Network::SendMessage(const std::vector<NodeInfo>& nodes,
   });
 }
 
-void Network::SendMessageInLoop(const voyager::SockAddr& addr,
+void Network::SendMessageInLoop(const NodeInfo& node,
                                 const std::string& s) {
-  std::string ipbuf(addr.Ipbuf());
-  auto it = connection_map_.find(ipbuf);
+  uint64_t node_id = node.GetNodeId();
+  auto it = connection_map_.find(node_id);
   if (it != connection_map_.end()) {
     it->second->SendMessage(s);
   } else {
+    voyager::SockAddr addr(node.GetIP(), node.GetPort());
     voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
     client->SetConnectionCallback(
-        [this, ipbuf, s](const voyager::TcpConnectionPtr& p) {
-      connection_map_[ipbuf] = p;
+        [this, node_id, s](const voyager::TcpConnectionPtr& p) {
+      connection_map_[node_id] = p;
       p->SendMessage(s);
     });
 
@@ -68,8 +68,8 @@ void Network::SendMessageInLoop(const voyager::SockAddr& addr,
     });
 
     client->SetCloseCallback(
-        [this, ipbuf, client](const voyager::TcpConnectionPtr& p) {
-      connection_map_.erase(ipbuf);
+        [this, node_id, client](const voyager::TcpConnectionPtr& p) {
+      connection_map_.erase(node_id);
       delete client;
     });
 

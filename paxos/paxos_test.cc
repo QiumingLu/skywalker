@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  // voyager::SetLogHandler(nullptr);
+  voyager::SetLogHandler(nullptr);
 
   skywalker::Options options;
   options.log_storage_path = std::string(path);
