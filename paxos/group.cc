@@ -1,5 +1,4 @@
 #include "paxos/group.h"
-#include "util/logger.h"
 
 namespace skywalker {
 
