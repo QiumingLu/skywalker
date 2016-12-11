@@ -27,9 +27,8 @@ class NodeImpl : public Node {
   void OnReceiveMessage(const Slice& s);
 
   const Options options_;
-
+  uint64_t node_id_;
   Network network_;
-
   std::map<uint32_t, Group*> groups_;
 
   // No copying allowed

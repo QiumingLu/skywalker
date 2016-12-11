@@ -1,21 +1,34 @@
 #ifndef SKYWALKER_INCLUDE_OPTIONS_H_
 #define SKYWALKER_INCLUDE_OPTIONS_H_
 
+#include <stdint.h>
+
 #include <string>
 #include <vector>
 
-#include "skywalker/nodeinfo.h"
-
 namespace skywalker {
+
+struct IpPort {
+  std::string ip;
+  uint16_t port;
+
+  IpPort()
+      : ip(), port(-1) {
+  }
+
+  IpPort(const std::string& s, uint16_t n)
+      : ip(s), port(n) {
+  }
+};
 
 struct Options {
   std::string log_storage_path;
   bool log_sync;
   uint32_t sync_interval;
   uint32_t group_size;
-  NodeInfo node_info;
-  std::vector<NodeInfo> all_other_nodes;
-  std::vector<NodeInfo> follow_nodes;
+  IpPort ipport;
+  std::vector<IpPort> membership;
+  std::vector<IpPort> followers;
 };
 
 }  // namespace skywalker

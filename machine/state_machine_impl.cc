@@ -29,7 +29,7 @@ bool StateMachineImpl::Init() {
   int success = config_->GetDB()->GetSystemVariables(&s);
   if (success != 0 && success != 1) { return false; }
 
-  std::set<NodeInfo>& membership = config_->MemberShip();
+  std::set<uint64_t>& membership = config_->MemberShip();
 
   if (success == 0) {
     res = variables_.ParseFromString(s);
@@ -41,11 +41,11 @@ bool StateMachineImpl::Init() {
     }
     membership.clear();
     for (int i = 0; i < variables_.membership_size(); ++i) {
-      membership.insert(NodeInfo(variables_.membership(i)));
+      membership.insert(variables_.membership(i));
     }
   } else {
     for (auto m : membership) {
-      variables_.add_membership(m.GetNodeId());
+      variables_.add_membership(m);
     }
   }
   return res;

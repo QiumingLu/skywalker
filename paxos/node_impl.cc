@@ -1,17 +1,18 @@
 #include "paxos/node_impl.h"
+#include "paxos/node_util.h"
 #include "paxos/paxos.pb.h"
-#include "skywalker/nodeinfo.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {
 
 NodeImpl::NodeImpl(const Options& options)
     : options_(options),
-      network_(options.node_info) {
+      node_id_(MakeNodeId(options.ipport)) {
 }
 
 NodeImpl::~NodeImpl() {
-  for (std::map<uint32_t, Group*>::iterator it = groups_.begin(); 
+  network_.StopServer();
+  for (std::map<uint32_t, Group*>::iterator it = groups_.begin();
        it != groups_.end(); ++it) {
     delete it->second;
   }
@@ -20,7 +21,7 @@ NodeImpl::~NodeImpl() {
 bool NodeImpl::StartWorking() {
   bool ret = true;
   for (uint32_t i = 0; i < options_.group_size; ++i) {
-    Group* group = new Group(i, options_, &network_);
+    Group* group = new Group(i, node_id_, options_, &network_);
     ret = group->Start();
     if (ret) {
       groups_[i] = group;
@@ -31,6 +32,7 @@ bool NodeImpl::StartWorking() {
   SWLog(DEBUG, "Node::Start - Group Start Successfully!\n");
 
   network_.StartServer(
+      options_.ipport,
       std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
   SWLog(DEBUG, "Node::Start - Network StartServer Successfully!\n");
 
@@ -47,7 +49,7 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   Content* content = new Content();
   content->ParseFromArray(s.data(), static_cast<int>(s.size()));
 
-  SWLog(DEBUG, 
+  SWLog(DEBUG,
         "NodeImpl::OnReceiveMessage - New Content, "
         "which content_type=%d, group_id=%" PRIu32", version=%" PRIu32".\n",
         content->type(), content->group_id(), content->version());
@@ -55,7 +57,7 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   if (groups_.find(content->group_id()) != groups_.end()) {
     groups_[content->group_id()]->OnReceiveContent(content);
   } else {
-    SWLog(ERROR, 
+    SWLog(ERROR,
           "NodeImpl::OnReceiveMessage - group_id=%" PRIu32" is not right!\n",
           content->group_id());
   }

@@ -1,11 +1,11 @@
 #include "network/network.h"
 #include "skywalker/logging.h"
+#include "paxos/node_util.h"
 
 namespace skywalker {
 
-Network::Network(const NodeInfo& my)
-    : addr_(my.GetIP(), my.GetPort()),
-      bg_loop_(),
+Network::Network()
+    : bg_loop_(),
       loop_(nullptr),
       server_(nullptr) {
 }
@@ -14,9 +14,12 @@ Network::~Network() {
   delete server_;
 }
 
-void Network::StartServer(const std::function<void (const Slice&) >& cb) {
+void Network::StartServer(const IpPort& i,
+                          const std::function<void (const Slice&) >& cb) {
   loop_ = bg_loop_.Loop();
-  server_ = new voyager::TcpServer(loop_, addr_);
+  voyager::SockAddr addr(i.ip, i.port);
+  server_ = new voyager::TcpServer(loop_, addr);
+
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
     Slice s(buf->Peek(), buf->ReadableSize());
@@ -25,6 +28,7 @@ void Network::StartServer(const std::function<void (const Slice&) >& cb) {
       buf->RetrieveAll();
     }
   });
+
   server_->Start();
 }
 
@@ -32,7 +36,7 @@ void Network::StopServer() {
   loop_->Exit();
 }
 
-void Network::SendMessage(const std::vector<NodeInfo>& nodes,
+void Network::SendMessage(const std::set<uint64_t>& nodes,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->RunInLoop([this, nodes, content_ptr] () {
     std::string s;
@@ -48,15 +52,16 @@ void Network::SendMessage(const std::vector<NodeInfo>& nodes,
   });
 }
 
-void Network::SendMessageInLoop(const NodeInfo& node,
+void Network::SendMessageInLoop(uint64_t node_id,
                                 const std::string& s) {
-  uint64_t node_id = node.GetNodeId();
   auto it = connection_map_.find(node_id);
   if (it != connection_map_.end()) {
     it->second->SendMessage(s);
   } else {
-    voyager::SockAddr addr(node.GetIP(), node.GetPort());
+    IpPort i(ParseNodeId(node_id));
+    voyager::SockAddr addr(i.ip, i.port);
     voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
+
     client->SetConnectionCallback(
         [this, node_id, s](const voyager::TcpConnectionPtr& p) {
       connection_map_[node_id] = p;

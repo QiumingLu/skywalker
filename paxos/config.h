@@ -4,19 +4,18 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <set>
-#include <vector>
 
 #include "network/messager.h"
 #include "storage/db.h"
 #include "machine/state_machine_impl.h"
-#include "skywalker/nodeinfo.h"
 #include "skywalker/options.h"
 
 namespace skywalker {
 
 class Config {
  public:
-  Config(uint32_t group_id, const Options& options, Network* network);
+  Config(uint32_t group_id, uint64_t node_id,
+         const Options& options, Network* network);
   ~Config();
 
   bool Init();
@@ -25,10 +24,10 @@ class Config {
   Messager* GetMessager() const { return messager_; }
   StateMachineImpl* GetStateMachine() const { return state_machine_; }
 
-  uint32_t GetGroupId() const { return group_id_; }
-
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
+
+  uint32_t GetGroupId() const { return group_id_; }
 
   uint64_t GetNodeId() const { return node_id_; }
   size_t GetNodeSize() const { return membership_.size(); }
@@ -37,10 +36,10 @@ class Config {
     return (membership_.size() / 2 + 1);
   }
 
-  std::set<NodeInfo>& MemberShip() { return membership_; }
-  const std::set<NodeInfo>& MemberShip() const { return membership_; }
+  std::set<uint64_t>& MemberShip() { return membership_; }
+  const std::set<uint64_t>& MemberShip() const { return membership_; }
 
-  const std::vector<NodeInfo>& FollowNodes() const { return follow_nodes_; }
+  const std::set<uint64_t>& Followers() const { return followers_; }
 
   bool IsValidNodeId(uint64_t node_id) const;
 
@@ -52,8 +51,8 @@ class Config {
   bool log_sync_;
   uint32_t sync_interval_;
 
-  std::set<NodeInfo> membership_;
-  std::vector<NodeInfo> follow_nodes_;
+  std::set<uint64_t> membership_;
+  std::set<uint64_t> followers_;
 
   DB* db_;
   Messager* messager_;

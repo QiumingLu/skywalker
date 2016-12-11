@@ -2,8 +2,9 @@
 
 namespace skywalker {
 
-Group::Group(uint32_t group_id, const Options& options, Network* network)
-    : config_(group_id, options, network),
+Group::Group(uint32_t group_id, uint64_t node_id,
+             const Options& options, Network* network)
+    : config_(group_id, node_id, options, network),
       instance_(&config_) {
 }
 

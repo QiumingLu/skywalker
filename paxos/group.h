@@ -14,7 +14,8 @@ class Network;
 
 class Group {
  public:
-  Group(uint32_t group_id, const Options& options, Network* network);
+  Group(uint32_t group_id, uint64_t node_id,
+        const Options& options, Network* network);
 
   bool Start();
 

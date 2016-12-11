@@ -1,28 +1,34 @@
 #include "paxos/config.h"
+#include "paxos/node_util.h"
 
 namespace skywalker {
 
-Config::Config(uint32_t group_id, const Options& options, Network* network)
+Config::Config(uint32_t group_id, uint64_t node_id,
+               const Options& options, Network* network)
     : group_id_(group_id),
-      node_id_(options.node_info.GetNodeId()),
+      node_id_(node_id),
+      log_storage_path_(options.log_storage_path),
       log_sync_(options.log_sync),
       sync_interval_(options.sync_interval),
-      follow_nodes_(options.follow_nodes),
       db_(new DB()),
       messager_(new Messager(this, network)),
       state_machine_(new StateMachineImpl(this)) {
 
-  std::string temp(options.log_storage_path);
-  if (temp[temp.size() - 1] != '/') {
-    temp += '/';
+  char name[8];
+  if (log_storage_path_[log_storage_path_.size() - 1] != '/') {
+    snprintf(name, sizeof(name), "/g%d", group_id);
+  } else {
+    snprintf(name, sizeof(name), "g%d", group_id);
   }
-  char name[512];
-  snprintf(name, sizeof(name), "%sg%d", temp.c_str(), group_id);
-  log_storage_path_ = std::string(name);
 
-  membership_.insert(NodeInfo(node_id_));
-  for (auto node : options.all_other_nodes) {
-    membership_.insert(node);
+  log_storage_path_ += name;
+
+  for (auto i : options.membership) {
+    membership_.insert(MakeNodeId(i));
+  }
+
+  for (auto i : options.followers) {
+    followers_.insert(MakeNodeId(i));
   }
 }
 
