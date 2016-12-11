@@ -16,14 +16,20 @@ RunLoop::RunLoop(Instance* instance)
       instance_(instance),
       thread_(),
       mutex_(),
-      cond_(&mutex_),
-      value_() {
+      cond_(&mutex_) {
 }
 
 RunLoop::~RunLoop() {
   if (exit_ != true) {
     exit_ = true;
     thread_.Join();
+  }
+
+  for (auto v : values_) {
+    delete v;
+  }
+  for (auto c : contents_) {
+    delete c;
   }
 }
 
@@ -38,7 +44,7 @@ void RunLoop::Exit() {
 
 void RunLoop::NewValue(const Slice& value) {
   MutexLock lock(&mutex_);
-  value_ = value;
+  values_.push_back(new std::string(value.data(), value.size()));
   cond_.Signal();
 }
 
@@ -52,14 +58,20 @@ void RunLoop::ThreadFunc() {
   exit_ = false;
   while(!exit_) {
     Content* content = nullptr;
+    std::string* value = nullptr;
     {
       MutexLock lock(&mutex_);
-      while (contents_.empty() && value_.empty() ) {
+      while (contents_.empty() && values_.empty()) {
         cond_.Wait();
       }
       if (!contents_.empty()) {
         content = contents_.front();
         contents_.pop_front();
+      }
+
+      if (!values_.empty()) {
+        value = values_.front();
+        values_.pop_front();
       }
     }
 
@@ -68,9 +80,9 @@ void RunLoop::ThreadFunc() {
       delete content;
     }
 
-    if (!value_.empty()) {
-      instance_->HandleNewValue(value_);
-      value_.clear();
+    if (value != nullptr) {
+      instance_->HandleNewValue(*value);
+      delete value;
     }
   }
 }

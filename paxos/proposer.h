@@ -6,7 +6,6 @@
 #include "paxos/ballot_number.h"
 #include "paxos/counter.h"
 #include "paxos/paxos.pb.h"
-#include "skywalker/slice.h"
 
 namespace skywalker {
 
@@ -25,7 +24,7 @@ class Proposer {
 
   void SetNoSkipPrepare() { skip_prepare_ = false; }
 
-  void NewValue(const Slice& value);
+  void NewValue(const std::string& value);
 
   void OnPrepareReply(const PaxosMessage& msg);
   void OnAccpetReply(const PaxosMessage& msg);

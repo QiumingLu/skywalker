@@ -28,7 +28,7 @@ class Instance {
 
   void OnReceiveContent(Content* content);
 
-  void HandleNewValue(const Slice& value);
+  void HandleNewValue(const std::string& value);
 
   void HandleContent(const Content& content);
 

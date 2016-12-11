@@ -19,30 +19,6 @@ class BallotNumber {
   void SetNodeId(uint64_t id) { node_id_ = id; }
   uint64_t GetNodeId() const { return node_id_; }
 
-  bool operator>=(const BallotNumber& other) const {
-    if (proposal_id_ == other.proposal_id_) {
-      return node_id_ >= other.node_id_;
-    } else {
-      return proposal_id_ > other.proposal_id_;
-    }
-  }
-
-  bool operator!=(const BallotNumber& other) const {
-    return (proposal_id_ != other.proposal_id_) || (node_id_ != other.node_id_);
-  }
-
-  bool operator==(const BallotNumber& other) const {
-    return (proposal_id_ == other.proposal_id_) && (node_id_ == other.node_id_);
-  }
-
-  bool operator>(const BallotNumber& other) const {
-    if (proposal_id_ == other.proposal_id_) {
-      return node_id_ > other.node_id_;
-    } else {
-      return proposal_id_ > other.proposal_id_;
-    }
-  }
-
   void Reset() {
     proposal_id_ = 0;
     node_id_ = 0;
@@ -52,6 +28,40 @@ class BallotNumber {
   uint64_t proposal_id_;
   uint64_t node_id_;
 };
+
+inline bool operator==(const BallotNumber& x, const BallotNumber& y) {
+  return (x.GetProposalId() == y.GetProposalId()) &&
+         (x.GetNodeId() == y.GetNodeId());
+}
+
+inline bool operator!=(const BallotNumber& x, const BallotNumber& y) {
+  return !(x == y);
+}
+
+
+inline bool operator<(const BallotNumber& x, const BallotNumber& y) {
+  if (x.GetProposalId() == y.GetProposalId()) {
+    return x.GetNodeId() < y.GetNodeId();
+  } else {
+    return x.GetProposalId() < y.GetProposalId();
+  }
+}
+
+inline bool operator>(const BallotNumber& x, const BallotNumber& y) {
+  if (x.GetProposalId() == y.GetProposalId()) {
+    return x.GetNodeId() > y.GetNodeId();
+  } else {
+    return x.GetProposalId() > y.GetProposalId();
+  }
+}
+
+inline bool operator<=(const BallotNumber& x, const BallotNumber& y) {
+  return ((x == y) || (x < y));
+}
+
+inline bool operator>=(const BallotNumber& x, const BallotNumber& y) {
+  return ((x == y) || (x > y));
+}
 
 }  // namespace skywalker
 

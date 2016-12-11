@@ -46,7 +46,7 @@ void Instance::OnReceiveContent(Content* content) {
   loop_.NewContent(content);
 }
 
-void Instance::HandleNewValue(const Slice& value) {
+void Instance::HandleNewValue(const std::string& value) {
   transfer_.SetNowInstanceId(proposer_.GetInstanceId());
   proposer_.NewValue(value);
 }
@@ -60,6 +60,21 @@ void Instance::HandleContent(const Content& content) {
 }
 
 void Instance::HandlePaxosMessage(const PaxosMessage& msg) {
+  SWLog(DEBUG,
+        "Instance::HandlePaxosMessage - "
+        "msg.type=%d, msg.node_id=%" PRIu64", msg.instance_id=%" PRIu64", "
+        "msg.proposal_id=%" PRIu64", msg.proposal_node_id=%" PRIu64", "
+        "msg.value=%s, "
+        "msg.pre_accepted_id=%" PRIu64", msg.pre_accepted_node_id=%" PRIu64", "
+        "msg.reject_for_promised_id=%" PRIu64", "
+        "msg.now_instance_id=%" PRIu64".\n",
+        msg.type(), msg.node_id(), msg.instance_id(),
+        msg.proposal_id(), msg.proposal_node_id(),
+        msg.value().c_str(),
+        msg.pre_accepted_id(), msg.pre_accepted_node_id(),
+        msg.reject_for_promised_id(),
+        msg.now_instance_id());
+
   switch(msg.type()) {
     case PROPOSER_SEND_NEW_VALUE:
     case PREPARE_REPLY:

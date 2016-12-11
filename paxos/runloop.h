@@ -33,7 +33,7 @@ class RunLoop {
 
   Mutex mutex_;
   Condition cond_;
-  Slice value_;
+  std::deque<std::string*> values_;
   std::deque<Content*> contents_;
 
   // No copying allowed

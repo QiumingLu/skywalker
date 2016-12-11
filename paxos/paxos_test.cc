@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  voyager::SetLogHandler(nullptr);
+  //voyager::SetLogHandler(nullptr);
 
   skywalker::Options options;
   options.log_storage_path = std::string(path);
@@ -48,10 +48,10 @@ int main(int argc, char** argv) {
   skywalker::Node* node = nullptr;
   bool res = skywalker::Node::Start(options, &node);
 
-  std::string value;
   while (res) {
     printf("please enter value:\n");
-    getline(std::cin, value);
+    std::string value;
+    std::cin >> value;
     uint64_t instance_id(0);
     bool success = node->Propose(0, value, &instance_id);
     printf("bool success:%d, it's instance_id is %" PRIu64"\n",
