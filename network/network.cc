@@ -78,11 +78,6 @@ void Network::SendMessageInLoop(uint64_t node_id,
       delete client;
     });
 
-    client->SetWriteCompleteCallback(
-        [node_id, s](const voyager::TcpConnectionPtr& p) {
-      SWLog(DEBUG, "send message to node_id=%" PRIu64" successfully!\n", node_id);
-    });
-
     client->Connect(false);
   }
 }
