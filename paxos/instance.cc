@@ -1,4 +1,5 @@
 #include "paxos/instance.h"
+#include "paxos/config.h"
 #include "util/mutexlock.h"
 #include "skywalker/logging.h"
 
