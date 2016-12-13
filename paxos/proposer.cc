@@ -105,7 +105,10 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
                  counter_.IsReceiveAllOnThisRound()) {
         SWLog(DEBUG,
               "Proposer::OnPrepareReply - "
-              "Prepare not pass, reprepare 300ms later.\n");
+              "Prepare not pass, reprepare 30ms later.\n");
+        config_->GetLoop()->RunAfter(30, [this]() {
+          Prepare(true);
+        });
       }
     }
   }
@@ -166,7 +169,10 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
                  counter_.IsReceiveAllOnThisRound()) {
         SWLog(DEBUG,
               "Proposer::OnAccpetReply - "
-              "Accept not pass, reprepare 300ms later.\n");
+              "Accept not pass, reprepare 30ms later.\n");
+        config_->GetLoop()->RunAfter(30, [this]() {
+          Prepare(true);
+        });
       }
     }
   }

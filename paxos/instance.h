@@ -4,7 +4,6 @@
 #include "paxos/acceptor.h"
 #include "paxos/learner.h"
 #include "paxos/proposer.h"
-#include "paxos/runloop.h"
 #include "paxos/transfer.h"
 #include "paxos/paxos.pb.h"
 #include "skywalker/slice.h"
@@ -47,12 +46,12 @@ class Instance {
 
   Config* config_;
 
+  Mutex mutex_;
+  skywalker::Transfer transfer_;
+
   Acceptor acceptor_;
   Learner learner_;
   Proposer proposer_;
-  RunLoop loop_;
-  Mutex mutex_;
-  Transfer transfer_;
 
   // No copying allowed
   Instance(const Instance&);

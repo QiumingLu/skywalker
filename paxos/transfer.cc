@@ -1,12 +1,13 @@
 #include "paxos/transfer.h"
+#include "paxos/config.h"
 #include "util/mutexlock.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {
 
-Transfer::Transfer(Config* config, RunLoop* loop)
+Transfer::Transfer(Config* config)
     : config_(config),
-      loop_(loop),
+      loop_(config_->GetLoop()),
       mutex_(),
       cond_(&mutex_),
       transfer_end_(false),

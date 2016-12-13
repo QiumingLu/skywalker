@@ -9,6 +9,8 @@
 #include "storage/db.h"
 #include "machine/state_machine_impl.h"
 #include "skywalker/options.h"
+#include "paxos/runloop.h"
+#include "paxos/instance.h"
 
 namespace skywalker {
 
@@ -18,11 +20,12 @@ class Config {
          const Options& options, Network* network);
   ~Config();
 
-  bool Init();
+  bool InitAll(Instance* instance);
 
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }
   StateMachineImpl* GetStateMachine() const { return state_machine_; }
+  RunLoop* GetLoop() const { return loop_; }
 
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
@@ -57,6 +60,7 @@ class Config {
   DB* db_;
   Messager* messager_;
   StateMachineImpl* state_machine_;
+  RunLoop* loop_;
 
   // No copying allowed
   Config(const Config&);

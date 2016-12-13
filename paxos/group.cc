@@ -9,11 +9,7 @@ Group::Group(uint32_t group_id, uint64_t node_id,
 }
 
 bool Group::Start() {
-  bool ret = config_.Init();
-  if (ret) {
-    ret = instance_.Init();
-  }
-  return ret;
+  return config_.InitAll(&instance_);
 }
 
 bool Group::OnReceiveValue(const Slice& value,

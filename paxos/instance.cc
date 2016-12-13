@@ -6,16 +6,14 @@ namespace skywalker {
 
 Instance::Instance(Config* config)
     : config_(config),
+      mutex_(),
+      transfer_(config),
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
-      proposer_(config, this),
-      loop_(this),
-      mutex_(),
-      transfer_(config, &loop_) {
+      proposer_(config, this) {
 }
 
 Instance::~Instance() {
-  loop_.Exit();
 }
 
 bool Instance::Init() {
@@ -30,8 +28,6 @@ bool Instance::Init() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
-  loop_.Loop();
-
   return ret;
 }
 
@@ -43,7 +39,7 @@ bool Instance::OnReceiveValue(const Slice& value,
 }
 
 void Instance::OnReceiveContent(Content* content) {
-  loop_.NewContent(content);
+  config_->GetLoop()->NewContent(content);
 }
 
 void Instance::HandleNewValue(const std::string& value) {

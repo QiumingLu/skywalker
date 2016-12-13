@@ -1,6 +1,8 @@
 #ifndef SKYWALKER_UTIL_TIMERLIST_H_
 #define SKYWALKER_UTIL_TIMERLIST_H_
 
+#include <stdint.h>
+#include <functional>
 #include <set>
 #include <vector>
 #include <utility>

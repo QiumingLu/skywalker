@@ -145,6 +145,13 @@ void Learner::SetHightestInstanceId(uint64_t instance_id,
   if (instance_id > hightest_instance_id_) {
     hightest_instance_id_ = instance_id;
     hightest_instance_id_from_node_id_ = node_id;
+
+    if (hightest_instance_id_ > instance_id_) {
+      config_->GetLoop()->RunAfter(1000, [this]() {
+         AskForLearn();
+         is_learning_ = false;
+      });
+    }
   }
 }
 

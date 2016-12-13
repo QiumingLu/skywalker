@@ -1,7 +1,6 @@
 #ifndef SKYWALKER_PAXOS_TRANSFER_H_
 #define SKYWALKER_PAXOS_TRANSFER_H_
 
-#include "paxos/config.h"
 #include "paxos/runloop.h"
 #include "skywalker/slice.h"
 #include "skywalker/state_machine.h"
@@ -9,9 +8,11 @@
 
 namespace skywalker {
 
+class Config;
+
 class Transfer {
  public:
-  Transfer(Config* config, RunLoop* loop);
+  Transfer(Config* config);
 
   bool NewValue(const Slice& value,
                 MachineContext* context,
