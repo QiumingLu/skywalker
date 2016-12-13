@@ -38,13 +38,17 @@ class Learner {
                         const BallotNumber& learned_ballot,
                         const std::string& learned_value);
 
-  void BroadcastMessageToFollower();
-
   void SetHightestInstanceId(uint64_t instance_id, uint64_t node_id);
 
+  int WriteToDB(uint64_t instance_id, const BallotNumber& ballot,
+                const std::string& value, uint32_t last_checksum);
+  void FinishLearnValue(const std::string& value,
+                        const BallotNumber& ballot);
+  void BroadcastMessageToFollower(const BallotNumber& ballot);
+
   Config* config_;
-  Instance* instance_;
   Messager* messager_;
+  Instance* instance_;
   Acceptor* acceptor_;
 
   uint64_t instance_id_;

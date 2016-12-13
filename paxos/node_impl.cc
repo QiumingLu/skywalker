@@ -11,7 +11,6 @@ NodeImpl::NodeImpl(const Options& options)
 }
 
 NodeImpl::~NodeImpl() {
-  network_.StopServer();
   for (std::map<uint32_t, Group*>::iterator it = groups_.begin();
        it != groups_.end(); ++it) {
     delete it->second;

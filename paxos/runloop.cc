@@ -1,5 +1,7 @@
 #include "paxos/runloop.h"
 
+#include <algorithm>
+
 #include "paxos/instance.h"
 #include "util/mutexlock.h"
 
@@ -59,10 +61,13 @@ void RunLoop::ThreadFunc() {
   while(!exit_) {
     Content* content = nullptr;
     std::string* value = nullptr;
+    uint64_t t = timers_.TimeoutMicros() / 1000;
+    uint64_t timeout = std::min(t, static_cast<uint64_t>(1000));
+
     {
       MutexLock lock(&mutex_);
       while (contents_.empty() && values_.empty()) {
-        cond_.Wait();
+        cond_.Wait(timeout);
       }
       if (!contents_.empty()) {
         content = contents_.front();
@@ -84,7 +89,19 @@ void RunLoop::ThreadFunc() {
       instance_->HandleNewValue(*value);
       delete value;
     }
+
+    timers_.RunTimerProcs();
   }
+}
+
+TimerList::Timer* RunLoop::RunAt(uint64_t milliseconds,
+                                 const std::function<void ()>& cb) {
+  TimerList::Timer* t = timers_.RunAt(milliseconds*1000, cb);
+  return t;
+}
+
+void RunLoop::Remove(TimerList::Timer* t) {
+  timers_.Remove(t);
 }
 
 }  // namespace skywalker

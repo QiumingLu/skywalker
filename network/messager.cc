@@ -23,19 +23,23 @@ std::shared_ptr<Content> Messager::PackMessage(ContentType type,
 
 void Messager::SendMessage(uint64_t node_id,
                            const std::shared_ptr<Content>& content_ptr) {
-  std::set<uint64_t> nodes;
-  nodes.insert(node_id);
-  network_->SendMessage(nodes, content_ptr);
+  assert(node_id != 0);
+  network_->SendMessage(node_id, content_ptr);
 }
 
-void Messager::BroadcastMessage(const std::shared_ptr<Content>& content_ptr) {
-  network_->SendMessage(config_->MemberShip(), content_ptr);
+void Messager::BroadcastMessage(
+    const std::shared_ptr<Content>& content_ptr) {
+  if (config_->MemberShip().empty() == false) {
+    network_->SendMessage(config_->MemberShip(), content_ptr);
+  }
 }
 
 
 void Messager::BroadcastMessageToFollower(
     const std::shared_ptr<Content>& content_ptr) {
-  network_->SendMessage(config_->Followers(), content_ptr);
+  if (config_->Followers().empty() == false) {
+    network_->SendMessage(config_->Followers(), content_ptr);
+  }
 }
 
 }  // namespace skywalker

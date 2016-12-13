@@ -25,7 +25,9 @@ class Network {
 
   void StartServer(const IpPort& i,
                    const std::function<void (const Slice& s)>& cb);
-  void StopServer();
+
+  void SendMessage(uint64_t node_id,
+                   const std::shared_ptr<Content>& content_ptr);
 
   void SendMessage(const std::set<uint64_t>& nodes,
                    const std::shared_ptr<Content>& content_ptr);

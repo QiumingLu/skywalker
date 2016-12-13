@@ -178,6 +178,9 @@ void Proposer::NewChosenValue() {
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   msg->set_proposal_id(proposal_id_);
+  if (value_.size() <= 128) {
+    msg->set_value(value_);
+  }
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessage(content_ptr);

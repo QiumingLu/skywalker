@@ -13,7 +13,7 @@ struct IpPort {
   uint16_t port;
 
   IpPort()
-      : ip(), port(-1) {
+      : ip(), port(0) {
   }
 
   IpPort(const std::string& s, uint16_t n)

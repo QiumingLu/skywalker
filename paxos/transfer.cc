@@ -30,7 +30,7 @@ bool Transfer::NewValue(const Slice& value,
 
   MutexLock lock(&mutex_);
   while (!transfer_end_ && wait) {
-    res = cond_.Wait(5000);
+    res = cond_.Wait(1000);
     wait = false;
   }
   if (res) {
@@ -38,8 +38,9 @@ bool Transfer::NewValue(const Slice& value,
       *new_instance_id = instance_id_;
     }
   } else {
-    SWLog(INFO, 
-          "Transfer::NewValue - handle new value(%s) timeout.\n", value.data());
+    SWLog(INFO,
+          "Transfer::NewValue - handle new value(%s) timeout.\n",
+          value.data());
   }
   return success_;
 }

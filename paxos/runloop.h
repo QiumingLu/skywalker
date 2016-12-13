@@ -7,6 +7,7 @@
 #include "skywalker/slice.h"
 #include "util/thread.h"
 #include "util/mutex.h"
+#include "util/timerlist.h"
 
 namespace skywalker {
 
@@ -23,6 +24,10 @@ class RunLoop {
   void NewValue(const Slice& value);
   void NewContent(Content* content);
 
+  TimerList::Timer* RunAt(uint64_t milliseconds,
+                          const std::function<void ()>& cb);
+  void Remove(TimerList::Timer* t);
+
  private:
   static void* StartRunLoop(void* data);
   void ThreadFunc();
@@ -35,6 +40,8 @@ class RunLoop {
   Condition cond_;
   std::deque<std::string*> values_;
   std::deque<Content*> contents_;
+
+  TimerList timers_;
 
   // No copying allowed
   RunLoop(const RunLoop&);

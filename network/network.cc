@@ -8,15 +8,16 @@ Network::Network()
     : bg_loop_(),
       loop_(nullptr),
       server_(nullptr) {
+  loop_ = bg_loop_.Loop();
 }
 
 Network::~Network() {
+  loop_->Exit();
   delete server_;
 }
 
 void Network::StartServer(const IpPort& i,
                           const std::function<void (const Slice&) >& cb) {
-  loop_ = bg_loop_.Loop();
   voyager::SockAddr addr(i.ip, i.port);
   server_ = new voyager::TcpServer(loop_, addr);
 
@@ -32,8 +33,18 @@ void Network::StartServer(const IpPort& i,
   server_->Start();
 }
 
-void Network::StopServer() {
-  loop_->Exit();
+void Network::SendMessage(uint64_t node_id,
+                          const std::shared_ptr<Content>& content_ptr) {
+  loop_->RunInLoop([this, node_id, content_ptr] () {
+    std::string s;
+    bool res = content_ptr->SerializeToString(&s);
+    if (res) {
+      SendMessageInLoop(node_id, s);
+    } else {
+      SWLog(ERROR,
+            "Network::SendMessage - Content.SerializeToString error.\n");
+    }
+  });
 }
 
 void Network::SendMessage(const std::set<uint64_t>& nodes,

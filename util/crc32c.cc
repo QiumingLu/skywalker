@@ -72,11 +72,12 @@ static const uint32_t table[256] = {
 
 uint32_t crc32(uint32_t crc, const char* buf, size_t size) {
   const uint8_t *p = reinterpret_cast<const uint8_t *>(buf);
-  crc = crc ^ 0xffffffffu;
+  crc ^= 0xffffffffu;
   for (size_t i = 0; i < size; ++i) {
     crc = table[(crc ^ 0xff) ^ *p++] ^ (crc >> 8);
   }
-  return crc ^ 0xffffffffu;
+  crc ^= 0xffffffffu;
+  return crc;
 }
 
 }  // namespace crc
