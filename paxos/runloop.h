@@ -15,8 +15,10 @@ class Instance;
 
 class RunLoop {
  public:
-  RunLoop(Instance* instance);
+  RunLoop();
   ~RunLoop();
+
+  void SetInstance(Instance* instance) { instance_ = instance; }
 
   void Loop();
   void Exit();

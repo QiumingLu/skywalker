@@ -10,7 +10,6 @@
 #include "machine/state_machine_impl.h"
 #include "skywalker/options.h"
 #include "paxos/runloop.h"
-#include "paxos/instance.h"
 
 namespace skywalker {
 
@@ -20,7 +19,7 @@ class Config {
          const Options& options, Network* network);
   ~Config();
 
-  bool InitAll(Instance* instance);
+  bool Init();
 
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }

@@ -13,7 +13,7 @@ Config::Config(uint32_t group_id, uint64_t node_id,
       db_(new DB()),
       messager_(new Messager(this, network)),
       state_machine_(new StateMachineImpl(this)),
-      loop_(nullptr) {
+      loop_(new RunLoop()) {
 
   char name[8];
   if (log_storage_path_[log_storage_path_.size() - 1] != '/') {
@@ -40,20 +40,12 @@ Config::~Config() {
   delete db_;
 }
 
-bool Config::InitAll(Instance* instance) {
+bool Config::Init() {
   int ret = db_->Open(group_id_, log_storage_path_);
   if (ret != 0) {
     return false;
   }
-  bool b = state_machine_->Init();
-  if (b) {
-    b = instance->Init();
-    if (b) {
-      loop_ = new RunLoop(instance);
-      loop_->Loop();
-    }
-  }
-  return b;
+  return state_machine_->Init();
 }
 
 bool Config::IsValidNodeId(uint64_t node_id) const {

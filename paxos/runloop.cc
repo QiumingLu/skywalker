@@ -13,9 +13,9 @@ void* RunLoop::StartRunLoop(void* data) {
   return nullptr;
 }
 
-RunLoop::RunLoop(Instance* instance)
+RunLoop::RunLoop()
     : exit_(false),
-      instance_(instance),
+      instance_(nullptr),
       thread_(),
       mutex_(),
       cond_(&mutex_) {
