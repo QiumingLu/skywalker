@@ -1,5 +1,6 @@
 #include "paxos/instance.h"
 #include "paxos/config.h"
+#include "paxos/runloop.h"
 #include "util/mutexlock.h"
 #include "skywalker/logging.h"
 
@@ -7,6 +8,9 @@ namespace skywalker {
 
 Instance::Instance(Config* config)
     : config_(config),
+      loop_(config_->GetLoop()),
+      propose_timer_(nullptr),
+      learn_timer_(nullptr),
       mutex_(),
       transfer_(config),
       acceptor_(config, this),
@@ -29,6 +33,10 @@ bool Instance::Init() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
+  learn_timer_ = loop_->RunEvery(30000, [this]() {
+    learner_.AskForLearn();
+  });
+
   return ret;
 }
 
@@ -40,12 +48,19 @@ bool Instance::OnReceiveValue(const Slice& value,
 }
 
 void Instance::OnReceiveContent(Content* content) {
-  config_->GetLoop()->NewContent(content);
+  loop_->NewContent(content);
 }
 
 void Instance::HandleNewValue(const std::string& value) {
   transfer_.SetNowInstanceId(proposer_.GetInstanceId());
   proposer_.NewValue(value);
+  uint64_t id = proposer_.GetInstanceId();
+  propose_timer_ = loop_->RunAfter(1000, [id, this]() {
+    assert(id == proposer_.GetInstanceId());
+    proposer_.QuitPropose();
+    transfer_.SetResult(false, id, "");
+    propose_timer_ = nullptr;
+  });
 }
 
 void Instance::HandleContent(const Content& content) {
@@ -133,6 +148,7 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
       learner_.OnAskForLearn(msg);
       break;
     case LEARNER_SEND_LEARNED_VALUE:
+      learner_.OnSendLearnedValue(msg);
       break;
     case LEARNER_SEND_NOW_INSTANCE_ID:
       learner_.OnSendNowInstanceId(msg);
@@ -157,6 +173,10 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
                         learner_.GetLearnedValue());
 
     if (success) {
+      if (propose_timer_) {
+        loop_->Remove(propose_timer_);
+        propose_timer_ = nullptr;
+      }
       NextInstance();
     } else {
       proposer_.SetNoSkipPrepare();

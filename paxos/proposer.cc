@@ -16,7 +16,9 @@ Proposer::Proposer(Config* config, Instance* instance)
       preparing_(false),
       accepting_(false),
       skip_prepare_(false),
-      was_rejected_by_someone_(false) {
+      was_rejected_by_someone_(false),
+      loop_(config_->GetLoop()),
+      retry_timer_(nullptr) {
 }
 
 void Proposer::NewValue(const std::string& value) {
@@ -32,8 +34,8 @@ void Proposer::NewValue(const std::string& value) {
 }
 
 void Proposer::Prepare(bool need_new_ballot) {
+  QuitPropose();
   preparing_ = true;
-  accepting_ = false;
   skip_prepare_ = false;
   was_rejected_by_someone_ = false;
 
@@ -65,7 +67,10 @@ void Proposer::Prepare(bool need_new_ballot) {
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessage(content_ptr);
   instance_->HandlePaxosMessage(content_ptr->paxos_msg());
+
+  AddRetryTimer();
 }
+
 
 void Proposer::OnPrepareReply(const PaxosMessage& msg) {
   SWLog(DEBUG,
@@ -106,9 +111,7 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
         SWLog(DEBUG,
               "Proposer::OnPrepareReply - "
               "Prepare not pass, reprepare 30ms later.\n");
-        config_->GetLoop()->RunAfter(30, [this]() {
-          Prepare(true);
-        });
+//        AddRetryTimer(30);
       }
     }
   }
@@ -120,8 +123,7 @@ void Proposer::Accept() {
         "now node_id=%" PRIu64", instance_id=%" PRIu64", "
         "proposal_id=%" PRIu64", value=%s.\n",
         config_->GetNodeId(), instance_id_, proposal_id_, value_.c_str());
-
-  preparing_ = false;
+  QuitPropose();
   accepting_ = true;
 
   PaxosMessage* msg = new PaxosMessage();
@@ -137,6 +139,8 @@ void Proposer::Accept() {
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessage(content_ptr);
   instance_->HandlePaxosMessage(content_ptr->paxos_msg());
+
+  AddRetryTimer();
 }
 
 void Proposer::OnAccpetReply(const PaxosMessage& msg) {
@@ -163,16 +167,14 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
 
       if (counter_.IsPassedOnThisRound()) {
         SWLog(DEBUG, "Proposer::OnAccpetReply - Accept pass.\n");
-        accepting_ = false;
+        QuitPropose();
         NewChosenValue();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
         SWLog(DEBUG,
               "Proposer::OnAccpetReply - "
               "Accept not pass, reprepare 30ms later.\n");
-        config_->GetLoop()->RunAfter(30, [this]() {
-          Prepare(true);
-        });
+        AddRetryTimer(30);
       }
     }
   }
@@ -191,6 +193,28 @@ void Proposer::NewChosenValue() {
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessage(content_ptr);
   instance_->HandlePaxosMessage(content_ptr->paxos_msg());
+}
+
+void Proposer::AddRetryTimer(uint64_t timeout) {
+  uint64_t id = instance_id_;
+  if (retry_timer_) {
+    loop_->Remove(retry_timer_);
+  }
+  retry_timer_ = loop_->RunAfter(timeout, [id, this]() {
+    if (id == instance_id_) {
+      Prepare(was_rejected_by_someone_);
+    }
+    retry_timer_ = nullptr;
+  });
+}
+
+void Proposer::QuitPropose() {
+  preparing_ = false;
+  accepting_ = false;
+  if (retry_timer_) {
+    loop_->Remove(retry_timer_);
+    retry_timer_ = nullptr;
+  }
 }
 
 void Proposer::NextInstance() {

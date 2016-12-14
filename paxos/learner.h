@@ -19,6 +19,7 @@ class Learner {
   uint64_t GetInstanceId() const { return instance_id_; }
 
   void OnNewChosenValue(const PaxosMessage& msg);
+  void AskForLearn();
   void OnAskForLearn(const PaxosMessage& msg);
   void OnSendNowInstanceId(const PaxosMessage& msg);
   void OnComfirmAskForLearn(const PaxosMessage& msg);
@@ -30,7 +31,6 @@ class Learner {
   void NextInstance();
 
  private:
-  void AskForLearn();
   void SendNowInstanceId(const PaxosMessage& msg);
   void ComfirmAskForLearn(const PaxosMessage& msg);
   void SendLearnedValue(uint64_t node_id,

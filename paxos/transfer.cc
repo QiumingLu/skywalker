@@ -26,18 +26,13 @@ bool Transfer::NewValue(const Slice& value,
   context_ = context;
   success_ = false;
   loop_->NewValue(value);
-  bool res = true;
-  bool wait = true;
 
   MutexLock lock(&mutex_);
-  while (!transfer_end_ && wait) {
-    res = cond_.Wait(1000);
-    wait = false;
+  while (!transfer_end_) {
+    cond_.Wait();
   }
-  if (res) {
-    if (success_) {
-      *new_instance_id = instance_id_;
-    }
+  if (success_) {
+    *new_instance_id = instance_id_;
   } else {
     SWLog(INFO,
           "Transfer::NewValue - handle new value(%s) timeout.\n",

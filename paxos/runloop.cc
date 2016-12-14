@@ -66,8 +66,10 @@ void RunLoop::ThreadFunc() {
 
     {
       MutexLock lock(&mutex_);
-      while (contents_.empty() && values_.empty()) {
+      bool wait = true;
+      while (contents_.empty() && values_.empty() && wait) {
         cond_.Wait(timeout);
+        wait = false;
       }
       if (!contents_.empty()) {
         content = contents_.front();

@@ -81,7 +81,7 @@ void DefaultLogHandler(LogLevel level, const char* filename, int line,
   }
 }
 
-void NullLogHandler(LogLevel /* level */, 
+void NullLogHandler(LogLevel /* level */,
                     const char* /* filename */, int /* line */,
                     const char* /* format */, va_list /* ap */) {
 }

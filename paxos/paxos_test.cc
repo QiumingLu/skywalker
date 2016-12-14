@@ -22,12 +22,12 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  //voyager::SetLogHandler(nullptr);
+  voyager::SetLogHandler(nullptr);
 
   skywalker::Options options;
   options.log_storage_path = std::string(path);
   options.log_sync = true;
-  options.sync_interval = 1;
+  options.sync_interval = 0;
   options.group_size = 1;
 
   std::vector<std::string> my;

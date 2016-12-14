@@ -1,5 +1,6 @@
 #include "paxos/config.h"
 #include "paxos/node_util.h"
+#include "skywalker/logging.h"
 
 namespace skywalker {
 
@@ -41,8 +42,10 @@ Config::~Config() {
 }
 
 bool Config::Init() {
-  int ret = db_->Open(group_id_, log_storage_path_);
+ int ret = db_->Open(group_id_, log_storage_path_);
   if (ret != 0) {
+    SWLog(ERROR, "Config::Init - db open failed, which path is %s",
+          log_storage_path_.c_str());
     return false;
   }
   return state_machine_->Init();

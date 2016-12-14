@@ -6,12 +6,14 @@
 #include "paxos/ballot_number.h"
 #include "paxos/counter.h"
 #include "paxos/paxos.pb.h"
+#include "util/timerlist.h"
 
 namespace skywalker {
 
 class Config;
 class Instance;
 class Messager;
+class RunLoop;
 
 class Proposer {
  public:
@@ -29,11 +31,16 @@ class Proposer {
   void OnPrepareReply(const PaxosMessage& msg);
   void OnAccpetReply(const PaxosMessage& msg);
 
+  void QuitPropose();
+
   void NextInstance();
 
  private:
   void Prepare(bool need_new_ballot = true);
   void Accept();
+
+  void AddRetryTimer(uint64_t timeout = 300);
+
   void NewChosenValue();
 
   Config* config_;
@@ -53,6 +60,9 @@ class Proposer {
   bool accepting_;
   bool skip_prepare_;
   bool was_rejected_by_someone_;
+
+  RunLoop* loop_;
+  TimerList::Timer* retry_timer_;
 
   // No copying allowed
   Proposer(const Proposer&);

@@ -35,7 +35,7 @@ void Network::StartServer(const IpPort& i,
 
 void Network::SendMessage(uint64_t node_id,
                           const std::shared_ptr<Content>& content_ptr) {
-  loop_->RunInLoop([this, node_id, content_ptr] () {
+  loop_->QueueInLoop([this, node_id, content_ptr] () {
     std::string s;
     bool res = content_ptr->SerializeToString(&s);
     if (res) {
@@ -49,7 +49,7 @@ void Network::SendMessage(uint64_t node_id,
 
 void Network::SendMessage(const std::set<uint64_t>& nodes,
                           const std::shared_ptr<Content>& content_ptr) {
-  loop_->RunInLoop([this, nodes, content_ptr] () {
+  loop_->QueueInLoop([this, nodes, content_ptr] () {
     std::string s;
     bool res = content_ptr->SerializeToString(&s);
     if (res) {

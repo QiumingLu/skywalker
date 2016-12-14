@@ -34,6 +34,7 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
 }
 
 void Learner::AskForLearn() {
+  is_learning_ = false;
   PaxosMessage* msg = new PaxosMessage();
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
@@ -78,6 +79,7 @@ void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
      msg.now_instance_id() > instance_id_) {
     if (!is_learning_) {
       ComfirmAskForLearn(msg);
+      is_learning_ = true;
     }
   }
   SetHightestInstanceId(msg.now_instance_id(), msg.node_id());
@@ -91,20 +93,27 @@ void Learner::ComfirmAskForLearn(const PaxosMessage& msg) {
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
   messager_->SendMessage(msg.node_id(), content_ptr);
-  is_learning_ = true;
 }
 
 void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
   uint64_t i = msg.instance_id();
-  uint64_t now = instance_id_;
-  while (i < now) {
+  while (i < instance_id_) {
     std::string s;
-    config_->GetDB()->Get(msg.instance_id(), &s);
-    AcceptorState state;
-    state.ParseFromString(s);
-    BallotNumber ballot(state.accepted_id(), state.accepted_node_id());
-    SendLearnedValue(msg.node_id(), i, ballot, state.accepted_value());
-    ++i;
+    int ret = config_->GetDB()->Get(i, &s);
+    if (ret == 0) {
+      AcceptorState state;
+      state.ParseFromString(s);
+      BallotNumber ballot(state.accepted_id(), state.accepted_node_id());
+      SendLearnedValue(msg.node_id(), i, ballot, state.accepted_value());
+      SWLog(INFO, "Learner::OnComfirmAskForLearn - s:%s, i:%" PRIu64"",
+            state.accepted_value().c_str(), i);
+      ++i;
+    } else {
+      SWLog(ERROR, "Learner::OnComfirmAskForLearn - "
+            "no found data of instance %" PRIu64"\n",
+            i);
+      break;
+    }
   }
 }
 
@@ -132,6 +141,9 @@ void Learner::OnSendLearnedValue(const PaxosMessage& msg) {
       FinishLearnValue(msg.value(), ballot);
     }
   }
+  SWLog(INFO,
+        "Learner::OnSendLearnedValue - s:%s, instance_id:%" PRIu64"",
+        msg.value().c_str(), msg.instance_id());
 }
 
 void Learner::NextInstance() {
@@ -145,13 +157,6 @@ void Learner::SetHightestInstanceId(uint64_t instance_id,
   if (instance_id > hightest_instance_id_) {
     hightest_instance_id_ = instance_id;
     hightest_instance_id_from_node_id_ = node_id;
-
-    if (hightest_instance_id_ > instance_id_) {
-      config_->GetLoop()->RunAfter(1000, [this]() {
-         AskForLearn();
-         is_learning_ = false;
-      });
-    }
   }
 }
 
@@ -181,7 +186,7 @@ void Learner::FinishLearnValue(const std::string& value,
   learned_value_ = value;
   has_learned_ = true;
   BroadcastMessageToFollower(ballot);
-  SWLog(DEBUG,
+  SWLog(INFO,
         "Learner::FinishLearnValue - learn a new value=%s.\n",
         learned_value_.c_str());
 }

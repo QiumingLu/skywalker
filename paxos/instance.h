@@ -9,10 +9,12 @@
 #include "skywalker/slice.h"
 #include "skywalker/state_machine.h"
 #include "util/mutex.h"
+#include "util/timerlist.h"
 
 namespace skywalker {
 
 class Config;
+class RunLoop;
 
 class Instance {
  public:
@@ -45,6 +47,9 @@ class Instance {
   void NextInstance();
 
   Config* config_;
+  RunLoop* loop_;
+  TimerList::Timer* propose_timer_;
+  TimerList::Timer* learn_timer_;
 
   Mutex mutex_;
   skywalker::Transfer transfer_;
