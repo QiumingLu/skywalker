@@ -34,8 +34,8 @@ void Proposer::NewValue(const std::string& value) {
 }
 
 void Proposer::Prepare(bool need_new_ballot) {
-  QuitPropose();
   preparing_ = true;
+  accepting_ = false;
   skip_prepare_ = false;
   was_rejected_by_someone_ = false;
 
@@ -111,7 +111,7 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
         SWLog(DEBUG,
               "Proposer::OnPrepareReply - "
               "Prepare not pass, reprepare 30ms later.\n");
-//        AddRetryTimer(30);
+        AddRetryTimer(30);
       }
     }
   }
@@ -123,7 +123,8 @@ void Proposer::Accept() {
         "now node_id=%" PRIu64", instance_id=%" PRIu64", "
         "proposal_id=%" PRIu64", value=%s.\n",
         config_->GetNodeId(), instance_id_, proposal_id_, value_.c_str());
-  QuitPropose();
+
+  preparing_ = false;
   accepting_ = true;
 
   PaxosMessage* msg = new PaxosMessage();

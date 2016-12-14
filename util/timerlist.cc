@@ -107,7 +107,7 @@ void TimerList::Remove(Timer* timer) {
 
 uint64_t TimerList::TimeoutMicros() const {
   if (timers_.empty()) {
-    return 1000000;
+    return 5000000;
   }
   return (timers_.begin()->first - NowMicros());
 }
@@ -118,29 +118,22 @@ void TimerList::RunTimerProcs() {
   }
 
   uint64_t micros_now = NowMicros();
-  std::vector<Timer*> res(ExpiredTimers(micros_now));
-
-  for (size_t i = 0; i < res.size(); ++i) {
-    res[i]->timerproc_cb();
-
-    if (res[i]->repeat) {
-      res[i]->micros_value = micros_now + res[i]->micros_interval;
-      timers_.insert(Entry(res[i]->micros_value, res[i]));
+  std::set<Entry>::iterator it;
+  while (true) {
+    it = timers_.begin();
+    if (it != timers_.end() && it->first <= micros_now) {
+      it->second->timerproc_cb();
+      if (it->second->repeat) {
+        uint64_t micros_value = it->first + it->second->micros_interval;
+        timers_.insert(Entry(micros_value, it->second));
+      } else {
+        delete it->second;
+      }
+      timers_.erase(it);
     } else {
-      delete res[i];
+      break;
     }
   }
-}
-
-std::vector<TimerList::Timer*> TimerList::ExpiredTimers(uint64_t micros) {
-  std::vector<Timer*> res;
-  Entry entry(micros, reinterpret_cast<Timer*>(UINTPTR_MAX));
-  std::set<Entry>::iterator end = timers_.lower_bound(entry);
-  for (std::set<Entry>::iterator it = timers_.begin(); it != end; ++it) {
-    res.push_back(it->second);
-  }
-  timers_.erase(timers_.begin(), end);
-  return res;
 }
 
 }  // namespace skywalker

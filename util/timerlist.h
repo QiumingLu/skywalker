@@ -36,8 +36,6 @@ class TimerList {
  private:
   typedef std::pair<uint64_t, Timer*> Entry;
 
-  std::vector<Timer*> ExpiredTimers(uint64_t micros);
-
   std::set<Entry> timers_;
 
   // No copying allowed
