@@ -62,7 +62,7 @@ class Proposer {
   bool was_rejected_by_someone_;
 
   RunLoop* loop_;
-  TimerList::Timer* retry_timer_;
+  TimerId retry_timer_;
 
   // No copying allowed
   Proposer(const Proposer&);

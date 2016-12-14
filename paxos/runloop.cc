@@ -96,25 +96,22 @@ void RunLoop::ThreadFunc() {
   }
 }
 
-TimerList::Timer* RunLoop::RunAt(uint64_t milli_value,
-                                 const std::function<void ()>& cb) {
-  TimerList::Timer* t = timers_.RunAt(milli_value*1000, cb);
-  return t;
+TimerId RunLoop::RunAt(uint64_t milli_value,
+                       const TimerProcCallback& cb) {
+  return timers_.RunAt(milli_value*1000, cb);
 }
 
-TimerList::Timer* RunLoop::RunAfter(uint64_t milli_delay,
-                                    const std::function<void ()>& cb) {
-  TimerList::Timer* t = timers_.RunAfter(milli_delay*1000, cb);
-  return t;
+TimerId RunLoop::RunAfter(uint64_t milli_delay,
+                          const TimerProcCallback& cb) {
+  return timers_.RunAfter(milli_delay*1000, cb);
 }
 
-TimerList::Timer* RunLoop::RunEvery(uint64_t milli_interval,
-                                    const std::function<void ()>& cb) {
-  TimerList::Timer* t = timers_.RunEvery(milli_interval*1000, cb);
-  return t;
+TimerId RunLoop::RunEvery(uint64_t milli_interval,
+                          const TimerProcCallback& cb) {
+  return timers_.RunEvery(milli_interval*1000, cb);
 }
 
-void RunLoop::Remove(TimerList::Timer* t) {
+void RunLoop::Remove(TimerId t) {
   timers_.Remove(t);
 }
 

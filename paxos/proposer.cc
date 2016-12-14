@@ -18,7 +18,7 @@ Proposer::Proposer(Config* config, Instance* instance)
       skip_prepare_(false),
       was_rejected_by_someone_(false),
       loop_(config_->GetLoop()),
-      retry_timer_(nullptr) {
+      retry_timer_() {
 }
 
 void Proposer::NewValue(const std::string& value) {
@@ -198,24 +198,18 @@ void Proposer::NewChosenValue() {
 
 void Proposer::AddRetryTimer(uint64_t timeout) {
   uint64_t id = instance_id_;
-  if (retry_timer_) {
-    loop_->Remove(retry_timer_);
-  }
+  loop_->Remove(retry_timer_);
   retry_timer_ = loop_->RunAfter(timeout, [id, this]() {
     if (id == instance_id_) {
       Prepare(was_rejected_by_someone_);
     }
-    retry_timer_ = nullptr;
   });
 }
 
 void Proposer::QuitPropose() {
   preparing_ = false;
   accepting_ = false;
-  if (retry_timer_) {
-    loop_->Remove(retry_timer_);
-    retry_timer_ = nullptr;
-  }
+  loop_->Remove(retry_timer_);
 }
 
 void Proposer::NextInstance() {

@@ -9,8 +9,8 @@ namespace skywalker {
 Instance::Instance(Config* config)
     : config_(config),
       loop_(config_->GetLoop()),
-      propose_timer_(nullptr),
-      learn_timer_(nullptr),
+      propose_timer_(),
+      learn_timer_(),
       mutex_(),
       transfer_(config),
       acceptor_(config, this),
@@ -33,9 +33,9 @@ bool Instance::Init() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
-  learn_timer_ = loop_->RunEvery(30000, [this]() {
-    learner_.AskForLearn();
-  });
+//  learn_timer_ = loop_->RunEvery(30000, [this]() {
+//    learner_.AskForLearn();
+//  });
 
   return ret;
 }
@@ -59,7 +59,6 @@ void Instance::HandleNewValue(const std::string& value) {
     assert(id == proposer_.GetInstanceId());
     proposer_.QuitPropose();
     transfer_.SetResult(false, id, "");
-    propose_timer_ = nullptr;
   });
 }
 
@@ -173,10 +172,7 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
                         learner_.GetLearnedValue());
 
     if (success) {
-      if (propose_timer_) {
-        loop_->Remove(propose_timer_);
-        propose_timer_ = nullptr;
-      }
+      loop_->Remove(propose_timer_);
       NextInstance();
     } else {
       proposer_.SetNoSkipPrepare();

@@ -48,8 +48,8 @@ class Instance {
 
   Config* config_;
   RunLoop* loop_;
-  TimerList::Timer* propose_timer_;
-  TimerList::Timer* learn_timer_;
+  TimerId propose_timer_;
+  TimerId learn_timer_;
 
   Mutex mutex_;
   skywalker::Transfer transfer_;

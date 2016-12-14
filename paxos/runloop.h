@@ -26,14 +26,11 @@ class RunLoop {
   void NewValue(const Slice& value);
   void NewContent(Content* content);
 
-  TimerList::Timer* RunAt(uint64_t milli_value,
-                          const std::function<void ()>& cb);
-  TimerList::Timer* RunAfter(uint64_t milli_delay,
-                             const std::function<void ()>& cb);
-  TimerList::Timer* RunEvery(uint64_t milli_interval,
-                             const std::function<void ()>& cb);
+  TimerId RunAt(uint64_t milli_value, const TimerProcCallback& cb);
+  TimerId RunAfter(uint64_t milli_delay, const TimerProcCallback& cb);
+  TimerId RunEvery(uint64_t milli_interval, const TimerProcCallback& cb);
 
-  void Remove(TimerList::Timer* t);
+  void Remove(TimerId t);
 
  private:
   static void* StartRunLoop(void* data);
