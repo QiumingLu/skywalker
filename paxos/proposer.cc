@@ -18,7 +18,7 @@ Proposer::Proposer(Config* config, Instance* instance)
       skip_prepare_(false),
       was_rejected_by_someone_(false),
       loop_(config_->GetLoop()),
-      retry_timer_() {
+      rand_(301) {
 }
 
 void Proposer::NewValue(const std::string& value) {
@@ -110,8 +110,8 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
                  counter_.IsReceiveAllOnThisRound()) {
         SWLog(DEBUG,
               "Proposer::OnPrepareReply - "
-              "Prepare not pass, reprepare 30ms later.\n");
-        AddRetryTimer(30);
+              "Prepare not pass, reprepare about 30ms later.\n");
+        AddRetryTimer(rand_.Uniform(30) + 10);
       }
     }
   }
@@ -175,7 +175,7 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
         SWLog(DEBUG,
               "Proposer::OnAccpetReply - "
               "Accept not pass, reprepare 30ms later.\n");
-        AddRetryTimer(30);
+        AddRetryTimer(rand_.Uniform(30) + 10);
       }
     }
   }

@@ -1,0 +1,2 @@
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc libvoyager_http.a  CMakeFiles/voyager_http.dir/http_client.cc.o CMakeFiles/voyager_http.dir/http_message.cc.o CMakeFiles/voyager_http.dir/http_request.cc.o CMakeFiles/voyager_http.dir/http_response.cc.o CMakeFiles/voyager_http.dir/http_request_parser.cc.o CMakeFiles/voyager_http.dir/http_response_parser.cc.o CMakeFiles/voyager_http.dir/http_server.cc.o
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libvoyager_http.a

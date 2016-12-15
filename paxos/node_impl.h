@@ -19,9 +19,9 @@ class NodeImpl : public Node {
 
   bool StartWorking();
 
-  virtual bool Propose(uint32_t group_id,
-                       const Slice& value,
-                       uint64_t* new_instance_id);
+  virtual int Propose(uint32_t group_id,
+                      const Slice& value,
+                      uint64_t* new_instance_id);
 
  private:
   void OnReceiveMessage(const Slice& s);

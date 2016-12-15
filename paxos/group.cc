@@ -18,9 +18,9 @@ bool Group::Start() {
   return ret;
 }
 
-bool Group::OnReceiveValue(const Slice& value,
-                           MachineContext* context,
-                           uint64_t* new_instance_id) {
+int Group::OnReceiveValue(const Slice& value,
+                          MachineContext* context,
+                          uint64_t* new_instance_id) {
   return instance_.OnReceiveValue(value, context, new_instance_id);
 }
 

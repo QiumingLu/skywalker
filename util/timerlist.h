@@ -60,7 +60,7 @@ class TimerList {
   TimerId RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
   TimerId RunEvery(uint64_t micros_interval, TimerProcCallback&& cb);
 
-  void Remove(TimerId id);
+  void Remove(const TimerId& id);
 
   uint64_t TimeoutMicros() const;
   void RunTimerProcs();

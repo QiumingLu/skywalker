@@ -16,9 +16,9 @@ class Node {
   Node() { }
   virtual ~Node() { }
 
-  virtual bool Propose(uint32_t group_id,
-                       const Slice& value,
-                       uint64_t* new_instance_id) = 0;
+  virtual int Propose(uint32_t group_id,
+                      const Slice& value,
+                      uint64_t* new_instance_id) = 0;
 
  private:
   // No copying allowed

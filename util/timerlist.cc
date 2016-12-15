@@ -1,7 +1,6 @@
 #include "util/timerlist.h"
 #include <sys/time.h>
 #include <time.h>
-#include "skywalker/logging.h"
 
 namespace skywalker {
 
@@ -67,7 +66,7 @@ TimerId TimerList::RunEvery(uint64_t micros_interval,
    return id;
 }
 
-void TimerList::Remove(TimerId id) {
+void TimerList::Remove(const TimerId& id) {
   std::set<TimerId>::iterator it = timers_.find(id);
   if (it != timers_.end()) {
     delete it->second;
@@ -77,9 +76,9 @@ void TimerList::Remove(TimerId id) {
 
 uint64_t TimerList::TimeoutMicros() const {
   if (timers_.empty()) {
-    return 5000000;
+    return 1000000;
   }
-  if (timers_.begin()->first > NowMicros()) {
+  if (timers_.begin()->first < NowMicros()) {
     return 0;
   } else {
     return timers_.begin()->first - NowMicros();
@@ -96,14 +95,16 @@ void TimerList::RunTimerProcs() {
   while (true) {
     it = timers_.begin();
     if (it != timers_.end() && it->first <= micros_now) {
-      it->second->timerproc_cb();
-      if (it->second->repeat) {
-        uint64_t micros_value = it->first + it->second->micros_interval;
-        timers_.insert(TimerId(micros_value, it->second));
-      } else {
-        delete it->second;
-      }
+      uint64_t micros_value = it->first;
+      Timer* timer = it->second;
       timers_.erase(it);
+      timer->timerproc_cb();
+      if (timer->repeat) {
+        micros_value += timer->micros_interval;
+        timers_.insert(TimerId(micros_value, timer));
+      } else {
+        delete timer;
+      }
     } else {
       break;
     }

@@ -7,6 +7,7 @@
 #include "paxos/counter.h"
 #include "paxos/paxos.pb.h"
 #include "util/timerlist.h"
+#include "util/random.h"
 
 namespace skywalker {
 
@@ -63,6 +64,7 @@ class Proposer {
 
   RunLoop* loop_;
   TimerId retry_timer_;
+  Random rand_;
 
   // No copying allowed
   Proposer(const Proposer&);

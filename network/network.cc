@@ -23,10 +23,17 @@ void Network::StartServer(const IpPort& i,
 
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
-    Slice s(buf->Peek(), buf->ReadableSize());
-    if (!s.empty() && s.size() > sizeof(int)) {
-      cb(s);
-      buf->RetrieveAll();
+    size_t size = buf->ReadableSize();
+    while (size > sizeof(int)) {
+      const char* crlf = buf->FindCRLF();
+      if (crlf) {
+        size_t len = crlf - buf->Peek();
+        cb(Slice(buf->Peek(), len));
+        buf->RetrieveUntil(crlf + 2);
+        size = buf->ReadableSize();
+      } else {
+        break;
+      }
     }
   });
 
@@ -38,6 +45,7 @@ void Network::SendMessage(uint64_t node_id,
   loop_->QueueInLoop([this, node_id, content_ptr] () {
     std::string s;
     bool res = content_ptr->SerializeToString(&s);
+    s += "\r\n";
     if (res) {
       SendMessageInLoop(node_id, s);
     } else {
@@ -52,6 +60,7 @@ void Network::SendMessage(const std::set<uint64_t>& nodes,
   loop_->QueueInLoop([this, nodes, content_ptr] () {
     std::string s;
     bool res = content_ptr->SerializeToString(&s);
+    s += "\r\n";
     if (res) {
       for (auto n : nodes) {
         SendMessageInLoop(n, s);

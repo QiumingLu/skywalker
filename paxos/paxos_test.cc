@@ -21,8 +21,9 @@ int main(int argc, char** argv) {
     printf("getcwd error\n");
     return -1;
   }
+  printf("%s\n", path);
 
-  voyager::SetLogHandler(nullptr);
+  //voyager::SetLogHandler(nullptr);
 
   skywalker::Options options;
   options.log_storage_path = std::string(path);
@@ -51,11 +52,9 @@ int main(int argc, char** argv) {
   while (res) {
     printf("please enter value:\n");
     std::string value;
-    std::cin >> value;
+    std::getline(std::cin, value);
     uint64_t instance_id(0);
-    bool success = node->Propose(0, value, &instance_id);
-    printf("bool success:%d, it's instance_id is %" PRIu64"\n",
-           success, instance_id);
+    node->Propose(0, value, &instance_id);
   }
 
   printf("paxos test end\n");

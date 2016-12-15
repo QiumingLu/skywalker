@@ -105,8 +105,6 @@ void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
       state.ParseFromString(s);
       BallotNumber ballot(state.accepted_id(), state.accepted_node_id());
       SendLearnedValue(msg.node_id(), i, ballot, state.accepted_value());
-      SWLog(INFO, "Learner::OnComfirmAskForLearn - s:%s, i:%" PRIu64"",
-            state.accepted_value().c_str(), i);
       ++i;
     } else {
       SWLog(ERROR, "Learner::OnComfirmAskForLearn - "
@@ -141,9 +139,6 @@ void Learner::OnSendLearnedValue(const PaxosMessage& msg) {
       FinishLearnValue(msg.value(), ballot);
     }
   }
-  SWLog(INFO,
-        "Learner::OnSendLearnedValue - s:%s, instance_id:%" PRIu64"",
-        msg.value().c_str(), msg.instance_id());
 }
 
 void Learner::NextInstance() {

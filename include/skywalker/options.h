@@ -29,6 +29,8 @@ struct Options {
   IpPort ipport;
   std::vector<IpPort> membership;
   std::vector<IpPort> followers;
+
+  Options();
 };
 
 }  // namespace skywalker

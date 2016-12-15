@@ -10,6 +10,7 @@
 #include "skywalker/state_machine.h"
 #include "util/mutex.h"
 #include "util/timerlist.h"
+#include "util/random.h"
 
 namespace skywalker {
 
@@ -23,9 +24,9 @@ class Instance {
 
   bool Init();
 
-  bool OnReceiveValue(const Slice& value,
-                      MachineContext* context,
-                      uint64_t* new_instance_id);
+  int OnReceiveValue(const Slice& value,
+                     MachineContext* context,
+                     uint64_t* new_instance_id);
 
   void OnReceiveContent(Content* content);
 
@@ -57,6 +58,7 @@ class Instance {
   Acceptor acceptor_;
   Learner learner_;
   Proposer proposer_;
+  Random rand_;
 
   // No copying allowed
   Instance(const Instance&);

@@ -15,7 +15,8 @@ Instance::Instance(Config* config)
       transfer_(config),
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
-      proposer_(config, this) {
+      proposer_(config, this),
+      rand_(301) {
 }
 
 Instance::~Instance() {
@@ -33,16 +34,16 @@ bool Instance::Init() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
-//  learn_timer_ = loop_->RunEvery(30000, [this]() {
-//    learner_.AskForLearn();
-//  });
+  learn_timer_ = loop_->RunEvery(30000 + rand_.Uniform(10000), [this]() {
+    learner_.AskForLearn();
+  });
 
   return ret;
 }
 
-bool Instance::OnReceiveValue(const Slice& value,
-                              MachineContext* context,
-                              uint64_t* new_instance_id) {
+int Instance::OnReceiveValue(const Slice& value,
+                             MachineContext* context,
+                             uint64_t* new_instance_id) {
   MutexLock lock(&mutex_);
   return transfer_.NewValue(value, context, new_instance_id);
 }

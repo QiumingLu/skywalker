@@ -14,9 +14,9 @@ class Transfer {
  public:
   Transfer(Config* config);
 
-  bool NewValue(const Slice& value,
-                MachineContext* context,
-                uint64_t* new_instance_id);
+  int NewValue(const Slice& value,
+               MachineContext* context,
+               uint64_t* new_instance_id);
 
   void SetNowInstanceId(uint64_t instance_id);
 
@@ -35,7 +35,7 @@ class Transfer {
   uint64_t instance_id_;
   Slice value_;
   MachineContext* context_;
-  bool success_;
+  int result_;
 
   // No copying allowed
   Transfer(const Transfer& );

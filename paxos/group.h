@@ -21,7 +21,7 @@ class Group {
 
   Instance* GetInstance() { return &instance_; }
 
-  bool OnReceiveValue(const Slice& value,
+  int OnReceiveValue(const Slice& value,
                       MachineContext* context,
                       uint64_t* new_instance_id);
 
