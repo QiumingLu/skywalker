@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 #include "paxos/acceptor.h"
+#include "paxos/runloop.h"
 #include "paxos/paxos.pb.h"
+#include "util/random.h"
 
 namespace skywalker {
 
@@ -32,6 +34,7 @@ class Learner {
  private:
   void SendNowInstanceId(const PaxosMessage& msg);
   void ComfirmAskForLearn(const PaxosMessage& msg);
+  void ASyncSend(uint64_t node_id, uint64_t from, uint64_t to);
   void SendLearnedValue(uint64_t node_id,
                         uint64_t learner_instance_id,
                         const AcceptorState& state);
@@ -54,6 +57,10 @@ class Learner {
   bool is_learning_;
   bool has_learned_;
   std::string learned_value_;
+
+  bool bg_run_;
+  RunLoop bg_loop_;
+  Random rand_;
 
   // No copying allowed
   Learner(const Learner&);

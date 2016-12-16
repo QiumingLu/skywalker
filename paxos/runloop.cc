@@ -53,7 +53,7 @@ void RunLoop::ThreadFunc() {
   exit_ = false;
   while(!exit_) {
     uint64_t t = timers_.TimeoutMicros() / 1000;
-    uint64_t timeout = std::min(t, static_cast<uint64_t>(1000));
+    uint64_t timeout = std::min(t, static_cast<uint64_t>(5000));
     std::vector<Func> funcs;
     {
       MutexLock lock(&mutex_);

@@ -14,7 +14,10 @@ Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
       hightest_instance_id_(0),
       hightest_instance_id_from_node_id_(0),
       is_learning_(false),
-      has_learned_(false) {
+      has_learned_(false),
+      bg_run_(false),
+      bg_loop_(),
+      rand_(301) {
 }
 
 void Learner::OnNewChosenValue(const PaxosMessage& msg) {
@@ -42,6 +45,14 @@ void Learner::AskForLearn() {
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessage(content_ptr);
+
+  config_->GetLoop()->RunAfter(30000 + rand_.Uniform(10000), [this]() {
+    AskForLearn();
+  });
+  if (!bg_run_) {
+    bg_run_ = true;
+    bg_loop_.Loop();
+  }
 }
 
 void Learner::OnAskForLearn(const PaxosMessage& msg) {
@@ -78,7 +89,8 @@ void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
     if (!is_learning_) {
       ComfirmAskForLearn(msg);
       is_learning_ = true;
-    }
+
+   }
   }
   SetHightestInstanceId(msg.now_instance_id(), msg.node_id());
 }
@@ -94,19 +106,22 @@ void Learner::ComfirmAskForLearn(const PaxosMessage& msg) {
 }
 
 void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
-  // FIXME: run in a new thread?
-  uint64_t i = msg.instance_id();
-  while (i < instance_id_) {
+  bg_loop_.QueueInLoop(std::bind(&Learner::ASyncSend, this,
+                       msg.node_id(), msg.instance_id(), instance_id_));
+}
+
+void Learner::ASyncSend(uint64_t node_id, uint64_t from, uint64_t to) {
+  while (from < to) {
     std::string s;
-    int ret = config_->GetDB()->Get(i, &s);
+    int ret = config_->GetDB()->Get(from, &s);
     if (ret == 0) {
       AcceptorState state;
       state.ParseFromString(s);
-      SendLearnedValue(msg.node_id(), i, state);
-      ++i;
+      SendLearnedValue(node_id, from, state);
+      ++from;
     } else {
       SWLog(ERROR, "Learner::OnComfirmAskForLearn - "
-            "no found data of instance %" PRIu64"\n", i);
+            "no found data of instance %" PRIu64"\n", from);
       break;
     }
   }

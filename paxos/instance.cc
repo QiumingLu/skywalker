@@ -32,7 +32,7 @@ bool Instance::Init() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
-  learn_timer_ = loop_->RunEvery(30000 + rand_.Uniform(10000), [this]() {
+  learn_timer_ = loop_->RunAfter(10000 + rand_.Uniform(30000), [this]() {
     learner_.AskForLearn();
   });
 

@@ -76,7 +76,7 @@ void TimerList::Remove(const TimerId& id) {
 
 uint64_t TimerList::TimeoutMicros() const {
   if (timers_.empty()) {
-    return 1000000;
+    return 5000000;
   }
   if (timers_.begin()->first < NowMicros()) {
     return 0;
