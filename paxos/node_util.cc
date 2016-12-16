@@ -24,5 +24,3 @@ IpPort ParseNodeId(uint64_t node_id) {
 }
 
 }  // namespace skywalker
-
-

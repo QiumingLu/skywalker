@@ -21,10 +21,8 @@ Proposer::Proposer(Config* config, Instance* instance)
       rand_(301) {
 }
 
-void Proposer::NewValue(const std::string& value) {
-  if (value_.size() == 0) {
-    value_ = value;
-  }
+void Proposer::NewPropose(const Slice& value) {
+  value_ = value.ToString();
 
   if (skip_prepare_ && !was_rejected_by_someone_) {
     Accept();
@@ -38,8 +36,6 @@ void Proposer::Prepare(bool need_new_ballot) {
   accepting_ = false;
   skip_prepare_ = false;
   was_rejected_by_someone_ = false;
-
-  hightest_ballot_.Reset();
 
   if (need_new_ballot) {
     if (proposal_id_ < hightest_proprosal_id_) {
@@ -108,8 +104,7 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
         Accept();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
-        SWLog(DEBUG,
-              "Proposer::OnPrepareReply - "
+        SWLog(DEBUG, "Proposer::OnPrepareReply - "
               "Prepare not pass, reprepare about 30ms later.\n");
         AddRetryTimer(rand_.Uniform(30) + 10);
       }
@@ -155,7 +150,6 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
   if (accepting_) {
     if (msg.proposal_id() == proposal_id_) {
       counter_.AddReceivedNode(msg.node_id());
-
       if (msg.reject_for_promised_id() == 0) {
         counter_.AddPromisorOrAcceptor(msg.node_id());
       } else {
@@ -172,8 +166,7 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
         NewChosenValue();
       } else if (counter_.IsRejectedOnThisRound() ||
                  counter_.IsReceiveAllOnThisRound()) {
-        SWLog(DEBUG,
-              "Proposer::OnAccpetReply - "
+        SWLog(DEBUG, "Proposer::OnAccpetReply - "
               "Accept not pass, reprepare 30ms later.\n");
         AddRetryTimer(rand_.Uniform(30) + 10);
       }
@@ -213,12 +206,12 @@ void Proposer::QuitPropose() {
 }
 
 void Proposer::NextInstance() {
+  hightest_ballot_.Reset();
   hightest_proprosal_id_ = 0;
-  ++instance_id_;
-  value_.clear();
   preparing_ = false;
   accepting_ = false;
   counter_.StartNewRound();
+  ++instance_id_;
 }
 
 }  // namespace skywalker

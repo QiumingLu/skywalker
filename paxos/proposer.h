@@ -1,13 +1,12 @@
 #ifndef SKYWALKER_PAXOS_PROPOSER_H_
 #define SKYWALKER_PAXOS_PROPOSER_H_
 
-#include <string>
-
 #include "paxos/ballot_number.h"
 #include "paxos/counter.h"
 #include "paxos/paxos.pb.h"
 #include "util/timerlist.h"
 #include "util/random.h"
+#include "skywalker/slice.h"
 
 namespace skywalker {
 
@@ -21,13 +20,10 @@ class Proposer {
   Proposer(Config* config, Instance* instance);
 
   void SetInstanceId(uint64_t id) { instance_id_ = id; }
-  uint64_t GetInstanceId() const { return instance_id_; }
-
   void SetStartProposalId(uint64_t id) { proposal_id_ = id; }
-
   void SetNoSkipPrepare() { skip_prepare_ = false; }
 
-  void NewValue(const std::string& value);
+  void NewPropose(const Slice& value);
 
   void OnPrepareReply(const PaxosMessage& msg);
   void OnAccpetReply(const PaxosMessage& msg);

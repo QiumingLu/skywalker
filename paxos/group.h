@@ -1,12 +1,14 @@
 #ifndef SKYWALKER_PAXOS_GROUP_H_
 #define SKYWALKER_PAXOS_GROUP_H_
 
+#include <memory>
+
 #include "paxos/config.h"
 #include "paxos/instance.h"
 #include "paxos/paxos.pb.h"
-#include "skywalker/state_machine.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
+#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -19,17 +21,23 @@ class Group {
 
   bool Start();
 
-  Instance* GetInstance() { return &instance_; }
+  int OnReceivePropose(const Slice& value,
+                       uint64_t* now_instance_id);
 
-  int OnReceiveValue(const Slice& value,
-                      MachineContext* context,
-                      uint64_t* new_instance_id);
-
-  void OnReceiveContent(Content* content);
+  void OnReceiveContent(const std::shared_ptr<Content>& c);
 
  private:
+  void ProposeComplete(int result);
+
   Config config_;
   Instance instance_;
+  RunLoop* loop_;
+
+  Mutex mutex_;
+  Condition cond_;
+  bool propose_end_;
+  uint64_t instance_id_;
+  int result_;
 
   // No copying allowed
   Group(const Group&);

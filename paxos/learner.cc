@@ -23,8 +23,8 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
     BallotNumber ballot(msg.proposal_id(), msg.node_id());
     if (ballot == b) {
       FinishLearnValue(acceptor_->GetAcceptedValue(), b);
-    } else if (msg.value().empty() == false) {
-      int res = WriteToDB(instance_id_, ballot, msg.value(), 0);
+    } else if (!(msg.value().empty())) {
+      int res = WriteToDB(msg);
       if (res == 0) {
         FinishLearnValue(msg.value(), b);
       }
@@ -36,9 +36,9 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
 void Learner::AskForLearn() {
   is_learning_ = false;
   PaxosMessage* msg = new PaxosMessage();
+  msg->set_type(LEARNER_ASK_FOR_LEARN);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
-  msg->set_type(LEARNER_ASK_FOR_LEARN);
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessage(content_ptr);
@@ -52,9 +52,7 @@ void Learner::OnAskForLearn(const PaxosMessage& msg) {
       if (res == 0) {
         AcceptorState state;
         state.ParseFromString(s);
-        BallotNumber ballot(state.accepted_id(), state.accepted_node_id());
-        SendLearnedValue(msg.node_id(), msg.instance_id(),
-                         ballot, state.accepted_value());
+        SendLearnedValue(msg.node_id(), msg.instance_id(), state);
       }
     } else {
       SendNowInstanceId(msg);
@@ -65,9 +63,9 @@ void Learner::OnAskForLearn(const PaxosMessage& msg) {
 
 void Learner::SendNowInstanceId(const PaxosMessage& msg) {
   PaxosMessage* reply_msg = new PaxosMessage();
-  reply_msg->set_instance_id(msg.instance_id());
-  reply_msg->set_node_id(config_->GetNodeId());
   reply_msg->set_type(LEARNER_SEND_NOW_INSTANCE_ID);
+  reply_msg->set_node_id(config_->GetNodeId());
+  reply_msg->set_instance_id(msg.instance_id());
   reply_msg->set_now_instance_id(instance_id_);
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
@@ -87,15 +85,16 @@ void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
 
 void Learner::ComfirmAskForLearn(const PaxosMessage& msg) {
   PaxosMessage* reply_msg = new PaxosMessage();
+  reply_msg->set_type(LEARNER_COMFIRM_ASK_FOR_LEARN);
   reply_msg->set_node_id(config_->GetNodeId());
   reply_msg->set_instance_id(instance_id_);
-  reply_msg->set_type(LEARNER_COMFIRM_ASK_FOR_LEARN);
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
   messager_->SendMessage(msg.node_id(), content_ptr);
 }
 
 void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
+  // FIXME: run in a new thread?
   uint64_t i = msg.instance_id();
   while (i < instance_id_) {
     std::string s;
@@ -103,13 +102,11 @@ void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
     if (ret == 0) {
       AcceptorState state;
       state.ParseFromString(s);
-      BallotNumber ballot(state.accepted_id(), state.accepted_node_id());
-      SendLearnedValue(msg.node_id(), i, ballot, state.accepted_value());
+      SendLearnedValue(msg.node_id(), i, state);
       ++i;
     } else {
       SWLog(ERROR, "Learner::OnComfirmAskForLearn - "
-            "no found data of instance %" PRIu64"\n",
-            i);
+            "no found data of instance %" PRIu64"\n", i);
       break;
     }
   }
@@ -117,15 +114,14 @@ void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
 
 void Learner::SendLearnedValue(uint64_t node_id,
                                uint64_t learner_instance_id,
-                               const BallotNumber& learned_ballot,
-                               const std::string& learned_value) {
+                               const AcceptorState& state) {
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(LEARNER_SEND_LEARNED_VALUE);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(learner_instance_id);
-  msg->set_proposal_id(learned_ballot.GetProposalId());
-  msg->set_proposal_node_id(learned_ballot.GetNodeId());
-  msg->set_value(learned_value);
+  msg->set_proposal_id(state.accepted_id());
+  msg->set_proposal_node_id(state.accepted_node_id());
+  msg->set_value(state.accepted_value());
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->SendMessage(node_id, content_ptr);
@@ -134,17 +130,11 @@ void Learner::SendLearnedValue(uint64_t node_id,
 void Learner::OnSendLearnedValue(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_) {
     BallotNumber ballot(msg.proposal_id(), msg.proposal_node_id());
-    int res = WriteToDB(msg.instance_id(), ballot, msg.value(), 0);
+    int res = WriteToDB(msg);
     if (res == 0) {
       FinishLearnValue(msg.value(), ballot);
     }
   }
-}
-
-void Learner::NextInstance() {
-  ++instance_id_;
-  has_learned_ = false;
-  learned_value_.clear();
 }
 
 void Learner::SetHightestInstanceId(uint64_t instance_id,
@@ -155,24 +145,21 @@ void Learner::SetHightestInstanceId(uint64_t instance_id,
   }
 }
 
-int Learner::WriteToDB(uint64_t instance_id,
-                       const BallotNumber& ballot,
-                       const std::string& value,
-                       uint32_t last_checksum) {
+int Learner::WriteToDB(const PaxosMessage& msg) {
   AcceptorState state;
-  state.set_instance_id(instance_id);
-  state.set_promised_id(ballot.GetProposalId());
-  state.set_promised_node_id(ballot.GetNodeId());
-  state.set_accepted_id(ballot.GetProposalId());
-  state.set_accepted_node_id(ballot.GetNodeId());
-  state.set_accepted_value(value);
+  state.set_instance_id(msg.instance_id());
+  state.set_promised_id(msg.proposal_id());
+  state.set_promised_node_id(msg.node_id());
+  state.set_accepted_id(msg.proposal_id());
+  state.set_accepted_node_id(msg.node_id());
+  state.set_accepted_value(msg.value());
 
   WriteOptions options;
   options.sync = false;
 
   std::string s;
   state.SerializeToString(&s);
-  int res = config_->GetDB()->Put(options, instance_id, s);
+  int res = config_->GetDB()->Put(options, msg.instance_id(), s);
   return res;
 }
 
@@ -181,8 +168,7 @@ void Learner::FinishLearnValue(const std::string& value,
   learned_value_ = value;
   has_learned_ = true;
   BroadcastMessageToFollower(ballot);
-  SWLog(INFO,
-        "Learner::FinishLearnValue - learn a new value=%s.\n",
+  SWLog(INFO, "Learner::FinishLearnValue - learn a new value=%s.\n",
         learned_value_.c_str());
 }
 
@@ -197,6 +183,12 @@ void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessageToFollower(content_ptr);
+}
+
+void Learner::NextInstance() {
+  has_learned_ = false;
+  learned_value_.clear();
+  ++instance_id_;
 }
 
 }  // namespace skywalker

@@ -26,13 +26,6 @@ RunLoop::~RunLoop() {
     exit_ = true;
     thread_.Join();
   }
-
-  for (auto v : values_) {
-    delete v;
-  }
-  for (auto c : contents_) {
-    delete c;
-  }
 }
 
 void RunLoop::Loop() {
@@ -44,54 +37,36 @@ void RunLoop::Exit() {
   exit_ = true;
 }
 
-void RunLoop::NewValue(const Slice& value) {
+void RunLoop::QueueInLoop(const Func& func) {
   MutexLock lock(&mutex_);
-  values_.push_back(new std::string(value.data(), value.size()));
+  funcs_.push_back(func);
   cond_.Signal();
 }
 
-void RunLoop::NewContent(Content* content) {
+void RunLoop::QueueInLoop(Func&& func) {
   MutexLock lock(&mutex_);
-  contents_.push_back(content);
+  funcs_.push_back(std::move(func));
   cond_.Signal();
 }
 
 void RunLoop::ThreadFunc() {
   exit_ = false;
   while(!exit_) {
-    Content* content = nullptr;
-    std::string* value = nullptr;
     uint64_t t = timers_.TimeoutMicros() / 1000;
     uint64_t timeout = std::min(t, static_cast<uint64_t>(1000));
-
+    std::vector<Func> funcs;
     {
       MutexLock lock(&mutex_);
       bool wait = true;
-      while (contents_.empty() && values_.empty() && wait) {
+      while (funcs_.empty() && wait) {
         cond_.Wait(timeout);
         wait = false;
       }
-      if (!contents_.empty()) {
-        content = contents_.front();
-        contents_.pop_front();
-      }
-
-      if (!values_.empty()) {
-        value = values_.front();
-        values_.pop_front();
-      }
+      funcs.swap(funcs_);
     }
-
-    if (content != nullptr) {
-      instance_->HandleContent(*content);
-      delete content;
+    for (auto f : funcs) {
+      f();
     }
-
-    if (value != nullptr) {
-      instance_->HandleNewValue(*value);
-      delete value;
-    }
-
     timers_.RunTimerProcs();
   }
 }
@@ -111,7 +86,22 @@ TimerId RunLoop::RunEvery(uint64_t milli_interval,
   return timers_.RunEvery(milli_interval*1000, cb);
 }
 
-void RunLoop::Remove(TimerId t) {
+TimerId RunLoop::RunAt(uint64_t milli_value,
+                       TimerProcCallback&& cb) {
+  return timers_.RunAt(milli_value*1000, std::move(cb));
+}
+
+TimerId RunLoop::RunAfter(uint64_t milli_delay,
+                          TimerProcCallback&& cb) {
+  return timers_.RunAfter(milli_delay*1000, std::move(cb));
+}
+
+TimerId RunLoop::RunEvery(uint64_t milli_interval,
+                          TimerProcCallback&& cb) {
+  return timers_.RunEvery(milli_interval*1000, std::move(cb));
+}
+
+void RunLoop::Remove(const TimerId& t) {
   timers_.Remove(t);
 }
 

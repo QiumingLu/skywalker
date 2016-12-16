@@ -14,14 +14,14 @@ namespace skywalker {
 
 class NodeImpl : public Node {
  public:
-  NodeImpl(const Options& options);
+  explicit NodeImpl(const Options& options);
   virtual ~NodeImpl();
 
   bool StartWorking();
 
   virtual int Propose(uint32_t group_id,
                       const Slice& value,
-                      uint64_t* new_instance_id);
+                      uint64_t* now_instance_id);
 
  private:
   void OnReceiveMessage(const Slice& s);

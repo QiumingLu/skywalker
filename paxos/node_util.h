@@ -1,6 +1,8 @@
 #ifndef SKYWALKER_PAXOS_NODE_UTIL_H_
 #define SKYWALKER_PAXOS_NODE_UTIL_H_
 
+#include <stdint.h>
+
 #include "skywalker/options.h"
 
 namespace skywalker {

@@ -16,7 +16,6 @@ class Learner {
   Learner(Config* config, Instance* instance, Acceptor* acceptor);
 
   void SetInstanceId(uint64_t instance_id) { instance_id_ = instance_id; }
-  uint64_t GetInstanceId() const { return instance_id_; }
 
   void OnNewChosenValue(const PaxosMessage& msg);
   void AskForLearn();
@@ -35,13 +34,10 @@ class Learner {
   void ComfirmAskForLearn(const PaxosMessage& msg);
   void SendLearnedValue(uint64_t node_id,
                         uint64_t learner_instance_id,
-                        const BallotNumber& learned_ballot,
-                        const std::string& learned_value);
-
+                        const AcceptorState& state);
   void SetHightestInstanceId(uint64_t instance_id, uint64_t node_id);
 
-  int WriteToDB(uint64_t instance_id, const BallotNumber& ballot,
-                const std::string& value, uint32_t last_checksum);
+  int WriteToDB(const PaxosMessage& msg);
   void FinishLearnValue(const std::string& value,
                         const BallotNumber& ballot);
   void BroadcastMessageToFollower(const BallotNumber& ballot);

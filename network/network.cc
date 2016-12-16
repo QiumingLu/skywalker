@@ -42,11 +42,11 @@ void Network::StartServer(const IpPort& i,
 
 void Network::SendMessage(uint64_t node_id,
                           const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([this, node_id, content_ptr] () {
+  loop_->QueueInLoop([node_id, content_ptr, this] () {
     std::string s;
     bool res = content_ptr->SerializeToString(&s);
-    s += "\r\n";
     if (res) {
+      s += "\r\n";
       SendMessageInLoop(node_id, s);
     } else {
       SWLog(ERROR,
@@ -83,17 +83,17 @@ void Network::SendMessageInLoop(uint64_t node_id,
     voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
 
     client->SetConnectionCallback(
-        [this, node_id, s](const voyager::TcpConnectionPtr& p) {
+        [node_id, s, this](const voyager::TcpConnectionPtr& p) {
       connection_map_.insert(std::make_pair(node_id, p));
       p->SendMessage(s);
     });
 
-    client->SetConnectFailureCallback([this, client]() {
+    client->SetConnectFailureCallback([client, this]() {
       delete client;
     });
 
     client->SetCloseCallback(
-        [this, node_id, client](const voyager::TcpConnectionPtr& p) {
+        [node_id, client, this](const voyager::TcpConnectionPtr& p) {
       connection_map_.erase(node_id);
       delete client;
     });

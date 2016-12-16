@@ -16,10 +16,9 @@ class Acceptor {
  public:
   Acceptor(Config* config, Instance* instance);
 
-  bool Init();
+  bool Init(uint64_t* instance_id);
 
   void SetInstanceId(uint64_t id) { instance_id_ = id; }
-  uint64_t GetInstanceId() const { return instance_id_; }
 
   const BallotNumber& GetPromisedBallot() const { return promised_ballot_; }
   const BallotNumber& GetAcceptedBallot() const { return accepted_ballot_; }

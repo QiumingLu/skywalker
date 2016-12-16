@@ -1,4 +1,7 @@
 #include "paxos/node_impl.h"
+
+#include <memory>
+
 #include "paxos/node_util.h"
 #include "paxos/paxos.pb.h"
 #include "skywalker/logging.h"
@@ -11,9 +14,8 @@ NodeImpl::NodeImpl(const Options& options)
 }
 
 NodeImpl::~NodeImpl() {
-  for (std::map<uint32_t, Group*>::iterator it = groups_.begin();
-       it != groups_.end(); ++it) {
-    delete it->second;
+  for (auto g : groups_) {
+    delete g.second;
   }
 }
 
@@ -39,26 +41,26 @@ bool NodeImpl::StartWorking() {
 }
 
 int NodeImpl::Propose(uint32_t group_id, const Slice& value,
-                      uint64_t *new_instance_id) {
+                      uint64_t *now_instance_id) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnReceiveValue(value, nullptr, new_instance_id);
+  return groups_[group_id]->OnReceivePropose(value, now_instance_id);
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {
-  Content* content = new Content();
-  content->ParseFromArray(s.data(), static_cast<int>(s.size()));
+  std::shared_ptr<Content> c(new Content());
+  c->ParseFromArray(s.data(), static_cast<int>(s.size()));
 
   SWLog(DEBUG,
         "NodeImpl::OnReceiveMessage - New Content, "
         "which content_type=%d, group_id=%" PRIu32", version=%" PRIu32".\n",
-        content->type(), content->group_id(), content->version());
+        c->type(), c->group_id(), c->version());
 
-  if (groups_.find(content->group_id()) != groups_.end()) {
-    groups_[content->group_id()]->OnReceiveContent(content);
+  if (groups_.find(c->group_id()) != groups_.end()) {
+    groups_[c->group_id()]->OnReceiveContent(c);
   } else {
     SWLog(ERROR,
-          "NodeImpl::OnReceiveMessage - group_id=%" PRIu32" is not right!\n",
-          content->group_id());
+          "NodeImpl::OnReceiveMessage - group_id=%" PRIu32" is wrong!\n",
+          c->group_id());
   }
 }
 

@@ -48,6 +48,7 @@ bool Config::Init() {
           log_storage_path_.c_str());
     return false;
   }
+  loop_->Loop();
   return state_machine_->Init();
 }
 

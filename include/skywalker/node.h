@@ -11,14 +11,14 @@ namespace skywalker {
 class Node {
  public:
   static bool Start(const Options& options,
-                     Node** nodeptr);
+                    Node** nodeptr);
 
   Node() { }
   virtual ~Node() { }
 
   virtual int Propose(uint32_t group_id,
                       const Slice& value,
-                      uint64_t* new_instance_id) = 0;
+                      uint64_t* now_instance_id) = 0;
 
  private:
   // No copying allowed

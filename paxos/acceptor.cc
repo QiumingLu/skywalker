@@ -13,16 +13,11 @@ Acceptor::Acceptor(Config* config, Instance* instance)
       instance_id_(0) {
 }
 
-bool Acceptor::Init() {
-  uint64_t instance_id = 0;
-  int res = ReadFromDB(&instance_id);
+bool Acceptor::Init(uint64_t* instance_id) {
+  int res = ReadFromDB(instance_id);
   if (res != 0) {
     return false;
   }
-
-  instance_id_ = instance_id;
-  SWLog(DEBUG,
-        "Acceptor::Init - now instance_id=%" PRIu64".\n", instance_id_);
   return true;
 }
 
@@ -49,9 +44,8 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     promised_ballot_ =  b;
     int ret = WriteToDB(instance_id_, 0);
     if (ret != 0) {
-      SWLog(ERROR, 
-            "Acceptor::OnPrepare - write instance_id_ = %" PRIu64" to db failed.\n", 
-            instance_id_);
+      SWLog(ERROR, "Acceptor::OnPrepare - "
+            "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
     }
   } else {
     reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
@@ -87,11 +81,9 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
     accepted_value_ = msg.value();
     int ret = WriteToDB(instance_id_, 0);
     if (ret != 0) {
-      SWLog(ERROR,
-            "Acceptor::OnAccpet - write instance_id=%" PRIu64" to db failed.\n",
-            instance_id_);
+      SWLog(ERROR, "Acceptor::OnAccpet - "
+            "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
     }
-
   } else {
     reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
   }
@@ -123,7 +115,6 @@ int Acceptor::ReadFromDB(uint64_t* instance_id) {
   std::string value;
   res = config_->GetDB()->Get(*instance_id, &value);
   if (res !=  0) {
-    *instance_id = 1;
     return res;
   }
 
