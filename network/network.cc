@@ -23,17 +23,6 @@ void Network::StartServer(const IpPort& i,
 
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
-    while (buf->ReadableSize() >= sizeof(int)) {
-      int len = 0;
-      memcpy(&len, buf->Peek(), sizeof(int));
-      if (buf->ReadableSize() >= (sizeof(int) + len)) {
-        cb(Slice(buf->Peek() + sizeof(int), len));
-        buf->Retrieve(len + sizeof(int));
-      } else {
-        break;
-      }
-    }
-    /*
     while (true) {
       const char* crlf = buf->FindCRLF();
       if (crlf) {
@@ -44,7 +33,6 @@ void Network::StartServer(const IpPort& i,
         break;
       }
     }
-    */
   });
 
   server_->Start();
@@ -53,14 +41,11 @@ void Network::StartServer(const IpPort& i,
 void Network::SendMessage(uint64_t node_id,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([node_id, content_ptr, this] () {
-    char len[sizeof(int)] = { 0 };
-    std::string s(len);
-    bool res = content_ptr->AppendToString(&s);
+    std::string s;
+    bool res = content_ptr->SerializeToString(&s);
     if (res) {
       // FIXME
-      int l = static_cast<int>(s.size() - sizeof(int));
-      memcpy(&*(s.begin()), &l, sizeof(int));
-      // s += "\r\n";
+      s += "\r\n";
       SendMessageInLoop(node_id, s);
     } else {
       SWLog(ERROR,
@@ -74,8 +59,9 @@ void Network::SendMessage(const std::set<uint64_t>& nodes,
   loop_->QueueInLoop([this, nodes, content_ptr] () {
     std::string s;
     bool res = content_ptr->SerializeToString(&s);
-    s += "\r\n";
     if (res) {
+      // FIXME
+      s += "\r\n";
       for (auto n : nodes) {
         SendMessageInLoop(n, s);
       }
