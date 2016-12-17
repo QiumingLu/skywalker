@@ -189,9 +189,9 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
 
 bool Instance::MachineExecute(const std::string& value) {
   if (value.size() >= sizeof(int)) {
-    int id = 0;
+    int id = -1;
     memcpy(&id, &*(value.begin()), sizeof(int));
-    if (id != 0) {
+    if (id != -1) {
       assert(machines_.find(id) != machines_.end());
       return machines_[id]->Execute(config_->GetGroupId(), instance_id_, value);
     }
