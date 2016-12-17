@@ -21,9 +21,6 @@ int main(int argc, char** argv) {
     printf("getcwd error\n");
     return -1;
   }
-  printf("%s\n", path);
-
-  //voyager::SetLogHandler(nullptr);
 
   skywalker::Options options;
   options.log_storage_path = std::string(path);

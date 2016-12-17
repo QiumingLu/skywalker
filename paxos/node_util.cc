@@ -9,7 +9,7 @@ namespace skywalker {
 
 uint64_t MakeNodeId(const IpPort& i) {
   uint64_t ip = static_cast<uint64_t>(::inet_addr(i.ip.c_str()));
-  assert(ip != -1);
+  assert(ip != (UINTMAX_MAX - 1));
   uint64_t node_id = (ip << 32) | i.port;
   return node_id;
 }

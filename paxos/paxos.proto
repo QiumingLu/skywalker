@@ -19,7 +19,7 @@ message PaxosMessage {
   uint64 instance_id = 3;
   uint64 proposal_id = 4;
   uint64 proposal_node_id = 5;
-  string value = 6;
+  bytes value = 6;
   uint64 pre_accepted_id = 7;
   uint64 pre_accepted_node_id = 8;
   uint64 reject_for_promised_id = 9;
@@ -49,7 +49,7 @@ message AcceptorState {
   uint64 promised_node_id = 3;
   uint64 accepted_id = 4;
   uint64 accepted_node_id = 5;
-  string accepted_value = 6;
+  bytes accepted_value = 6;
 }
 
 message SystemVariables {

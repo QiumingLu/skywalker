@@ -184,7 +184,7 @@ void Learner::FinishLearnValue(const std::string& value,
   has_learned_ = true;
   BroadcastMessageToFollower(ballot);
   SWLog(INFO, "Learner::FinishLearnValue - learn a new value=%s.\n",
-        learned_value_.c_str());
+        learned_value_.c_str()+sizeof(int));
 }
 
 void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
