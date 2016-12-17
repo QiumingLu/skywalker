@@ -51,11 +51,9 @@ void Instance::RemoveMachine(StateMachine* machine) {
 
 void Instance::HandlePropose(const Slice& value, int machine_id) {
   assert(!is_proposing_);
-  char buf[sizeof(int)];
-  memcpy(buf, &machine_id, sizeof(buf));
 
-  propose_value_ = std::string(buf);
-  propose_value_.append(value.data(), value.size());
+  propose_value_.set_mechine_id(machine_id);
+  propose_value_.set_user_value(value.data(), value.size());
   proposer_.NewPropose(propose_value_);
 
   propose_timer_ = loop_->RunAfter(1000, [this]() {
@@ -91,7 +89,7 @@ void Instance::HandlePaxosMessage(const PaxosMessage& msg) {
         "msg.now_instance_id=%" PRIu64".\n",
         msg.type(), msg.node_id(), msg.instance_id(),
         msg.proposal_id(), msg.proposal_node_id(),
-        msg.value().c_str(),
+        msg.value().user_value().c_str(),
         msg.pre_accepted_id(), msg.pre_accepted_node_id(),
         msg.reject_for_promised_id(),
         msg.now_instance_id());
@@ -164,11 +162,13 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
   }
 
   if (learner_.HasLearned()) {
-    bool success = MachineExecute(learner_.GetLearnedValue());
+    const PaxosValue& learned_value(learner_.GetLearnedValue());
+    bool success = MachineExecute(learned_value);
 
     if (is_proposing_) {
       if (success) {
-        if (propose_value_ == learner_.GetLearnedValue()) {
+       if (propose_value_.mechine_id() == learned_value.mechine_id() &&
+            propose_value_.user_value() == learned_value.user_value()) {
           propose_cb_(0, instance_id_);
         } else {
           propose_cb_(1, instance_id_);
@@ -187,14 +187,12 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
   }
 }
 
-bool Instance::MachineExecute(const std::string& value) {
-  if (value.size() >= sizeof(int)) {
-    int id = -1;
-    memcpy(&id, &*(value.begin()), sizeof(int));
-    if (id != -1) {
-      assert(machines_.find(id) != machines_.end());
-      return machines_[id]->Execute(config_->GetGroupId(), instance_id_, value);
-    }
+bool Instance::MachineExecute(const PaxosValue& value) {
+  int id = value.mechine_id();
+  if (id != -1) {
+    assert(machines_.find(id) != machines_.end());
+    return machines_[id]->Execute(config_->GetGroupId(),
+                                  instance_id_, value.user_value());
   }
   return true;
 }

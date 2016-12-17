@@ -39,10 +39,10 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     reply_msg->set_pre_accepted_id(accepted_ballot_.GetProposalId());
     reply_msg->set_pre_accepted_node_id(accepted_ballot_.GetNodeId());
     if (accepted_ballot_.GetProposalId() > 0) {
-      reply_msg->set_value(accepted_value_);
+      reply_msg->set_allocated_value(new PaxosValue(accepted_value_));
     }
     promised_ballot_ =  b;
-    int ret = WriteToDB(instance_id_, 0);
+    int ret = WriteToDB(instance_id_);
     if (ret != 0) {
       SWLog(ERROR, "Acceptor::OnPrepare - "
             "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
@@ -79,7 +79,7 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
     promised_ballot_ = b;
     accepted_ballot_ = b;
     accepted_value_ = msg.value();
-    int ret = WriteToDB(instance_id_, 0);
+    int ret = WriteToDB(instance_id_);
     if (ret != 0) {
       SWLog(ERROR, "Acceptor::OnAccpet - "
             "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
@@ -102,7 +102,7 @@ void Acceptor::NextInstance() {
   ++instance_id_;
   promised_ballot_.Reset();
   accepted_ballot_.Reset();
-  accepted_value_.clear();
+  accepted_value_.Clear();
 }
 
 int Acceptor::ReadFromDB(uint64_t* instance_id) {
@@ -112,30 +112,30 @@ int Acceptor::ReadFromDB(uint64_t* instance_id) {
     return 0;
   }
 
-  std::string value;
-  res = config_->GetDB()->Get(*instance_id, &value);
+  std::string s;
+  res = config_->GetDB()->Get(*instance_id, &s);
   if (res !=  0) {
     return res;
   }
 
   AcceptorState state;
-  state.ParseFromString(value);
+  state.ParseFromString(s);
   promised_ballot_.SetProposalId(state.promised_id());
   promised_ballot_.SetNodeId(state.promised_node_id());
   accepted_ballot_.SetProposalId(state.accepted_id());
   accepted_ballot_.SetNodeId(state.accepted_node_id());
-  accepted_value_ = std::move(state.accepted_value());
+  accepted_value_ = state.accepted_value();
   return 0;
 }
 
-int Acceptor::WriteToDB(uint64_t instance_id, uint32_t last_checksum) {
+int Acceptor::WriteToDB(uint64_t instance_id) {
   AcceptorState state;
   state.set_instance_id(instance_id);
   state.set_promised_id(promised_ballot_.GetProposalId());
   state.set_promised_node_id(promised_ballot_.GetNodeId());
   state.set_accepted_id(accepted_ballot_.GetProposalId());
   state.set_accepted_node_id(accepted_ballot_.GetNodeId());
-  state.set_accepted_value(accepted_value_);
+  state.set_allocated_accepted_value(new PaxosValue(accepted_value_));
   WriteOptions options;
   options.sync = config_->LogSync();
   if (options.sync) {
@@ -147,9 +147,9 @@ int Acceptor::WriteToDB(uint64_t instance_id, uint32_t last_checksum) {
     }
   }
 
-  std::string value;
-  state.SerializeToString(&value);
-  int ret = config_->GetDB()->Put(options, instance_id, value);
+  std::string s;
+  state.SerializeToString(&s);
+  int ret = config_->GetDB()->Put(options, instance_id, s);
   return ret;
 }
 

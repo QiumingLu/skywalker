@@ -13,17 +13,22 @@ enum MessageType {
   COMFIRM_ASK_FOR_LEARN = 8;
 }
 
+message PaxosValue {
+  int32 mechine_id = 1;
+  string user_value = 2;
+}
+
 message PaxosMessage {
   MessageType type = 1;
   uint64 node_id = 2;
   uint64 instance_id = 3;
   uint64 proposal_id = 4;
   uint64 proposal_node_id = 5;
-  bytes value = 6;
-  uint64 pre_accepted_id = 7;
-  uint64 pre_accepted_node_id = 8;
-  uint64 reject_for_promised_id = 9;
-  uint64 now_instance_id = 10;
+  uint64 pre_accepted_id = 6;
+  uint64 pre_accepted_node_id = 7;
+  uint64 reject_for_promised_id = 8;
+  uint64 now_instance_id = 9;
+  PaxosValue value = 10;
 }
 
 message CheckPointMessage {
@@ -49,7 +54,7 @@ message AcceptorState {
   uint64 promised_node_id = 3;
   uint64 accepted_id = 4;
   uint64 accepted_node_id = 5;
-  bytes accepted_value = 6;
+  PaxosValue accepted_value = 6;
 }
 
 message SystemVariables {

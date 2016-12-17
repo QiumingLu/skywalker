@@ -27,7 +27,7 @@ class Learner {
   void OnSendLearnedValue(const PaxosMessage& msg);
 
   bool HasLearned() const { return has_learned_; }
-  const std::string& GetLearnedValue() const { return learned_value_; }
+  const PaxosValue& GetLearnedValue() const { return learned_value_; }
 
   void NextInstance();
 
@@ -42,7 +42,7 @@ class Learner {
   void SetHightestInstanceId(uint64_t instance_id, uint64_t node_id);
 
   int WriteToDB(const PaxosMessage& msg);
-  void FinishLearnValue(const std::string& value,
+  void FinishLearnValue(const PaxosValue& value,
                         const BallotNumber& ballot);
   void BroadcastMessageToFollower(const BallotNumber& ballot);
 
@@ -57,7 +57,7 @@ class Learner {
 
   bool is_learning_;
   bool has_learned_;
-  std::string learned_value_;
+  PaxosValue learned_value_;
 
   bool bg_run_;
   RunLoop bg_loop_;

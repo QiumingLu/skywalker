@@ -22,7 +22,7 @@ class Proposer {
   void SetStartProposalId(uint64_t id) { proposal_id_ = id; }
   void SetNoSkipPrepare() { skip_prepare_ = false; }
 
-  void NewPropose(const std::string& value);
+  void NewPropose(const PaxosValue& value);
 
   void OnPrepareReply(const PaxosMessage& msg);
   void OnAccpetReply(const PaxosMessage& msg);
@@ -48,7 +48,7 @@ class Proposer {
 
   uint64_t instance_id_;
   uint64_t proposal_id_;
-  std::string value_;
+  PaxosValue value_;
 
   Counter counter_;
 

@@ -47,7 +47,7 @@ class Instance {
   void ProposerHandleMessage(const PaxosMessage& msg);
   void LearnerHandleMessage(const PaxosMessage& msg);
 
-  bool MachineExecute(const std::string& value);
+  bool MachineExecute(const PaxosValue& value);
 
   void NextInstance();
 
@@ -60,7 +60,7 @@ class Instance {
   uint64_t instance_id_;
 
   bool is_proposing_;
-  std::string propose_value_;
+  PaxosValue propose_value_;
   ProposeCompleteCallback propose_cb_;
   Random rand_;
 

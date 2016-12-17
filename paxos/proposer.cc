@@ -21,7 +21,7 @@ Proposer::Proposer(Config* config, Instance* instance)
       rand_(301) {
 }
 
-void Proposer::NewPropose(const std::string& value) {
+void Proposer::NewPropose(const PaxosValue& value) {
   value_ = value;
 
   if (skip_prepare_ && !was_rejected_by_someone_) {
@@ -57,7 +57,7 @@ void Proposer::Prepare(bool need_new_ballot) {
         "node_id=%" PRIu64", instance_id=%" PRIu64", "
         "proposal_id=%" PRIu64", value=%s.\n",
         config_->GetNodeId(), instance_id_,
-        proposal_id_, value_.c_str());
+        proposal_id_, value_.user_value().c_str());
 
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
@@ -77,7 +77,7 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
         "value=%s.\n",
         msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id(),
         msg.pre_accepted_id(), msg.pre_accepted_node_id(),
-        msg.value().c_str());
+        msg.value().user_value().c_str());
 
   if (preparing_) {
     if (msg.proposal_id() == proposal_id_) {
@@ -117,7 +117,8 @@ void Proposer::Accept() {
         "Proposer::Accept - start to accept, "
         "now node_id=%" PRIu64", instance_id=%" PRIu64", "
         "proposal_id=%" PRIu64", value=%s.\n",
-        config_->GetNodeId(), instance_id_, proposal_id_, value_.c_str());
+        config_->GetNodeId(), instance_id_, proposal_id_,
+        value_.user_value().c_str());
 
   preparing_ = false;
   accepting_ = true;
@@ -127,7 +128,7 @@ void Proposer::Accept() {
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   msg->set_proposal_id(proposal_id_);
-  msg->set_value(value_);
+  msg->set_allocated_value(new PaxosValue(value_));
 
   counter_.StartNewRound();
 
@@ -180,8 +181,8 @@ void Proposer::NewChosenValue() {
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   msg->set_proposal_id(proposal_id_);
-  if (value_.size() <= 128) {
-    msg->set_value(value_);
+  if (value_.ByteSizeLong() <= 128) {
+    msg->set_allocated_value(new PaxosValue(value_));
   }
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);

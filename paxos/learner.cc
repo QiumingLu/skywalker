@@ -26,7 +26,7 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
     BallotNumber ballot(msg.proposal_id(), msg.node_id());
     if (ballot == b) {
       FinishLearnValue(acceptor_->GetAcceptedValue(), b);
-    } else if (!(msg.value().empty())) {
+    } else if (!msg.has_value()) {
       int res = WriteToDB(msg);
       if (res == 0) {
         FinishLearnValue(msg.value(), b);
@@ -136,7 +136,7 @@ void Learner::SendLearnedValue(uint64_t node_id,
   msg->set_instance_id(learner_instance_id);
   msg->set_proposal_id(state.accepted_id());
   msg->set_proposal_node_id(state.accepted_node_id());
-  msg->set_value(state.accepted_value());
+  msg->set_allocated_value(new PaxosValue(state.accepted_value()));
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->SendMessage(node_id, content_ptr);
@@ -167,7 +167,7 @@ int Learner::WriteToDB(const PaxosMessage& msg) {
   state.set_promised_node_id(msg.node_id());
   state.set_accepted_id(msg.proposal_id());
   state.set_accepted_node_id(msg.node_id());
-  state.set_accepted_value(msg.value());
+  state.set_allocated_accepted_value(new PaxosValue(msg.value()));
 
   WriteOptions options;
   options.sync = false;
@@ -178,13 +178,13 @@ int Learner::WriteToDB(const PaxosMessage& msg) {
   return res;
 }
 
-void Learner::FinishLearnValue(const std::string& value,
+void Learner::FinishLearnValue(const PaxosValue& value,
                                const BallotNumber& ballot) {
   learned_value_ = value;
   has_learned_ = true;
   BroadcastMessageToFollower(ballot);
   SWLog(INFO, "Learner::FinishLearnValue - learn a new value=%s.\n",
-        learned_value_.c_str()+sizeof(int));
+        learned_value_.user_value().c_str());
 }
 
 void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
@@ -194,7 +194,7 @@ void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
   msg->set_instance_id(instance_id_);
   msg->set_proposal_id(ballot.GetProposalId());
   msg->set_proposal_node_id(ballot.GetNodeId());
-  msg->set_value(learned_value_);
+  msg->set_allocated_value(new PaxosValue(learned_value_));
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
   messager_->BroadcastMessageToFollower(content_ptr);
@@ -202,7 +202,7 @@ void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
 
 void Learner::NextInstance() {
   has_learned_ = false;
-  learned_value_.clear();
+  learned_value_.Clear();
   ++instance_id_;
 }
 

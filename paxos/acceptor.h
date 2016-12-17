@@ -26,13 +26,13 @@ class Acceptor {
   void OnPrepare(const PaxosMessage& msg);
   void OnAccpet(const PaxosMessage& msg);
 
-  const std::string& GetAcceptedValue() const { return accepted_value_; }
+  const PaxosValue& GetAcceptedValue() const { return accepted_value_; }
 
   void NextInstance();
 
  private:
   int ReadFromDB(uint64_t* instance_id);
-  int WriteToDB(uint64_t instance_id, uint32_t last_checksum);
+  int WriteToDB(uint64_t instance_id);
 
   uint32_t log_sync_count_;
 
@@ -44,7 +44,7 @@ class Acceptor {
   BallotNumber accepted_ballot_;
 
   uint64_t instance_id_;
-  std::string accepted_value_;
+  PaxosValue accepted_value_;
 
   // No copying allowed
   Acceptor(const Acceptor&);
