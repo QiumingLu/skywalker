@@ -53,7 +53,7 @@ void Instance::HandlePropose(const Slice& value, int machine_id) {
   assert(!is_proposing_);
 
   propose_value_.set_mechine_id(machine_id);
-  propose_value_.set_user_value(value.data(), value.size());
+  propose_value_.set_user_data(value.data(), value.size());
   proposer_.NewPropose(propose_value_);
 
   propose_timer_ = loop_->RunAfter(1000, [this]() {
@@ -89,7 +89,7 @@ void Instance::HandlePaxosMessage(const PaxosMessage& msg) {
         "msg.now_instance_id=%" PRIu64".\n",
         msg.type(), msg.node_id(), msg.instance_id(),
         msg.proposal_id(), msg.proposal_node_id(),
-        msg.value().user_value().c_str(),
+        msg.value().user_data().c_str(),
         msg.pre_accepted_id(), msg.pre_accepted_node_id(),
         msg.reject_for_promised_id(),
         msg.now_instance_id());
@@ -168,7 +168,7 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
     if (is_proposing_) {
       if (success) {
        if (propose_value_.mechine_id() == learned_value.mechine_id() &&
-            propose_value_.user_value() == learned_value.user_value()) {
+           propose_value_.user_data() == learned_value.user_data()) {
           propose_cb_(0, instance_id_);
         } else {
           propose_cb_(1, instance_id_);
@@ -192,7 +192,7 @@ bool Instance::MachineExecute(const PaxosValue& value) {
   if (id != -1) {
     assert(machines_.find(id) != machines_.end());
     return machines_[id]->Execute(config_->GetGroupId(),
-                                  instance_id_, value.user_value());
+                                  instance_id_, value.user_data());
   }
   return true;
 }

@@ -1,7 +1,7 @@
 #include "network/network.h"
 #include "skywalker/logging.h"
 #include "paxos/node_util.h"
-
+#include <string.h>
 namespace skywalker {
 
 Network::Network()
@@ -23,18 +23,28 @@ void Network::StartServer(const IpPort& i,
 
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
-    size_t size = buf->ReadableSize();
-    while (size > sizeof(int)) {
-      const char* crlf = buf->FindCRLF();
-      if (crlf) {
-        size_t len = crlf - buf->Peek();
-        cb(Slice(buf->Peek(), len));
-        buf->RetrieveUntil(crlf + 2);
-        size = buf->ReadableSize();
+    while (buf->ReadableSize() >= sizeof(int)) {
+      int len = 0;
+      memcpy(&len, buf->Peek(), sizeof(int));
+      if (buf->ReadableSize() >= (sizeof(int) + len)) {
+        cb(Slice(buf->Peek() + sizeof(int), len));
+        buf->Retrieve(len + sizeof(int));
       } else {
         break;
       }
     }
+    /*
+    while (true) {
+      const char* crlf = buf->FindCRLF();
+      if (crlf) {
+        size_t len = crlf - buf->Peek();
+        cb(Slice(buf->Peek(), len));
+        buf->Retrieve(len + 2);
+      } else {
+        break;
+      }
+    }
+    */
   });
 
   server_->Start();
@@ -43,10 +53,14 @@ void Network::StartServer(const IpPort& i,
 void Network::SendMessage(uint64_t node_id,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([node_id, content_ptr, this] () {
-    std::string s;
-    bool res = content_ptr->SerializeToString(&s);
+    char len[sizeof(int)] = { 0 };
+    std::string s(len);
+    bool res = content_ptr->AppendToString(&s);
     if (res) {
-      s += "\r\n";
+      // FIXME
+      int l = static_cast<int>(s.size() - sizeof(int));
+      memcpy(&*(s.begin()), &l, sizeof(int));
+      // s += "\r\n";
       SendMessageInLoop(node_id, s);
     } else {
       SWLog(ERROR,

@@ -57,7 +57,7 @@ void Proposer::Prepare(bool need_new_ballot) {
         "node_id=%" PRIu64", instance_id=%" PRIu64", "
         "proposal_id=%" PRIu64", value=%s.\n",
         config_->GetNodeId(), instance_id_,
-        proposal_id_, value_.user_value().c_str());
+        proposal_id_, value_.user_data().c_str());
 
   std::shared_ptr<Content> content_ptr =
       messager_->PackMessage(PAXOS_MESSAGE, msg, nullptr);
@@ -77,7 +77,7 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
         "value=%s.\n",
         msg.node_id(), msg.proposal_id(), msg.reject_for_promised_id(),
         msg.pre_accepted_id(), msg.pre_accepted_node_id(),
-        msg.value().user_value().c_str());
+        msg.value().user_data().c_str());
 
   if (preparing_) {
     if (msg.proposal_id() == proposal_id_) {
@@ -118,7 +118,7 @@ void Proposer::Accept() {
         "now node_id=%" PRIu64", instance_id=%" PRIu64", "
         "proposal_id=%" PRIu64", value=%s.\n",
         config_->GetNodeId(), instance_id_, proposal_id_,
-        value_.user_value().c_str());
+        value_.user_data().c_str());
 
   preparing_ = false;
   accepting_ = true;
