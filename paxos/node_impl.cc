@@ -40,10 +40,18 @@ bool NodeImpl::StartWorking() {
   return ret;
 }
 
+void NodeImpl::AddMachine(uint32_t group_id, StateMachine* machine) {
+  groups_[group_id]->AddMachine(machine);
+}
+
+void NodeImpl::RemoveMachine(uint32_t group_id, StateMachine* machine) {
+  groups_[group_id]->RemoveMachine(machine);
+}
+
 int NodeImpl::Propose(uint32_t group_id, const Slice& value,
-                      uint64_t *now_instance_id) {
+                      uint64_t *instance_id, int machine_id) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnReceivePropose(value, now_instance_id);
+  return groups_[group_id]->OnReceivePropose(value, instance_id, machine_id);
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {

@@ -19,27 +19,38 @@ bool Group::Start() {
     ret = instance_.Init();
     if (ret) {
       instance_.SetProposeCompleteCallback(
-          std::bind(&Group::ProposeComplete, this, std::placeholders::_1));
+          std::bind(&Group::ProposeComplete, this,
+                    std::placeholders::_1, std::placeholders::_2));
+      instance_.AddMachine(config_.GetMachine());
     }
   }
   return ret;
 }
 
+void Group::AddMachine(StateMachine* machine) {
+  instance_.AddMachine(machine);
+}
+
+void Group::RemoveMachine(StateMachine* machine) {
+  instance_.RemoveMachine(machine);
+}
+
 int Group::OnReceivePropose(const Slice& value,
-                            uint64_t* now_instance_id) {
+                            uint64_t* instance_id,
+                            int machine_id) {
   MutexLock lock(&mutex_);
   propose_end_ = false;
   instance_id_ = 0;
   result_ = -1;
-  loop_->QueueInLoop([value, this]() {
-    instance_.HandlePropose(value);
+  loop_->QueueInLoop([value, machine_id, this]() {
+    instance_.HandlePropose(value, machine_id);
   });
 
   while (!propose_end_) {
     cond_.Wait();
   }
 
-  *now_instance_id = instance_id_;
+  *instance_id = instance_id_;
   return result_;
 }
 
@@ -49,7 +60,7 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
   });
 }
 
-void Group::ProposeComplete(int result) {
+void Group::ProposeComplete(int result, uint64_t instance_id) {
   MutexLock lock(&mutex_);
   if (result == 0) {
     SWLog(INFO, "Group::OnReceivePropose - propose new value success.\n");
@@ -57,11 +68,13 @@ void Group::ProposeComplete(int result) {
     SWLog(INFO,
           "Group::OnReceivePropose - propose new value failed! "
           "Because another value has been chosen.\n");
+  } else if (result == 2) {
+    SWLog(INFO, "Group::OnReceivePropose - machines execute failed!\n");
   } else {
     SWLog(INFO, "Group::OnReceivePropose - propose new value timeout.\n");
   }
   result_ = result;
-  instance_id_ = instance_.GetInstanceId();
+  instance_id_ = instance_id;
   propose_end_ = true;
   cond_.Signal();
 }

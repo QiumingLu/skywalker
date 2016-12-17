@@ -2,12 +2,11 @@
 #define SKYWALKER_PAXOS_CONFIG_H_
 
 #include <stdint.h>
-#include <stddef.h>
 #include <set>
 
 #include "network/messager.h"
 #include "storage/db.h"
-#include "machine/state_machine_impl.h"
+#include "machine/inside_machine.h"
 #include "skywalker/options.h"
 #include "paxos/runloop.h"
 
@@ -23,7 +22,7 @@ class Config {
 
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }
-  StateMachineImpl* GetStateMachine() const { return state_machine_; }
+  InsideMachine* GetMachine() const { return machine_; }
   RunLoop* GetLoop() const { return loop_; }
 
   bool LogSync() const { return log_sync_; }
@@ -58,7 +57,7 @@ class Config {
 
   DB* db_;
   Messager* messager_;
-  StateMachineImpl* state_machine_;
+  InsideMachine* machine_;
   RunLoop* loop_;
 
   // No copying allowed

@@ -6,7 +6,6 @@
 #include "paxos/paxos.pb.h"
 #include "util/timerlist.h"
 #include "util/random.h"
-#include "skywalker/slice.h"
 
 namespace skywalker {
 
@@ -23,7 +22,7 @@ class Proposer {
   void SetStartProposalId(uint64_t id) { proposal_id_ = id; }
   void SetNoSkipPrepare() { skip_prepare_ = false; }
 
-  void NewPropose(const Slice& value);
+  void NewPropose(const std::string& value);
 
   void OnPrepareReply(const PaxosMessage& msg);
   void OnAccpetReply(const PaxosMessage& msg);

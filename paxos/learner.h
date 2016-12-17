@@ -38,6 +38,7 @@ class Learner {
   void SendLearnedValue(uint64_t node_id,
                         uint64_t learner_instance_id,
                         const AcceptorState& state);
+
   void SetHightestInstanceId(uint64_t instance_id, uint64_t node_id);
 
   int WriteToDB(const PaxosMessage& msg);

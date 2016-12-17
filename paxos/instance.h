@@ -2,6 +2,8 @@
 #define SKYWALKER_PAXOS_INSTANCE_H_
 
 #include <functional>
+#include <map>
+#include <string>
 
 #include "paxos/acceptor.h"
 #include "paxos/learner.h"
@@ -20,20 +22,21 @@ class RunLoop;
 
 class Instance {
  public:
-  typedef std::function<void (int)> ProposeCompleteCallback;
+  typedef std::function<void (int, uint64_t)> ProposeCompleteCallback;
 
   explicit Instance(Config* config);
   ~Instance();
 
   bool Init();
 
-  uint64_t GetInstanceId() const { return instance_id_; }
+  void AddMachine(StateMachine* machine);
+  void RemoveMachine(StateMachine* machine);
 
   void SetProposeCompleteCallback(const ProposeCompleteCallback& cb) {
     propose_cb_ = cb;
   }
 
-  void HandlePropose(const Slice& value);
+  void HandlePropose(const Slice& value, int machine_id = -1);
   void HandleContent(const std::shared_ptr<Content>& c);
 
   void HandlePaxosMessage(const PaxosMessage& msg);
@@ -41,11 +44,10 @@ class Instance {
 
  private:
   void AcceptorHandleMessage(const PaxosMessage& msg);
-  void LearnerHandleMessage(const PaxosMessage& msg);
   void ProposerHandleMessage(const PaxosMessage& msg);
+  void LearnerHandleMessage(const PaxosMessage& msg);
 
-  bool MachineExecute(uint64_t instance_id, const Slice& value,
-                      bool my_proposal, MachineContext* context);
+  bool MachineExecute(const std::string& value);
 
   void NextInstance();
 
@@ -58,12 +60,14 @@ class Instance {
   uint64_t instance_id_;
 
   bool is_proposing_;
-  Slice propose_value_;
+  std::string propose_value_;
   ProposeCompleteCallback propose_cb_;
   Random rand_;
 
   TimerId propose_timer_;
   TimerId learn_timer_;
+
+  std::map<uint32_t, StateMachine*> machines_;
 
   // No copying allowed
   Instance(const Instance&);

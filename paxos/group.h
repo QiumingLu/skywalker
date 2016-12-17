@@ -21,13 +21,17 @@ class Group {
 
   bool Start();
 
+  void AddMachine(StateMachine* machine);
+  void RemoveMachine(StateMachine* machine);
+
   int OnReceivePropose(const Slice& value,
-                       uint64_t* now_instance_id);
+                       uint64_t* instance_id,
+                       int machine_id = -1);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
  private:
-  void ProposeComplete(int result);
+  void ProposeComplete(int result, uint64_t instance_id);
 
   Config config_;
   Instance instance_;

@@ -21,8 +21,8 @@ Proposer::Proposer(Config* config, Instance* instance)
       rand_(301) {
 }
 
-void Proposer::NewPropose(const Slice& value) {
-  value_ = value.ToString();
+void Proposer::NewPropose(const std::string& value) {
+  value_ = value;
 
   if (skip_prepare_ && !was_rejected_by_someone_) {
     Accept();

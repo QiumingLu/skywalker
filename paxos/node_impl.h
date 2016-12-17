@@ -19,9 +19,13 @@ class NodeImpl : public Node {
 
   bool StartWorking();
 
+  virtual void AddMachine(uint32_t group_id, StateMachine* machine);
+  virtual void RemoveMachine(uint32_t group_id, StateMachine* machine);
+
   virtual int Propose(uint32_t group_id,
                       const Slice& value,
-                      uint64_t* now_instance_id);
+                      uint64_t* instance_id,
+                      int machine_id = -1);
 
  private:
   void OnReceiveMessage(const Slice& s);

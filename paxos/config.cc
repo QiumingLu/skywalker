@@ -13,7 +13,7 @@ Config::Config(uint32_t group_id, uint64_t node_id,
       sync_interval_(options.sync_interval),
       db_(new DB()),
       messager_(new Messager(this, network)),
-      state_machine_(new StateMachineImpl(this)),
+      machine_(new InsideMachine(this)),
       loop_(new RunLoop()) {
 
   char name[8];
@@ -36,20 +36,23 @@ Config::Config(uint32_t group_id, uint64_t node_id,
 
 Config::~Config() {
   delete loop_;
-  delete state_machine_;
+  delete machine_;
   delete messager_;
   delete db_;
 }
 
 bool Config::Init() {
- int ret = db_->Open(group_id_, log_storage_path_);
+  int ret = db_->Open(group_id_, log_storage_path_);
   if (ret != 0) {
-    SWLog(ERROR, "Config::Init - db open failed, which path is %s",
+    SWLog(ERROR, "Config::Init - db open failed, which path is %s\n",
           log_storage_path_.c_str());
     return false;
   }
-  loop_->Loop();
-  return state_machine_->Init();
+  bool b = machine_->Init();
+  if (b) {
+    loop_->Loop();
+  }
+  return b;
 }
 
 bool Config::IsValidNodeId(uint64_t node_id) const {

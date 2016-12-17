@@ -41,23 +41,42 @@ bool Instance::Init() {
   return ret;
 }
 
-void Instance::HandlePropose(const Slice& value) {
+void Instance::AddMachine(StateMachine* machine) {
+  machines_.insert(std::make_pair(machine->GetMachineId(), machine));
+}
+
+void Instance::RemoveMachine(StateMachine* machine) {
+  machines_.erase(machine->GetMachineId());
+}
+
+void Instance::HandlePropose(const Slice& value, int machine_id) {
   assert(!is_proposing_);
-  propose_value_ = value;
-  proposer_.NewPropose(value);
+  char buf[sizeof(int)];
+  memcpy(buf, &machine_id, sizeof(buf));
+
+  propose_value_ = std::string(buf);
+  propose_value_.append(value.data(), value.size());
+  proposer_.NewPropose(propose_value_);
+
   propose_timer_ = loop_->RunAfter(1000, [this]() {
     proposer_.QuitPropose();
     is_proposing_ = false;
-    propose_cb_(-1);
+    propose_cb_(-1, instance_id_);
   });
   is_proposing_ = true;
 }
 
 void Instance::HandleContent(const std::shared_ptr<Content>& c) {
-  if (c->type() == PAXOS_MESSAGE) {
-    HandlePaxosMessage(c->paxos_msg());
-  } else if (c->type() == CHECKPOINT_MESSAGE) {
-    HandleCheckPointMessage(c->checkpoint_msg());
+  switch(c->type()) {
+    case PAXOS_MESSAGE:
+      HandlePaxosMessage(c->paxos_msg());
+      break;
+    case CHECKPOINT_MESSAGE:
+      HandleCheckPointMessage(c->checkpoint_msg());
+      break;
+    default:
+      SWLog(ERROR, "Instance::HandleContent - Invalid content type.\n");
+      break;
   }
 }
 
@@ -78,37 +97,21 @@ void Instance::HandlePaxosMessage(const PaxosMessage& msg) {
         msg.now_instance_id());
 
   switch(msg.type()) {
-    case PREPARE_REPLY:
-    case ACCEPT_REPLY:
-      ProposerHandleMessage(msg);
-      break;
     case PREPARE:
     case ACCEPT:
       AcceptorHandleMessage(msg);
       break;
-   default:
+    case PREPARE_REPLY:
+    case ACCEPT_REPLY:
+      ProposerHandleMessage(msg);
+      break;
+    default:
       LearnerHandleMessage(msg);
       break;
   }
 }
 
 void Instance::HandleCheckPointMessage(const CheckPointMessage& msg) {
-}
-
-void Instance::ProposerHandleMessage(const PaxosMessage& msg) {
-  if (msg.instance_id() == instance_id_) {
-    if (msg.type() == PREPARE_REPLY) {
-      proposer_.OnPrepareReply(msg);
-    } else if (msg.type() == ACCEPT_REPLY) {
-      proposer_.OnAccpetReply(msg);
-    }
-  } else {
-    SWLog(DEBUG,
-          "Instance::ProposerHandleMessage - "
-          "now instance_id=%" PRIu64", but msg.instance_id=%" PRIu64", "
-          "they are not same, so skip this msg\n",
-          instance_id_, msg.instance_id());
-  }
 }
 
 void Instance::AcceptorHandleMessage(const PaxosMessage& msg) {
@@ -128,21 +131,31 @@ void Instance::AcceptorHandleMessage(const PaxosMessage& msg) {
   }
 }
 
+void Instance::ProposerHandleMessage(const PaxosMessage& msg) {
+  if (msg.instance_id() == instance_id_) {
+    if (msg.type() == PREPARE_REPLY) {
+      proposer_.OnPrepareReply(msg);
+    } else if (msg.type() == ACCEPT_REPLY) {
+      proposer_.OnAccpetReply(msg);
+    }
+  }
+}
+
 void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
   switch(msg.type()) {
     case NEW_CHOSEN_VALUE:
       learner_.OnNewChosenValue(msg);
       break;
-    case LEARNER_ASK_FOR_LEARN:
+    case ASK_FOR_LEARN:
       learner_.OnAskForLearn(msg);
       break;
-    case LEARNER_SEND_LEARNED_VALUE:
+    case SEND_LEARNED_VALUE:
       learner_.OnSendLearnedValue(msg);
       break;
-    case LEARNER_SEND_NOW_INSTANCE_ID:
+    case SEND_NOW_INSTANCE_ID:
       learner_.OnSendNowInstanceId(msg);
       break;
-    case LEARNER_COMFIRM_ASK_FOR_LEARN:
+    case COMFIRM_ASK_FOR_LEARN:
       learner_.OnComfirmAskForLearn(msg);
       break;
     default:
@@ -151,17 +164,39 @@ void Instance::LearnerHandleMessage(const PaxosMessage& msg) {
   }
 
   if (learner_.HasLearned()) {
+    bool success = MachineExecute(learner_.GetLearnedValue());
+
     if (is_proposing_) {
-      int res = 0;
-      if (propose_value_ != learner_.GetLearnedValue()) {
-        res = 1;
+      if (success) {
+        if (propose_value_ == learner_.GetLearnedValue()) {
+          propose_cb_(0, instance_id_);
+        } else {
+          propose_cb_(1, instance_id_);
+        }
+      } else {
+        propose_cb_(2, instance_id_);
+        proposer_.SetNoSkipPrepare();
       }
-      propose_cb_(res);
       loop_->Remove(propose_timer_);
       is_proposing_ = false;
     }
-    NextInstance();
+
+    if (success) {
+      NextInstance();
+    }
   }
+}
+
+bool Instance::MachineExecute(const std::string& value) {
+  if (value.size() >= sizeof(int)) {
+    int id = 0;
+    memcpy(&id, &*(value.begin()), sizeof(int));
+    if (id != 0) {
+      assert(machines_.find(id) != machines_.end());
+      return machines_[id]->Execute(config_->GetGroupId(), instance_id_, value);
+    }
+  }
+  return true;
 }
 
 void Instance::NextInstance() {
@@ -169,15 +204,8 @@ void Instance::NextInstance() {
   acceptor_.NextInstance();
   proposer_.NextInstance();
   learner_.NextInstance();
-  SWLog(INFO,
-        "Instance::NextInstance - "
-        "New instance is starting, Now instance_id=%" PRIu64".\n",
-        instance_id_);
-}
-
-bool Instance::MachineExecute(uint64_t instance_id, const Slice& value,
-                              bool my_proposal, MachineContext* context) {
-  return true;
+  SWLog(INFO, "Instance::NextInstance - New instance is starting, "
+        "Now instance_id=%" PRIu64".\n", instance_id_);
 }
 
 }  // namespace skywalker

@@ -6,24 +6,19 @@
 
 namespace skywalker {
 
-struct MachineContext {
-  uint32_t machine_id;
-  void* context;
-};
-
 class StateMachine {
  public:
   StateMachine();
-  virtual ~StateMachine();
+  virtual ~StateMachine() { }
+
+  int GetMachineId() const { return id_; }
 
   virtual bool Execute(uint32_t group_idx,
                        uint64_t instance_id,
-                       const std::string& value,
-                       MachineContext* context) = 0;
-
-  virtual uint32_t GetMachineId() const = 0;
-
+                       const std::string& value) = 0;
  private:
+  int id_;
+
   // No copying allowed
   StateMachine(const StateMachine&);
   void operator=(const StateMachine&);

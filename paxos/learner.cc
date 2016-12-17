@@ -39,7 +39,7 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
 void Learner::AskForLearn() {
   is_learning_ = false;
   PaxosMessage* msg = new PaxosMessage();
-  msg->set_type(LEARNER_ASK_FOR_LEARN);
+  msg->set_type(ASK_FOR_LEARN);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   std::shared_ptr<Content> content_ptr =
@@ -49,6 +49,7 @@ void Learner::AskForLearn() {
   config_->GetLoop()->RunAfter(30000 + rand_.Uniform(10000), [this]() {
     AskForLearn();
   });
+
   if (!bg_run_) {
     bg_run_ = true;
     bg_loop_.Loop();
@@ -74,7 +75,7 @@ void Learner::OnAskForLearn(const PaxosMessage& msg) {
 
 void Learner::SendNowInstanceId(const PaxosMessage& msg) {
   PaxosMessage* reply_msg = new PaxosMessage();
-  reply_msg->set_type(LEARNER_SEND_NOW_INSTANCE_ID);
+  reply_msg->set_type(SEND_NOW_INSTANCE_ID);
   reply_msg->set_node_id(config_->GetNodeId());
   reply_msg->set_instance_id(msg.instance_id());
   reply_msg->set_now_instance_id(instance_id_);
@@ -84,20 +85,19 @@ void Learner::SendNowInstanceId(const PaxosMessage& msg) {
 }
 
 void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
- if (msg.instance_id() == instance_id_ &&
-     msg.now_instance_id() > instance_id_) {
+  if (msg.instance_id() == instance_id_ &&
+      msg.now_instance_id() > instance_id_) {
     if (!is_learning_) {
       ComfirmAskForLearn(msg);
       is_learning_ = true;
-
-   }
+    }
   }
   SetHightestInstanceId(msg.now_instance_id(), msg.node_id());
 }
 
 void Learner::ComfirmAskForLearn(const PaxosMessage& msg) {
   PaxosMessage* reply_msg = new PaxosMessage();
-  reply_msg->set_type(LEARNER_COMFIRM_ASK_FOR_LEARN);
+  reply_msg->set_type(COMFIRM_ASK_FOR_LEARN);
   reply_msg->set_node_id(config_->GetNodeId());
   reply_msg->set_instance_id(instance_id_);
   std::shared_ptr<Content> content_ptr =
@@ -131,7 +131,7 @@ void Learner::SendLearnedValue(uint64_t node_id,
                                uint64_t learner_instance_id,
                                const AcceptorState& state) {
   PaxosMessage* msg = new PaxosMessage();
-  msg->set_type(LEARNER_SEND_LEARNED_VALUE);
+  msg->set_type(SEND_LEARNED_VALUE);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(learner_instance_id);
   msg->set_proposal_id(state.accepted_id());
@@ -189,7 +189,7 @@ void Learner::FinishLearnValue(const std::string& value,
 
 void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
   PaxosMessage* msg = new PaxosMessage();
-  msg->set_type(LEARNER_SEND_LEARNED_VALUE);
+  msg->set_type(SEND_LEARNED_VALUE);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   msg->set_proposal_id(ballot.GetProposalId());

@@ -1,11 +1,12 @@
 #include "skywalker/state_machine.h"
+#include "util/sequence_number.h"
 
 namespace skywalker {
 
-StateMachine::StateMachine() {
-}
+static SequenceNumber seq_;
 
-StateMachine::~StateMachine() {
+StateMachine::StateMachine()
+    : id_(seq_.Next()) {
 }
 
 }  // namespace skywalker
