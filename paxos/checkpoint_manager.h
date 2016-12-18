@@ -8,6 +8,7 @@ class CheckpointManager {
   CheckpointManager();
 
  private:
+  // No copying allowed
   CheckpointManager(const CheckpointManager&);
   void operator=(const CheckpointManager&);
 };

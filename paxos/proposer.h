@@ -12,7 +12,6 @@ namespace skywalker {
 class Config;
 class Instance;
 class Messager;
-class RunLoop;
 
 class Proposer {
  public:
@@ -32,7 +31,7 @@ class Proposer {
   void NextInstance();
 
  private:
-  void Prepare(bool need_new_ballot = true);
+  void Prepare(bool need_new_proposal_id = true);
   void Accept();
 
   void AddRetryTimer(uint64_t timeout = 300);
@@ -42,22 +41,19 @@ class Proposer {
   Config* config_;
   Instance* instance_;
   Messager* messager_;
-
-  BallotNumber hightest_ballot_;
-  uint64_t hightest_proprosal_id_;
+  Counter counter_;
 
   uint64_t instance_id_;
   uint64_t proposal_id_;
+  uint64_t max_proprosal_id_;
+  BallotNumber max_ballot_;
   PaxosValue value_;
-
-  Counter counter_;
 
   bool preparing_;
   bool accepting_;
   bool skip_prepare_;
   bool was_rejected_by_someone_;
 
-  RunLoop* loop_;
   TimerId retry_timer_;
   Random rand_;
 

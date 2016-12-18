@@ -14,8 +14,8 @@ enum MessageType {
 }
 
 message PaxosValue {
-  int32 mechine_id = 1;
-  string user_data = 2;
+  int32 machine_id = 1;
+  bytes user_data = 2;
 }
 
 message PaxosMessage {

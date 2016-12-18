@@ -22,28 +22,28 @@ class Acceptor {
 
   const BallotNumber& GetPromisedBallot() const { return promised_ballot_; }
   const BallotNumber& GetAcceptedBallot() const { return accepted_ballot_; }
+  const PaxosValue& GetAcceptedValue() const { return accepted_value_; }
 
   void OnPrepare(const PaxosMessage& msg);
   void OnAccpet(const PaxosMessage& msg);
 
-  const PaxosValue& GetAcceptedValue() const { return accepted_value_; }
-
   void NextInstance();
 
  private:
-  int ReadFromDB(uint64_t* instance_id);
-  int WriteToDB(uint64_t instance_id);
+  void NewChosenValue(const PaxosMessage& msg);
 
-  uint32_t log_sync_count_;
+  bool ReadFromDB();
+  bool WriteToDB();
 
   Config* config_;
   Instance* instance_;
   Messager* messager_;
 
+  uint64_t instance_id_;
+  uint32_t log_sync_count_;
+
   BallotNumber promised_ballot_;
   BallotNumber accepted_ballot_;
-
-  uint64_t instance_id_;
   PaxosValue accepted_value_;
 
   // No copying allowed

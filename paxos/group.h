@@ -24,7 +24,7 @@ class Group {
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
 
-  int OnReceivePropose(const Slice& value,
+  int OnPropose(const Slice& value,
                        uint64_t* instance_id,
                        int machine_id = -1);
 

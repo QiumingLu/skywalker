@@ -6,95 +6,86 @@
 namespace skywalker {
 
 Acceptor::Acceptor(Config* config, Instance* instance)
-    : log_sync_count_(0),
-      config_(config),
+    : config_(config),
       instance_(instance),
       messager_(config->GetMessager()),
-      instance_id_(0) {
+      instance_id_(0),
+      log_sync_count_(0) {
 }
 
 bool Acceptor::Init(uint64_t* instance_id) {
-  int res = ReadFromDB(instance_id);
-  if (res != 0) {
-    return false;
+  if (ReadFromDB()) {
+    *instance_id = instance_id_;
+    return true;
   }
-  return true;
+  return false;
 }
 
 void Acceptor::OnPrepare(const PaxosMessage& msg) {
-  SWLog(DEBUG,
-        "Acceptor::OnPrepare - receive a new message, "
-        "which node_id=%" PRIu64", instance_id=%" PRIu64", "
-        "proposal_id=%" PRIu64".\n",
-        msg.node_id(), msg.instance_id(), msg.proposal_id());
-  PaxosMessage* reply_msg = new PaxosMessage();
-  reply_msg->set_type(PREPARE_REPLY);
-  reply_msg->set_node_id(config_->GetNodeId());
-  reply_msg->set_instance_id(instance_id_);
-  reply_msg->set_proposal_id(msg.proposal_id());
+  if (msg.instance_id() == instance_id_) {
+    PaxosMessage* reply_msg = new PaxosMessage();
+    reply_msg->set_type(PREPARE_REPLY);
+    reply_msg->set_node_id(config_->GetNodeId());
+    reply_msg->set_instance_id(instance_id_);
+    reply_msg->set_proposal_id(msg.proposal_id());
 
-  BallotNumber b(msg.proposal_id(), msg.node_id());
+    BallotNumber b(msg.proposal_id(), msg.node_id());
 
-  if (b >= promised_ballot_) {
-    reply_msg->set_pre_accepted_id(accepted_ballot_.GetProposalId());
-    reply_msg->set_pre_accepted_node_id(accepted_ballot_.GetNodeId());
-    if (accepted_ballot_.GetProposalId() > 0) {
-      reply_msg->set_allocated_value(new PaxosValue(accepted_value_));
+    if (b >= promised_ballot_) {
+      reply_msg->set_pre_accepted_id(accepted_ballot_.GetProposalId());
+      reply_msg->set_pre_accepted_node_id(accepted_ballot_.GetNodeId());
+      if (accepted_ballot_.GetProposalId() > 0) {
+        reply_msg->set_allocated_value(new PaxosValue(accepted_value_));
+      }
+      promised_ballot_ =  b;
+      if (WriteToDB()) {
+        SWLog(ERROR, "Acceptor::OnPrepare - "
+              "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
+      }
+    } else {
+      reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
     }
-    promised_ballot_ =  b;
-    int ret = WriteToDB(instance_id_);
-    if (ret != 0) {
-      SWLog(ERROR, "Acceptor::OnPrepare - "
-            "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
-    }
-  } else {
-    reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
-  }
 
-  if (msg.node_id() == config_->GetNodeId()) {
-    instance_->HandlePaxosMessage(*reply_msg);
-    delete reply_msg;
-  } else {
-    std::shared_ptr<Content> content_ptr =
-        messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
-    messager_->SendMessage(msg.node_id(), content_ptr);
+    if (msg.node_id() == config_->GetNodeId()) {
+      instance_->OnPaxosMessage(*reply_msg);
+      delete reply_msg;
+    } else {
+      messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+    }
+  } else if (msg.instance_id() == instance_id_ + 1) {
+    NewChosenValue(msg);
   }
 }
 
 void Acceptor::OnAccpet(const PaxosMessage& msg) {
-  SWLog(DEBUG,
-        "Acceptor::OnAccpet - receive a new message, "
-        "which node_id=%" PRIu64", instance_id=%" PRIu64", "
-        "proposal_id=%" PRIu64".\n",
-        msg.node_id(), msg.instance_id(), msg.proposal_id());
+  if (msg.instance_id() == instance_id_) {
+    PaxosMessage* reply_msg = new PaxosMessage();
+    reply_msg->set_type(ACCEPT_REPLY);
+    reply_msg->set_node_id(config_->GetNodeId());
+    reply_msg->set_instance_id(instance_id_);
+    reply_msg->set_proposal_id(msg.proposal_id());
 
-  PaxosMessage* reply_msg = new PaxosMessage();
-  reply_msg->set_type(ACCEPT_REPLY);
-  reply_msg->set_node_id(config_->GetNodeId());
-  reply_msg->set_instance_id(instance_id_);
-  reply_msg->set_proposal_id(msg.proposal_id());
-
-  BallotNumber b(msg.proposal_id(), msg.node_id());
-  if (b >= promised_ballot_) {
-    promised_ballot_ = b;
-    accepted_ballot_ = b;
-    accepted_value_ = msg.value();
-    int ret = WriteToDB(instance_id_);
-    if (ret != 0) {
-      SWLog(ERROR, "Acceptor::OnAccpet - "
-            "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
+    BallotNumber b(msg.proposal_id(), msg.node_id());
+    if (b >= promised_ballot_) {
+      promised_ballot_ = b;
+      accepted_ballot_ = b;
+      accepted_value_ = msg.value();
+      if (WriteToDB()) {
+        SWLog(ERROR, "Acceptor::OnAccpet - "
+              "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
+      }
+    } else {
+      reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
     }
-  } else {
-    reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
-  }
 
-  if (msg.node_id() == config_->GetNodeId()) {
-    instance_->HandlePaxosMessage(*reply_msg);
-    delete reply_msg;
-  } else {
-    std::shared_ptr<Content> content_ptr =
-        messager_->PackMessage(PAXOS_MESSAGE, reply_msg, nullptr);
-    messager_->SendMessage(msg.node_id(), content_ptr);
+    if (msg.node_id() == config_->GetNodeId()) {
+      instance_->OnPaxosMessage(*reply_msg);
+      delete reply_msg;
+    } else {
+      messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+    }
+  } else if (msg.instance_id() == instance_id_ + 1) {
+    NewChosenValue(msg);
   }
 }
 
@@ -105,17 +96,26 @@ void Acceptor::NextInstance() {
   accepted_value_.Clear();
 }
 
-int Acceptor::ReadFromDB(uint64_t* instance_id) {
-  int res = config_->GetDB()->GetMaxInstanceId(instance_id);
+void Acceptor::NewChosenValue(const PaxosMessage& msg) {
+  PaxosMessage new_msg;
+  new_msg.set_type(NEW_CHOSEN_VALUE);
+  new_msg.set_node_id(msg.node_id());
+  new_msg.set_instance_id(instance_id_);
+  new_msg.set_proposal_id(msg.proposal_id());
+  instance_->OnPaxosMessage(msg);
+}
+
+bool Acceptor::ReadFromDB() {
+  int res = config_->GetDB()->GetMaxInstanceId(&instance_id_);
   if (res == 1) {
-    *instance_id = 1;
-    return 0;
+    instance_id_ = 1;
+    return true;
   }
 
   std::string s;
-  res = config_->GetDB()->Get(*instance_id, &s);
+  res = config_->GetDB()->Get(instance_id_, &s);
   if (res !=  0) {
-    return res;
+    return false;
   }
 
   AcceptorState state;
@@ -125,12 +125,12 @@ int Acceptor::ReadFromDB(uint64_t* instance_id) {
   accepted_ballot_.SetProposalId(state.accepted_id());
   accepted_ballot_.SetNodeId(state.accepted_node_id());
   accepted_value_ = state.accepted_value();
-  return 0;
+  return true;
 }
 
-int Acceptor::WriteToDB(uint64_t instance_id) {
+bool Acceptor::WriteToDB() {
   AcceptorState state;
-  state.set_instance_id(instance_id);
+  state.set_instance_id(instance_id_);
   state.set_promised_id(promised_ballot_.GetProposalId());
   state.set_promised_node_id(promised_ballot_.GetNodeId());
   state.set_accepted_id(accepted_ballot_.GetProposalId());
@@ -149,8 +149,12 @@ int Acceptor::WriteToDB(uint64_t instance_id) {
 
   std::string s;
   state.SerializeToString(&s);
-  int ret = config_->GetDB()->Put(options, instance_id, s);
-  return ret;
+  int ret = config_->GetDB()->Put(options, instance_id_, s);
+  if (ret == 0) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 }  // namespace skywalker

@@ -13,7 +13,6 @@
 #include "skywalker/state_machine.h"
 #include "util/mutex.h"
 #include "util/timerlist.h"
-#include "util/random.h"
 
 namespace skywalker {
 
@@ -36,19 +35,15 @@ class Instance {
     propose_cb_ = cb;
   }
 
-  void HandlePropose(const Slice& value, int machine_id = -1);
-  void HandleContent(const std::shared_ptr<Content>& c);
+  void OnPropose(const Slice& value, int machine_id = -1);
+  void OnReceiveContent(const std::shared_ptr<Content>& c);
 
-  void HandlePaxosMessage(const PaxosMessage& msg);
-  void HandleCheckPointMessage(const CheckPointMessage& msg);
+  void OnPaxosMessage(const PaxosMessage& msg);
+  void OnCheckPointMessage(const CheckPointMessage& msg);
 
  private:
-  void AcceptorHandleMessage(const PaxosMessage& msg);
-  void ProposerHandleMessage(const PaxosMessage& msg);
-  void LearnerHandleMessage(const PaxosMessage& msg);
-
+  void CheckLearn();
   bool MachineExecute(const PaxosValue& value);
-
   void NextInstance();
 
   Config* config_;
@@ -62,12 +57,10 @@ class Instance {
   bool is_proposing_;
   PaxosValue propose_value_;
   ProposeCompleteCallback propose_cb_;
-  Random rand_;
-
   TimerId propose_timer_;
-  TimerId learn_timer_;
 
-  std::map<uint32_t, StateMachine*> machines_;
+  Mutex mutex_;
+  std::map<int, StateMachine*> machines_;
 
   // No copying allowed
   Instance(const Instance&);

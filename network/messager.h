@@ -21,9 +21,8 @@ class Messager {
   void BroadcastMessageToFollower(
       const std::shared_ptr<Content>& content_ptr);
 
-  std::shared_ptr<Content> PackMessage(ContentType type,
-                                       PaxosMessage* pmsg,
-                                       CheckPointMessage* cmsg);
+  std::shared_ptr<Content> PackMessage(PaxosMessage* msg);
+  std::shared_ptr<Content> PackMessage(CheckPointMessage* msg);
 
  private:
   Config* config_;

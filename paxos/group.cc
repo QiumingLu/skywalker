@@ -35,15 +35,15 @@ void Group::RemoveMachine(StateMachine* machine) {
   instance_.RemoveMachine(machine);
 }
 
-int Group::OnReceivePropose(const Slice& value,
-                            uint64_t* instance_id,
-                            int machine_id) {
+int Group::OnPropose(const Slice& value,
+                     uint64_t* instance_id,
+                     int machine_id) {
   MutexLock lock(&mutex_);
   propose_end_ = false;
   instance_id_ = 0;
   result_ = -1;
   loop_->QueueInLoop([value, machine_id, this]() {
-    instance_.HandlePropose(value, machine_id);
+    instance_.OnPropose(value, machine_id);
   });
 
   while (!propose_end_) {
@@ -56,7 +56,7 @@ int Group::OnReceivePropose(const Slice& value,
 
 void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
   loop_->QueueInLoop([c, this]() {
-    instance_.HandleContent(c);
+    instance_.OnReceiveContent(c);
   });
 }
 

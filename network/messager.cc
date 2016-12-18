@@ -9,15 +9,21 @@ Messager::Messager(Config* config, Network* network)
       network_(network) {
 }
 
-std::shared_ptr<Content> Messager::PackMessage(ContentType type,
-                                               PaxosMessage* pmsg,
-                                               CheckPointMessage* cmsg) {
+std::shared_ptr<Content> Messager::PackMessage(PaxosMessage* msg) {
   std::shared_ptr<Content> content_ptr(new Content());
-  content_ptr->set_type(type);
+  content_ptr->set_type(PAXOS_MESSAGE);
   content_ptr->set_group_id(config_->GetGroupId());
   content_ptr->set_version(1);
-  content_ptr->set_allocated_paxos_msg(pmsg);
-  content_ptr->set_allocated_checkpoint_msg(cmsg);
+  content_ptr->set_allocated_paxos_msg(msg);
+  return content_ptr;
+}
+
+std::shared_ptr<Content> Messager::PackMessage(CheckPointMessage* msg) {
+  std::shared_ptr<Content> content_ptr(new Content());
+  content_ptr->set_type(CHECKPOINT_MESSAGE);
+  content_ptr->set_group_id(config_->GetGroupId());
+  content_ptr->set_version(1);
+  content_ptr->set_allocated_checkpoint_msg(msg);
   return content_ptr;
 }
 

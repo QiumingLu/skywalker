@@ -16,7 +16,7 @@ bool InsideMachine::Init() {
   std::set<uint64_t>& membership = config_->MemberShip();
 
   if (success == 0) {
-    if (variables_.ParseFromString(s)) {
+    if (!variables_.ParseFromString(s)) {
       SWLog(ERROR, "InsideMachine::Init - variables.ParseFromArray failed, "
             "s=%s.\n", s.c_str());
       return false;
