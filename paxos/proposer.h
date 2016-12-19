@@ -34,7 +34,8 @@ class Proposer {
   void Prepare(bool need_new_proposal_id = true);
   void Accept();
 
-  void AddRetryTimer(uint64_t timeout = 300);
+  void SetMaxProposalId(const PaxosMessage& msg);
+  void AddRetryTimer(uint64_t timeout = 200);
 
   void NewChosenValue();
 

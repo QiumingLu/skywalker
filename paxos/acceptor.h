@@ -42,6 +42,7 @@ class Acceptor {
   uint64_t instance_id_;
   uint32_t log_sync_count_;
 
+  // Use for all instances
   BallotNumber promised_ballot_;
   BallotNumber accepted_ballot_;
   PaxosValue accepted_value_;

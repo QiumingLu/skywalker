@@ -19,7 +19,7 @@ Proposer::Proposer(Config* config, Instance* instance)
       accepting_(false),
       skip_prepare_(false),
       was_rejected_by_someone_(false),
-      rand_(301) {
+      rand_(0xdeadbeef) {
 }
 
 void Proposer::NewPropose(const PaxosValue& value) {
@@ -81,10 +81,6 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
       }
     } else {
       counter_.AddRejector(msg.node_id());
-      was_rejected_by_someone_ = true;
-      if (max_proprosal_id_ < msg.reject_for_promised_id()) {
-        max_proprosal_id_ = msg.reject_for_promised_id();
-      }
     }
 
     if (counter_.IsPassedOnThisRound()) {
@@ -98,6 +94,7 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
       AddRetryTimer(rand_.Uniform(30) + 10);
     }
   }
+  SetMaxProposalId(msg);
 }
 
 void Proposer::Accept() {
@@ -134,10 +131,6 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
       counter_.AddPromisorOrAcceptor(msg.node_id());
     } else {
       counter_.AddRejector(msg.node_id());
-      was_rejected_by_someone_ = true;
-      if (max_proprosal_id_ < msg.reject_for_promised_id()) {
-        max_proprosal_id_ = msg.reject_for_promised_id();
-      }
     }
 
     if (counter_.IsPassedOnThisRound()) {
@@ -149,6 +142,17 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
       SWLog(DEBUG, "Proposer::OnAccpetReply - "
             "Accept not pass, reprepare about 30ms later.\n");
       AddRetryTimer(rand_.Uniform(30) + 10);
+    }
+  }
+
+  SetMaxProposalId(msg);
+}
+
+void Proposer::SetMaxProposalId(const PaxosMessage& msg) {
+  if (msg.reject_for_promised_id() > 0) {
+    was_rejected_by_someone_ = true;
+    if (max_proprosal_id_ < msg.reject_for_promised_id()) {
+      max_proprosal_id_ = msg.reject_for_promised_id();
     }
   }
 }

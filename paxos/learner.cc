@@ -14,7 +14,7 @@ Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
       instance_id_(0),
       max_instance_id_(0),
       max_instance_id_from_node_id_(0),
-      rand_(301),
+      rand_(static_cast<uint32_t>(NowMicros())),
       is_learning_(false),
       has_learned_(false) {
 }
@@ -143,6 +143,8 @@ void Learner::OnSendLearnedValue(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_) {
     if (WriteToDB(msg)) {
       FinishLearnValue(msg.value());
+      BallotNumber b(msg.proposal_id(), msg.node_id());
+      BroadcastMessageToFollower(b);
     }
   }
 }

@@ -50,7 +50,8 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
       instance_->OnPaxosMessage(*reply_msg);
       delete reply_msg;
     } else {
-      messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+      messager_->SendMessage(msg.node_id(),
+                             messager_->PackMessage(reply_msg));
     }
   } else if (msg.instance_id() == instance_id_ + 1) {
     NewChosenValue(msg);
@@ -82,16 +83,18 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
       instance_->OnPaxosMessage(*reply_msg);
       delete reply_msg;
     } else {
-      messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+      messager_->SendMessage(msg.node_id(),
+                             messager_->PackMessage(reply_msg));
     }
   } else if (msg.instance_id() == instance_id_ + 1) {
     NewChosenValue(msg);
   }
 }
 
+// Don't reset the promised_ballot_ here so that
+// the proposer can reduce to call prepare function in sometimes.
 void Acceptor::NextInstance() {
   ++instance_id_;
-  promised_ballot_.Reset();
   accepted_ballot_.Reset();
   accepted_value_.Clear();
 }

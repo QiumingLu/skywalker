@@ -137,6 +137,7 @@ void Instance::CheckLearn() {
     bool success = MachineExecute(learned_value);
 
     if (is_proposing_) {
+      // FIXME use better return value? such as enum...?
       if (success) {
        if (propose_value_.machine_id() == learned_value.machine_id() &&
            propose_value_.user_data() == learned_value.user_data()) {
