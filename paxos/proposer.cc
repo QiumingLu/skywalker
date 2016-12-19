@@ -24,7 +24,6 @@ Proposer::Proposer(Config* config, Instance* instance)
 
 void Proposer::NewPropose(const PaxosValue& value) {
   value_ = value;
-
   if (skip_prepare_ && !was_rejected_by_someone_) {
     Accept();
   } else {
@@ -90,8 +89,8 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
     } else if (counter_.IsRejectedOnThisRound() ||
                counter_.IsReceiveAllOnThisRound()) {
       SWLog(DEBUG, "Proposer::OnPrepareReply - "
-            "Prepare not pass, reprepare about 30ms later.\n");
-      AddRetryTimer(rand_.Uniform(30) + 10);
+            "Prepare not pass, reprepare about 20ms later.\n");
+      AddRetryTimer(rand_.Uniform(10) + 10);
     }
   }
   SetMaxProposalId(msg);
@@ -140,8 +139,8 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
     } else if (counter_.IsRejectedOnThisRound() ||
                counter_.IsReceiveAllOnThisRound()) {
       SWLog(DEBUG, "Proposer::OnAccpetReply - "
-            "Accept not pass, reprepare about 30ms later.\n");
-      AddRetryTimer(rand_.Uniform(30) + 10);
+            "Accept not pass, reprepare about 20ms later.\n");
+      AddRetryTimer(rand_.Uniform(10) + 10);
     }
   }
 
@@ -188,10 +187,6 @@ void Proposer::QuitPropose() {
 }
 
 void Proposer::NextInstance() {
-  max_proprosal_id_ = 0;
-  preparing_ = false;
-  accepting_ = false;
-  counter_.StartNewRound();
   ++instance_id_;
 }
 

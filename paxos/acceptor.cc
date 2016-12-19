@@ -32,12 +32,12 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     BallotNumber b(msg.proposal_id(), msg.node_id());
 
     if (b >= promised_ballot_) {
-      reply_msg->set_pre_accepted_id(accepted_ballot_.GetProposalId());
-      reply_msg->set_pre_accepted_node_id(accepted_ballot_.GetNodeId());
+      promised_ballot_ =  b;
       if (accepted_ballot_.GetProposalId() > 0) {
+        reply_msg->set_pre_accepted_id(accepted_ballot_.GetProposalId());
+        reply_msg->set_pre_accepted_node_id(accepted_ballot_.GetNodeId());
         reply_msg->set_allocated_value(new PaxosValue(accepted_value_));
       }
-      promised_ballot_ =  b;
       if (!WriteToDB()) {
         SWLog(ERROR, "Acceptor::OnPrepare - "
               "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
