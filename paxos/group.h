@@ -21,14 +21,17 @@ class Group {
 
   bool Start();
 
-  void AddMachine(StateMachine* machine);
-  void RemoveMachine(StateMachine* machine);
-
   int OnPropose(const Slice& value,
                        uint64_t* instance_id,
                        int machine_id = -1);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
+
+  void AddMachine(StateMachine* machine);
+  void RemoveMachine(StateMachine* machine);
+
+  void AddMember(const IpPort& ip);
+  void RemoveMember(const IpPort& ip);
 
  private:
   void ProposeComplete(int result, uint64_t instance_id);
@@ -36,6 +39,7 @@ class Group {
   Config config_;
   Instance instance_;
   RunLoop* loop_;
+  InsideMachine* machine_;
 
   Mutex mutex_;
   Condition cond_;

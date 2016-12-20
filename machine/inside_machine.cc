@@ -9,23 +9,19 @@ InsideMachine::InsideMachine(Config* config)
 }
 
 bool InsideMachine::Init() {
-  std::string s;
-  int success = config_->GetDB()->GetSystemVariables(&s);
+  int success = config_->GetDB()->GetSystemVariables(&variables_);
   if (success == -1) { return false; }
 
   std::set<uint64_t>& membership = config_->MemberShip();
 
   if (success == 0) {
-    if (!variables_.ParseFromString(s)) {
-      SWLog(ERROR, "InsideMachine::Init - variables.ParseFromArray failed, "
-            "s=%s.\n", s.c_str());
-      return false;
-    }
     membership.clear();
     for (int i = 0; i < variables_.membership_size(); ++i) {
       membership.insert(variables_.membership(i));
     }
   } else {
+    variables_.set_gid(0);
+    variables_.set_version(-1);
     for (auto m : membership) {
       variables_.add_membership(m);
     }
@@ -35,15 +31,38 @@ bool InsideMachine::Init() {
 
 bool InsideMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             const std::string& value) {
+  // FIXME
   SystemVariables variables;
   if (variables.ParseFromString(value)) {
+    if (variables_.gid() != 0 && variables.gid() != variables_.gid()) {
+     return true;
+    }
+    if (variables.version() != variables_.version()) {
+      return true;
+    }
+    variables.set_version(instance_id);
+    return UpdateSystemVariables(variables);
   } else {
-    SWLog(ERROR, "InsideMachine::Execute - variables.ParseFromString failed, "
-          "value=%s.\n", value.c_str());
+    SWLog(ERROR,
+        "InsideMachine::Execute - variables.ParseFromString failed.\n");
     return false;
   }
+}
 
-  return true;
+bool InsideMachine::UpdateSystemVariables(const SystemVariables& v) {
+  int ret = config_->GetDB()->SetSystemVariables(v);
+  if (ret == 0) {
+    variables_ = v;
+    std::set<uint64_t>& membership = config_->MemberShip();
+    membership.clear();
+    for (int i = 0; i < variables_.membership_size(); ++i) {
+      membership.insert(variables_.membership(i));
+    }
+    return true;
+  } else  {
+    SWLog(ERROR, "InsideMachine::UpdateSystemVariables - update failed.\n");
+    return false;
+  }
 }
 
 }  // namespace skywalker

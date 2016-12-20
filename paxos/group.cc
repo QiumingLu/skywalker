@@ -1,6 +1,7 @@
 #include "paxos/group.h"
 #include "skywalker/logging.h"
 #include "util/mutexlock.h"
+#include "paxos/node_util.h"
 
 namespace skywalker {
 
@@ -22,17 +23,16 @@ bool Group::Start() {
           std::bind(&Group::ProposeComplete, this,
                     std::placeholders::_1, std::placeholders::_2));
       instance_.AddMachine(config_.GetMachine());
+      // FIXME
+      if (instance_.GetInstanceId() == 0 || machine_->Variables().gid() == 0) {
+        std::string s;
+        uint64_t  instance_id = 0;
+        machine_->Variables().SerializeToString(&s);
+        OnPropose(s, &instance_id, machine_->GetMachineId());
+      }
     }
   }
   return ret;
-}
-
-void Group::AddMachine(StateMachine* machine) {
-  instance_.AddMachine(machine);
-}
-
-void Group::RemoveMachine(StateMachine* machine) {
-  instance_.RemoveMachine(machine);
 }
 
 int Group::OnPropose(const Slice& value,
@@ -77,6 +77,55 @@ void Group::ProposeComplete(int result, uint64_t instance_id) {
   instance_id_ = instance_id;
   propose_end_ = true;
   cond_.Signal();
+}
+
+void Group::AddMachine(StateMachine* machine) {
+  instance_.AddMachine(machine);
+}
+
+void Group::RemoveMachine(StateMachine* machine) {
+  instance_.RemoveMachine(machine);
+}
+
+void Group::AddMember(const IpPort& ip) {
+  bool res = true;
+  uint64_t node_id(MakeNodeId(ip));
+  SystemVariables v(machine_->Variables());
+
+  for (int i = 0; i < v.membership_size(); ++i) {
+    if (node_id == v.membership(i)) {
+      res = false;
+      break;
+    }
+  }
+  if (res) {
+    v.add_membership(node_id);
+    std::string s;
+    v.SerializeToString(&s);
+    uint64_t instance_id = 0;
+    OnPropose(s, &instance_id, machine_->GetMachineId());
+  }
+}
+
+void Group::RemoveMember(const IpPort& ip) {
+  bool res = false;
+  uint64_t node_id(MakeNodeId(ip));
+  const SystemVariables& temp =machine_->Variables();
+  SystemVariables v;
+  for (int i = 0; i < temp.membership_size(); ++i) {
+    if (node_id == temp.membership(i)) {
+      res = true;
+    } else {
+      v.add_membership(temp.membership(i));
+    }
+  }
+
+  if (res) {
+    std::string s;
+    v.SerializeToString(&s);
+    uint64_t instance_id = 0;
+    OnPropose(s, &instance_id, machine_->GetMachineId());
+  }
 }
 
 }  // namespace skywalker

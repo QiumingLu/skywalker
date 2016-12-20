@@ -112,12 +112,27 @@ int DB::GetMinChosenInstanceId(uint64_t* id) {
   return ret;
 }
 
-int DB::SetSystemVariables(const std::string& s) {
+int DB::SetSystemVariables(const SystemVariables& v) {
+  std::string s;
+  if (!v.SerializeToString(&s)) {
+    SWLog(ERROR, "DB::SetSystemVariables - v.SerializeToString failed!\n");
+    return -1;
+  }
   return Put(WriteOptions(), kSystemVariables, s);
 }
 
-int DB::GetSystemVariables(std::string* s) {
-  return Get(kSystemVariables, s);
+int DB::GetSystemVariables(SystemVariables* v) {
+  std::string s;
+  int ret = Get(kSystemVariables, &s);
+  if (ret != 0) {
+    return ret;
+  }
+  if (v->ParseFromString(s)) {
+    return 0;
+  } else {
+    SWLog(ERROR, "DB::GetSystemVariables - v.ParseFromString failed!\n");
+    return -1;
+  }
 }
 
 int DB::SetMasterVariables(const std::string& s) {

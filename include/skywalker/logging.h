@@ -14,7 +14,7 @@ enum LogLevel {
   LOGLEVEL_FATAL
 };
 
-extern void Log(LogLevel level, const char* filename, int line, 
+extern void Log(LogLevel level, const char* filename, int line,
                 const char* format, ...)
 #    if defined(__GNUC__) || defined(__clang__)
      __attribute__((__format__ (__printf__, 4, 5)))
@@ -28,7 +28,7 @@ extern void Log(LogLevel level, const char* filename, int line,
 template<typename T>
 T* CheckNotNull(const char* logmessage, T* ptr) {
   if (ptr == nullptr) {
-    SWLog(FATAL, "%s", logmessage);
+    SWLog(FATAL, "%s\n", logmessage);
   }
   return ptr;
 }
@@ -40,7 +40,7 @@ extern void DefaultLogHandler(LogLevel level, const char* filename, int line,
                               const char* format, va_list ap);
 
 
-extern void NullLogHandler(LogLevel /* level */, 
+extern void NullLogHandler(LogLevel /* level */,
                            const char* /* filename */, int /* line */,
                            const char* /* format */, va_list /* ap */);
 

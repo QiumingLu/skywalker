@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 #include <leveldb/db.h>
+#include "paxos/paxos.pb.h"
 
 namespace skywalker {
 
@@ -35,8 +36,8 @@ class DB {
   int SetMinChosenInstanceId(uint64_t id);
   int GetMinChosenInstanceId(uint64_t* id);
 
-  int SetSystemVariables(const std::string& s);
-  int GetSystemVariables(std::string* s);
+  int SetSystemVariables(const SystemVariables& v);
+  int GetSystemVariables(SystemVariables* v);
 
   int SetMasterVariables(const std::string& s);
   int GetMasterVariavles(std::string* s);

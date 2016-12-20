@@ -40,16 +40,6 @@ bool NodeImpl::StartWorking() {
   return ret;
 }
 
-void NodeImpl::AddMachine(uint32_t group_id, StateMachine* machine) {
-  assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->AddMachine(machine);
-}
-
-void NodeImpl::RemoveMachine(uint32_t group_id, StateMachine* machine) {
-  assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->RemoveMachine(machine);
-}
-
 int NodeImpl::Propose(uint32_t group_id, const Slice& value,
                       uint64_t *instance_id, int machine_id) {
   assert(groups_.find(group_id) != groups_.end());
@@ -71,6 +61,26 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
     SWLog(ERROR, "NodeImpl::OnReceiveMessage - "
           "group_id=%" PRIu32" is wrong!\n", c->group_id());
   }
+}
+
+void NodeImpl::AddMachine(uint32_t group_id, StateMachine* machine) {
+  assert(groups_.find(group_id) != groups_.end());
+  groups_[group_id]->AddMachine(machine);
+}
+
+void NodeImpl::RemoveMachine(uint32_t group_id, StateMachine* machine) {
+  assert(groups_.find(group_id) != groups_.end());
+  groups_[group_id]->RemoveMachine(machine);
+}
+
+void NodeImpl::AddMember(uint32_t group_id, const IpPort& i) {
+  assert(groups_.find(group_id) != groups_.end());
+  groups_[group_id]->AddMember(i);
+}
+
+void NodeImpl::RemoveMember(uint32_t group_id, const IpPort& i) {
+  assert(groups_.find(group_id) != groups_.end());
+  groups_[group_id]->RemoveMember(i);
 }
 
 bool Node::Start(const Options& options, Node** nodeptr) {

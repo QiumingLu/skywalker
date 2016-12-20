@@ -26,7 +26,7 @@ message PaxosMessage {
   uint64 proposal_node_id = 5;
   uint64 pre_accepted_id = 6;
   uint64 pre_accepted_node_id = 7;
-  uint64 reject_for_promised_id = 8;
+  uint64 rejected_id = 8;
   uint64 now_instance_id = 9;
   PaxosValue value = 10;
 }
@@ -58,5 +58,7 @@ message AcceptorState {
 }
 
 message SystemVariables {
-  repeated uint64 membership = 1;
+  uint64 gid = 1;
+  uint64 version = 2;
+  repeated uint64 membership = 3;
 }

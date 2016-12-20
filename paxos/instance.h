@@ -35,6 +35,8 @@ class Instance {
     propose_cb_ = cb;
   }
 
+  uint64_t GetInstanceId() const { return instance_id_; }
+
   void OnPropose(const Slice& value, int machine_id = -1);
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 

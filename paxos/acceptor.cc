@@ -43,7 +43,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
               "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
       }
     } else {
-      reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
+      reply_msg->set_rejected_id(promised_ballot_.GetProposalId());
     }
 
     if (msg.node_id() == config_->GetNodeId()) {
@@ -76,7 +76,7 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
               "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
       }
     } else {
-      reply_msg->set_reject_for_promised_id(promised_ballot_.GetProposalId());
+      reply_msg->set_rejected_id(promised_ballot_.GetProposalId());
     }
 
     if (msg.node_id() == config_->GetNodeId()) {
@@ -111,7 +111,6 @@ void Acceptor::NewChosenValue(const PaxosMessage& msg) {
 bool Acceptor::ReadFromDB() {
   int res = config_->GetDB()->GetMaxInstanceId(&instance_id_);
   if (res == 1) {
-    instance_id_ = 1;
     return true;
   }
 

@@ -14,8 +14,12 @@ class InsideMachine : public StateMachine {
 
   bool Init();
 
+  const SystemVariables& Variables() const { return variables_; }
+
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value);
+
+  bool UpdateSystemVariables(const SystemVariables& v);
 
  private:
   Config* config_;
