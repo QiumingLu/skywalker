@@ -10,6 +10,7 @@ Group::Group(uint32_t group_id, uint64_t node_id,
     : config_(group_id, node_id, options, network),
       instance_(&config_),
       loop_(config_.GetLoop()),
+      machine_(config_.GetMachine()),
       mutex_(),
       cond_(&mutex_) {
 }
@@ -22,22 +23,38 @@ bool Group::Start() {
       instance_.SetProposeCompleteCallback(
           std::bind(&Group::ProposeComplete, this,
                     std::placeholders::_1, std::placeholders::_2));
-      instance_.AddMachine(config_.GetMachine());
-      // FIXME
-      if (instance_.GetInstanceId() == 0 || machine_->Variables().gid() == 0) {
-        std::string s;
-        uint64_t  instance_id = 0;
-        machine_->Variables().SerializeToString(&s);
-        OnPropose(s, &instance_id, machine_->GetMachineId());
-      }
+      instance_.AddMachine(machine_);
     }
   }
   return ret;
 }
 
+void Group::SyncData() {
+  int i = 0;
+  instance_.SyncData();
+  while (true) {
+    if (i++ > 3) {
+      instance_.SyncData();
+    }
+    const Membership& m = config_.GetMembership();
+    if (!config_.HasSyncMembership()) {
+      uint64_t instance_id;
+      std::string s;
+      m.SerializeToString(&s);
+      int ret = OnPropose(s, &instance_id, machine_->GetMachineId());
+      if (ret == 0 || ret == 1) {
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+}
+
 int Group::OnPropose(const Slice& value,
                      uint64_t* instance_id,
                      int machine_id) {
+  // FIXME
   MutexLock lock(&mutex_);
   propose_end_ = false;
   instance_id_ = 0;
@@ -61,6 +78,7 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
 }
 
 void Group::ProposeComplete(int result, uint64_t instance_id) {
+  // FIXME
   MutexLock lock(&mutex_);
   if (result == 0) {
     SWLog(INFO, "Group::OnReceivePropose - propose new value success.\n");
@@ -87,44 +105,77 @@ void Group::RemoveMachine(StateMachine* machine) {
   instance_.RemoveMachine(machine);
 }
 
-void Group::AddMember(const IpPort& ip) {
-  bool res = true;
+int Group::AddMember(const IpPort& ip) {
+  bool res = false;
   uint64_t node_id(MakeNodeId(ip));
-  SystemVariables v(machine_->Variables());
+  const Membership& temp = config_.GetMembership();
 
-  for (int i = 0; i < v.membership_size(); ++i) {
-    if (node_id == v.membership(i)) {
-      res = false;
+  for (int i = 0; i < temp.node_id_size(); ++i) {
+    if (node_id == temp.node_id(i)) {
+      res = true;
       break;
     }
   }
-  if (res) {
-    v.add_membership(node_id);
+  if (!res) {
+    Membership m(temp);
+    m.add_node_id(node_id);
     std::string s;
-    v.SerializeToString(&s);
+    m.SerializeToString(&s);
     uint64_t instance_id = 0;
-    OnPropose(s, &instance_id, machine_->GetMachineId());
+    return OnPropose(s, &instance_id, machine_->GetMachineId());
+  } else {
+    return 1;
   }
 }
 
-void Group::RemoveMember(const IpPort& ip) {
+int Group::RemoveMember(const IpPort& ip) {
   bool res = false;
   uint64_t node_id(MakeNodeId(ip));
-  const SystemVariables& temp =machine_->Variables();
-  SystemVariables v;
-  for (int i = 0; i < temp.membership_size(); ++i) {
-    if (node_id == temp.membership(i)) {
+  const Membership& temp = config_.GetMembership();
+  Membership m;
+  for (int i = 0; i < temp.node_id_size(); ++i) {
+    if (node_id == temp.node_id(i)) {
       res = true;
     } else {
-      v.add_membership(temp.membership(i));
+      m.add_node_id(temp.node_id(i));
     }
   }
 
   if (res) {
     std::string s;
-    v.SerializeToString(&s);
+    m.SerializeToString(&s);
     uint64_t instance_id = 0;
-    OnPropose(s, &instance_id, machine_->GetMachineId());
+    return OnPropose(s, &instance_id, machine_->GetMachineId());
+  } else {
+    return 1;
+  }
+}
+
+int Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
+  bool new_res = false;
+  bool old_res = false;
+  uint64_t new_node_id(MakeNodeId(new_i));
+  uint64_t old_node_id(MakeNodeId(old_i));
+  const Membership& temp = config_.GetMembership();
+  Membership m;
+  for (int i = 0; i < temp.node_id_size(); ++i) {
+    if (temp.node_id(i) == new_node_id) {
+      new_res = true;
+    }
+    if (temp.node_id(i) == old_node_id) {
+      old_res = true;
+    } else {
+      m.add_node_id(temp.node_id(i));
+    }
+  }
+
+  if (new_res &&  (!old_res)) {
+    return 1;
+  } else {
+    std::string s;
+    m.SerializeToString(&s);
+    uint64_t instance_id = 0;
+    return OnPropose(s, &instance_id, machine_->GetMachineId());
   }
 }
 

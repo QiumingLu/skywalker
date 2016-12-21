@@ -21,6 +21,8 @@ class Group {
 
   bool Start();
 
+  void SyncData();
+
   int OnPropose(const Slice& value,
                        uint64_t* instance_id,
                        int machine_id = -1);
@@ -30,8 +32,9 @@ class Group {
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
 
-  void AddMember(const IpPort& ip);
-  void RemoveMember(const IpPort& ip);
+  int AddMember(const IpPort& ip);
+  int RemoveMember(const IpPort& ip);
+  int ReplaceMember(const IpPort& new_i, const IpPort& old_i);
 
  private:
   void ProposeComplete(int result, uint64_t instance_id);

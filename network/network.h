@@ -20,21 +20,21 @@ namespace skywalker {
 
 class Network {
  public:
-  Network();
+  Network(uint64_t node_id);
   ~Network();
 
-  void StartServer(const IpPort& i,
-                   const std::function<void (const Slice& s)>& cb);
+  void StartServer(const std::function<void (const Slice& s)>& cb);
 
   void SendMessage(uint64_t node_id,
                    const std::shared_ptr<Content>& content_ptr);
 
-  void SendMessage(const std::set<uint64_t>& nodes,
+  void SendMessage(const Membership& m,
                    const std::shared_ptr<Content>& content_ptr);
 
  private:
   void SendMessageInLoop(uint64_t node_id, const std::string& s);
 
+  uint64_t my_node_id_;
   voyager::BGEventLoop bg_loop_;
   voyager::EventLoop* loop_;
   voyager::TcpServer* server_;

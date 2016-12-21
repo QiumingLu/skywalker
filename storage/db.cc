@@ -8,7 +8,7 @@
 namespace {
 const uint64_t kMinChosenKey = UINTMAX_MAX;
 const uint64_t kMasterVariables = (UINTMAX_MAX - 1);
-const uint64_t kSystemVariables = (UINTMAX_MAX - 2);
+const uint64_t kMembership = (UINTMAX_MAX - 2);
 }
 
 namespace skywalker {
@@ -62,7 +62,7 @@ int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
 }
 
 int DB::Get(uint64_t instance_id, std::string* value) {
-  char key[8] = {0};
+  char key[8];
   int ret = 0;
   memcpy(key, &instance_id, sizeof(uint64_t));
   leveldb::Status status = db_->Get(leveldb::ReadOptions(), key, value);
@@ -82,10 +82,10 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
   leveldb::Iterator* it = db_->NewIterator(leveldb::ReadOptions());
   it->SeekToLast();
   while (it->Valid()) {
-    memcpy(instance_id, it->key().data(), it->key().size());
-    if (*instance_id == kMinChosenKey ||
-        *instance_id == kMasterVariables ||
-        *instance_id == kSystemVariables) {
+    memcpy(instance_id, it->key().data(), sizeof(uint64_t));
+    if(*instance_id == kMasterVariables ||
+       *instance_id == kMinChosenKey ||
+       *instance_id == kMembership) {
       it->Prev();
     } else {
       ret = 0;
@@ -106,31 +106,30 @@ int DB::GetMinChosenInstanceId(uint64_t* id) {
   std::string value;
   int ret = Get(kMinChosenKey, &value);
   if (ret == 0) {
-    assert(value.size() == sizeof(uint64_t));
-    memcpy(id, &*(value.data()), value.size());
+    memcpy(id, &*(value.data()), sizeof(uint64_t));
   }
   return ret;
 }
 
-int DB::SetSystemVariables(const SystemVariables& v) {
+int DB::SetMembership(const Membership& m) {
   std::string s;
-  if (!v.SerializeToString(&s)) {
-    SWLog(ERROR, "DB::SetSystemVariables - v.SerializeToString failed!\n");
+  if (!m.SerializeToString(&s)) {
+    SWLog(ERROR, "DB::SetMembership - m.SerializeToString failed!\n");
     return -1;
   }
-  return Put(WriteOptions(), kSystemVariables, s);
+  return Put(WriteOptions(), kMembership, s);
 }
 
-int DB::GetSystemVariables(SystemVariables* v) {
+int DB::GetMembership(Membership* m) {
   std::string s;
-  int ret = Get(kSystemVariables, &s);
+  int ret = Get(kMembership, &s);
   if (ret != 0) {
     return ret;
   }
-  if (v->ParseFromString(s)) {
+  if (m->ParseFromString(s)) {
     return 0;
   } else {
-    SWLog(ERROR, "DB::GetSystemVariables - v.ParseFromString failed!\n");
+    SWLog(ERROR, "DB::GetMembership - m.ParseFromString failed!\n");
     return -1;
   }
 }

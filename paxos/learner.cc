@@ -17,14 +17,11 @@ Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
       rand_(static_cast<uint32_t>(NowMicros())),
       is_learning_(false),
       has_learned_(false) {
+  bg_loop_.Loop();
 }
 
 void Learner::SetInstanceId(uint64_t instance_id) {
   instance_id_ = instance_id;
-  config_->GetLoop()->RunAfter(10000 + rand_.Uniform(30000), [this]() {
-    AskForLearn();
-  });
-  bg_loop_.Loop();
 }
 
 void Learner::OnNewChosenValue(const PaxosMessage& msg) {
@@ -34,7 +31,7 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
     if (ballot == b) {
       FinishLearnValue(acceptor_->GetAcceptedValue());
       BroadcastMessageToFollower(b);
-    } else if (!msg.has_value()) {
+    } else if (msg.has_value()) {
       if (WriteToDB(msg)) {
         FinishLearnValue(msg.value());
         BroadcastMessageToFollower(b);

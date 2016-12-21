@@ -36,8 +36,8 @@ class DB {
   int SetMinChosenInstanceId(uint64_t id);
   int GetMinChosenInstanceId(uint64_t* id);
 
-  int SetSystemVariables(const SystemVariables& v);
-  int GetSystemVariables(SystemVariables* v);
+  int SetMembership(const Membership& v);
+  int GetMembership(Membership* v);
 
   int SetMasterVariables(const std::string& s);
   int GetMasterVariavles(std::string* s);

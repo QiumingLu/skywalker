@@ -11,6 +11,7 @@ Config::Config(uint32_t group_id, uint64_t node_id,
       log_storage_path_(options.log_storage_path),
       log_sync_(options.log_sync),
       sync_interval_(options.sync_interval),
+      has_sync_membership_(false),
       db_(new DB()),
       messager_(new Messager(this, network)),
       machine_(new InsideMachine(this)),
@@ -25,12 +26,13 @@ Config::Config(uint32_t group_id, uint64_t node_id,
 
   log_storage_path_ += name;
 
+  membership_.set_version(0);
   for (auto i : options.membership) {
-    membership_.insert(MakeNodeId(i));
+    membership_.add_node_id(MakeNodeId(i));
   }
 
   for (auto i : options.followers) {
-    followers_.insert(MakeNodeId(i));
+    followers_.add_node_id(MakeNodeId(i));
   }
 }
 
@@ -48,11 +50,14 @@ bool Config::Init() {
           log_storage_path_.c_str());
     return false;
   }
-  bool b = machine_->Init();
-  if (b) {
-    loop_->Loop();
+  Membership m;
+  ret = db_->GetMembership(&m);
+  if (ret == 0) {
+    has_sync_membership_ = true;
+    membership_ = m;
   }
-  return b;
+  loop_->Loop();
+  return true;
 }
 
 bool Config::IsValidNodeId(uint64_t node_id) const {

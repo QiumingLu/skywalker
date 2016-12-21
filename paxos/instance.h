@@ -28,6 +28,8 @@ class Instance {
 
   bool Init();
 
+  void SyncData();
+
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
 

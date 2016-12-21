@@ -9,7 +9,7 @@ Acceptor::Acceptor(Config* config, Instance* instance)
     : config_(config),
       instance_(instance),
       messager_(config->GetMessager()),
-      instance_id_(0),
+      instance_id_(1),
       log_sync_count_(0) {
 }
 
@@ -112,6 +112,8 @@ bool Acceptor::ReadFromDB() {
   int res = config_->GetDB()->GetMaxInstanceId(&instance_id_);
   if (res == 1) {
     return true;
+  } else if (res == -1) {
+    return false;
   }
 
   std::string s;

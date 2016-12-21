@@ -17,8 +17,8 @@ class Learner {
  public:
   Learner(Config* config, Instance* instance, Acceptor* acceptor);
 
-  // Only can run once
   void SetInstanceId(uint64_t instance_id);
+  void AskForLearn();
 
   void OnNewChosenValue(const PaxosMessage& msg);
   void OnAskForLearn(const PaxosMessage& msg);
@@ -32,7 +32,6 @@ class Learner {
   void NextInstance();
 
  private:
-  void AskForLearn();
   void SendNowInstanceId(const PaxosMessage& msg);
   void ComfirmAskForLearn(const PaxosMessage& msg);
   void ASyncSend(uint64_t node_id, uint64_t from, uint64_t to);

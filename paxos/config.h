@@ -25,22 +25,24 @@ class Config {
   InsideMachine* GetMachine() const { return machine_; }
   RunLoop* GetLoop() const { return loop_; }
 
+  bool HasSyncMembership() { return has_sync_membership_; }
+
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
 
   uint32_t GetGroupId() const { return group_id_; }
 
   uint64_t GetNodeId() const { return node_id_; }
-  size_t GetNodeSize() const { return membership_.size(); }
+  size_t GetNodeSize() const { return membership_.node_id_size(); }
 
   size_t GetMajoritySize() const {
-    return (membership_.size() / 2 + 1);
+    return (membership_.node_id_size() / 2 + 1);
   }
 
-  std::set<uint64_t>& MemberShip() { return membership_; }
-  const std::set<uint64_t>& MemberShip() const { return membership_; }
+  void SetMembership(const Membership& m) { membership_ = m; }
+  const Membership& GetMembership() const { return membership_; }
 
-  const std::set<uint64_t>& Followers() const { return followers_; }
+  const Membership& GetFollowers() const { return followers_; }
 
   bool IsValidNodeId(uint64_t node_id) const;
 
@@ -52,8 +54,10 @@ class Config {
   bool log_sync_;
   uint32_t sync_interval_;
 
-  std::set<uint64_t> membership_;
-  std::set<uint64_t> followers_;
+  bool has_sync_membership_;
+
+  Membership membership_;
+  Membership followers_;
 
   DB* db_;
   Messager* messager_;

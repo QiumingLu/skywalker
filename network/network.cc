@@ -2,10 +2,12 @@
 #include "skywalker/logging.h"
 #include "paxos/node_util.h"
 #include <string.h>
+
 namespace skywalker {
 
-Network::Network()
-    : bg_loop_(),
+Network::Network(uint64_t node_id)
+    : my_node_id_(node_id),
+      bg_loop_(),
       loop_(nullptr),
       server_(nullptr) {
   loop_ = bg_loop_.Loop();
@@ -16,8 +18,8 @@ Network::~Network() {
   delete server_;
 }
 
-void Network::StartServer(const IpPort& i,
-                          const std::function<void (const Slice&) >& cb) {
+void Network::StartServer(const std::function<void (const Slice&) >& cb) {
+  IpPort i(ParseNodeId(my_node_id_));
   voyager::SockAddr addr(i.ip, i.port);
   server_ = new voyager::TcpServer(loop_, addr);
 
@@ -54,16 +56,18 @@ void Network::SendMessage(uint64_t node_id,
   });
 }
 
-void Network::SendMessage(const std::set<uint64_t>& nodes,
+void Network::SendMessage(const Membership& m,
                           const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([this, nodes, content_ptr] () {
+  loop_->QueueInLoop([this, m, content_ptr] () {
     std::string s;
     bool res = content_ptr->SerializeToString(&s);
     if (res) {
       // FIXME
       s += "\r\n";
-      for (auto n : nodes) {
-        SendMessageInLoop(n, s);
+      for (int i = 0; i < m.node_id_size(); ++i) {
+        if (m.node_id(i) != my_node_id_) {
+          SendMessageInLoop(m.node_id(i), s);
+        }
       }
     } else {
       SWLog(ERROR,

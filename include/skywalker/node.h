@@ -25,9 +25,10 @@ class Node {
   virtual void AddMachine(uint32_t group_id, StateMachine* machine) = 0;
   virtual void RemoveMachine(uint32_t group_id, StateMachine* machine) = 0;
 
-  virtual void AddMember(uint32_t group_id, const IpPort& i) = 0;
-  virtual void RemoveMember(uint32_t group_id, const IpPort& i) = 0;
-
+  virtual int AddMember(uint32_t group_id, const IpPort& i) = 0;
+  virtual int RemoveMember(uint32_t group_id, const IpPort& i) = 0;
+  virtual int ReplaceMember(uint32_t group_id,
+                            const IpPort& new_i, const IpPort& old_i) = 0;
 private:
   // No copying allowed
   Node(const Node&);

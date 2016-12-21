@@ -32,9 +32,8 @@ void Proposer::NewPropose(const PaxosValue& value) {
 }
 
 void Proposer::Prepare(bool need_new_proposal_id) {
-  assert(!preparing_);
-  assert(!accepting_);
   preparing_ = true;
+  accepting_ = false;
   skip_prepare_ = false;
   was_rejected_by_someone_ = false;
   max_ballot_.Reset();
@@ -101,10 +100,8 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
 }
 
 void Proposer::Accept() {
-  assert(!preparing_);
-  assert(!accepting_);
+  preparing_ = false;
   accepting_ = true;
-
   SWLog(DEBUG,
         "Proposer::Accept - start to accept, "
         "now node_id=%" PRIu64", instance_id=%" PRIu64", "

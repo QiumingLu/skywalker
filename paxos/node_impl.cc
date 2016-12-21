@@ -10,7 +10,8 @@ namespace skywalker {
 
 NodeImpl::NodeImpl(const Options& options)
     : options_(options),
-      node_id_(MakeNodeId(options.ipport)) {
+      node_id_(MakeNodeId(options.ipport)),
+      network_(node_id_) {
 }
 
 NodeImpl::~NodeImpl() {
@@ -33,10 +34,12 @@ bool NodeImpl::StartWorking() {
   SWLog(DEBUG, "Node::Start - Group Start Successfully!\n");
 
   network_.StartServer(
-      options_.ipport,
       std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
   SWLog(DEBUG, "Node::Start - Network StartServer Successfully!\n");
 
+  for (auto g : groups_) {
+    g.second->SyncData();
+  }
   return ret;
 }
 
@@ -73,14 +76,20 @@ void NodeImpl::RemoveMachine(uint32_t group_id, StateMachine* machine) {
   groups_[group_id]->RemoveMachine(machine);
 }
 
-void NodeImpl::AddMember(uint32_t group_id, const IpPort& i) {
+int NodeImpl::AddMember(uint32_t group_id, const IpPort& i) {
   assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->AddMember(i);
+  return groups_[group_id]->AddMember(i);
 }
 
-void NodeImpl::RemoveMember(uint32_t group_id, const IpPort& i) {
+int NodeImpl::RemoveMember(uint32_t group_id, const IpPort& i) {
   assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->RemoveMember(i);
+  return groups_[group_id]->RemoveMember(i);
+}
+
+int NodeImpl::ReplaceMember(uint32_t group_id,
+                            const IpPort& new_i, const IpPort& old_i) {
+  assert(groups_.find(group_id) != groups_.end());
+  return groups_[group_id]->ReplaceMember(new_i, old_i);
 }
 
 bool Node::Start(const Options& options, Node** nodeptr) {

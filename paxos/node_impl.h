@@ -27,9 +27,10 @@ class NodeImpl : public Node {
   virtual void AddMachine(uint32_t group_id, StateMachine* machine);
   virtual void RemoveMachine(uint32_t group_id, StateMachine* machine);
 
-  virtual void AddMember(uint32_t group_id, const IpPort& i);
-  virtual void RemoveMember(uint32_t group_id, const IpPort& i);
-
+  virtual int AddMember(uint32_t group_id, const IpPort& i);
+  virtual int RemoveMember(uint32_t group_id, const IpPort& i);
+  virtual int ReplaceMember(uint32_t group_id,
+                            const IpPort& new_i, const IpPort& old_i);
  private:
   void OnReceiveMessage(const Slice& s);
 

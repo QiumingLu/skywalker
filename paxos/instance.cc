@@ -12,7 +12,7 @@ Instance::Instance(Config* config)
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
       proposer_(config, this),
-      instance_id_(0),
+      instance_id_(1),
       is_proposing_(false) {
 }
 
@@ -34,6 +34,10 @@ bool Instance::Init() {
   SWLog(INFO,
         "Instance::Init - now instance_id=%" PRIu64".\n", instance_id_);
   return ret;
+}
+
+void Instance::SyncData() {
+  learner_.AskForLearn();
 }
 
 void Instance::AddMachine(StateMachine* machine) {

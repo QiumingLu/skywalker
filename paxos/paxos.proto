@@ -57,8 +57,7 @@ message AcceptorState {
   PaxosValue accepted_value = 6;
 }
 
-message SystemVariables {
-  uint64 gid = 1;
-  uint64 version = 2;
-  repeated uint64 membership = 3;
+message Membership {
+  uint64 version = 1;
+  repeated uint64 node_id = 2;
 }

@@ -35,16 +35,16 @@ void Messager::SendMessage(uint64_t node_id,
 
 void Messager::BroadcastMessage(
     const std::shared_ptr<Content>& content_ptr) {
-  if (config_->MemberShip().empty() == false) {
-    network_->SendMessage(config_->MemberShip(), content_ptr);
+  if (config_->GetMembership().node_id_size() > 0) {
+    network_->SendMessage(config_->GetMembership(), content_ptr);
   }
 }
 
 
 void Messager::BroadcastMessageToFollower(
     const std::shared_ptr<Content>& content_ptr) {
-  if (config_->Followers().empty() == false) {
-    network_->SendMessage(config_->Followers(), content_ptr);
+  if (config_->GetFollowers().node_id_size() > 0) {
+    network_->SendMessage(config_->GetFollowers(), content_ptr);
   }
 }
 
