@@ -13,12 +13,14 @@ bool InsideMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             const std::string& value) {
   Membership m;
   if (m.ParseFromString(value)) {
-    assert(!config_->HasSyncMembership() ||
-           config_->GetMembership().version() == m.version());
+    assert(config_->GetMembership().version() == m.version());
     int ret = config_->GetDB()->SetMembership(m);
     if (ret == 0) {
       m.set_version(instance_id);
       config_->SetMembership(m);
+      if (!config_->HasSyncMembership()) {
+        config_->SetHasSyncMembership();
+      }
       return true;
     } else {
       SWLog(ERROR, "InsideMachine::Execute - update membership failed.\n");

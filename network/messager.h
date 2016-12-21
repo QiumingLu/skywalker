@@ -1,8 +1,8 @@
 #ifndef SKYWALKER_NETWORK_MESSAGER_H_
 #define SKYWALKER_NETWORK_MESSAGER_H_
 
+#include <stdint.h>
 #include <memory>
-#include <string>
 
 #include "network/network.h"
 #include "paxos/paxos.pb.h"

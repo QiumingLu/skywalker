@@ -25,6 +25,7 @@ class Config {
   InsideMachine* GetMachine() const { return machine_; }
   RunLoop* GetLoop() const { return loop_; }
 
+  void SetHasSyncMembership() { has_sync_membership_ = true; }
   bool HasSyncMembership() { return has_sync_membership_; }
 
   bool LogSync() const { return log_sync_; }

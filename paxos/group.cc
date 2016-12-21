@@ -106,6 +106,9 @@ void Group::RemoveMachine(StateMachine* machine) {
 }
 
 int Group::AddMember(const IpPort& ip) {
+  if (!config_.HasSyncMembership()) {
+    return 2;
+  }
   bool res = false;
   uint64_t node_id(MakeNodeId(ip));
   const Membership& temp = config_.GetMembership();
@@ -129,6 +132,9 @@ int Group::AddMember(const IpPort& ip) {
 }
 
 int Group::RemoveMember(const IpPort& ip) {
+  if (!config_.HasSyncMembership()) {
+    return 2;
+  }
   bool res = false;
   uint64_t node_id(MakeNodeId(ip));
   const Membership& temp = config_.GetMembership();
@@ -152,6 +158,10 @@ int Group::RemoveMember(const IpPort& ip) {
 }
 
 int Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
+  if (!config_.HasSyncMembership()) {
+    return 2;
+  }
+
   bool new_res = false;
   bool old_res = false;
   uint64_t new_node_id(MakeNodeId(new_i));

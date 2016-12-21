@@ -82,12 +82,12 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
   leveldb::Iterator* it = db_->NewIterator(leveldb::ReadOptions());
   it->SeekToLast();
   while (it->Valid()) {
-    memcpy(instance_id, it->key().data(), sizeof(uint64_t));
-    if(*instance_id == kMasterVariables ||
-       *instance_id == kMinChosenKey ||
-       *instance_id == kMembership) {
+    uint64_t id = 0;
+    memcpy(&id, it->key().data(), it->key().size());
+    if(id == kMasterVariables || id == kMinChosenKey || id == kMembership) {
       it->Prev();
     } else {
+      *instance_id = id;
       ret = 0;
       break;
     }
@@ -106,7 +106,7 @@ int DB::GetMinChosenInstanceId(uint64_t* id) {
   std::string value;
   int ret = Get(kMinChosenKey, &value);
   if (ret == 0) {
-    memcpy(id, &*(value.data()), sizeof(uint64_t));
+    memcpy(id, &*(value.data()), value.size());
   }
   return ret;
 }
