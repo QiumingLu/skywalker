@@ -10,6 +10,7 @@
 #include "paxos/proposer.h"
 #include "paxos/paxos.pb.h"
 #include "skywalker/slice.h"
+#include "skywalker/status.h"
 #include "skywalker/state_machine.h"
 #include "util/mutex.h"
 #include "util/timerlist.h"
@@ -21,7 +22,7 @@ class RunLoop;
 
 class Instance {
  public:
-  typedef std::function<void (int, uint64_t)> ProposeCompleteCallback;
+  typedef std::function<void (Status&&, uint64_t)> ProposeCompleteCallback;
 
   explicit Instance(Config* config);
   ~Instance();

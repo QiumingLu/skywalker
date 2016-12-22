@@ -9,7 +9,7 @@ Acceptor::Acceptor(Config* config, Instance* instance)
     : config_(config),
       instance_(instance),
       messager_(config->GetMessager()),
-      instance_id_(1),
+      instance_id_(0),
       log_sync_count_(0) {
 }
 

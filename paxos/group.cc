@@ -61,7 +61,7 @@ Status Group::OnPropose(const Slice& value,
   MutexLock lock(&mutex_);
   propose_end_ = false;
   instance_id_ = 0;
-  result_ = -1;
+  result_ = Status::NotSupported(Slice());
   loop_->QueueInLoop([value, machine_id, this]() {
     instance_.OnPropose(value, machine_id);
   });
@@ -71,14 +71,7 @@ Status Group::OnPropose(const Slice& value,
   }
 
   *instance_id = instance_id_;
-  if (result_ == 0) {
-    return Status::OK();
-  } else if (result_ == 1) {
-    return Status::Conflict("Propose new value failed! "
-                            "Because another value has been chosen.");
-  } else {
-    return Status::Timeout("Propose new value timeout, 1s");
-  }
+  return result_;
 }
 
 void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
@@ -87,9 +80,9 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
   });
 }
 
-void Group::ProposeComplete(int result, uint64_t instance_id) {
+void Group::ProposeComplete(Status&& result, uint64_t instance_id) {
   MutexLock lock(&mutex_);
-  result_ = result;
+  result_ = std::move(result);
   instance_id_ = instance_id;
   propose_end_ = true;
   cond_.Signal();

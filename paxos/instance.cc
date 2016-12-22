@@ -12,7 +12,7 @@ Instance::Instance(Config* config)
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
       proposer_(config, this),
-      instance_id_(1),
+      instance_id_(0),
       is_proposing_(false) {
 }
 
@@ -60,7 +60,8 @@ void Instance::OnPropose(const Slice& value, int machine_id) {
   propose_timer_ = loop_->RunAfter(1000, [this]() {
     proposer_.QuitPropose();
     is_proposing_ = false;
-    propose_cb_(-1, instance_id_);
+    propose_cb_(Status::Timeout("proposal time out of one second."),
+                instance_id_);
   });
   is_proposing_ = true;
 }
@@ -143,12 +144,14 @@ void Instance::CheckLearn() {
       if (success) {
        if (propose_value_.machine_id() == learned_value.machine_id() &&
            propose_value_.user_data() == learned_value.user_data()) {
-          propose_cb_(0, instance_id_);
+          propose_cb_(Status::OK(), instance_id_);
         } else {
-          propose_cb_(1, instance_id_);
+          propose_cb_(Status::Conflict("another value has been chosen."),
+                      instance_id_);
         }
       } else {
-        propose_cb_(2, instance_id_);
+        propose_cb_(Status::MachineError("machine execute failed."),
+                    instance_id_);
       }
       loop_->Remove(propose_timer_);
       is_proposing_ = false;

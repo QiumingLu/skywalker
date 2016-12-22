@@ -38,7 +38,7 @@ class Group {
   void RemoveMachine(StateMachine* machine);
 
  private:
-  void ProposeComplete(int result, uint64_t instance_id);
+  void ProposeComplete(Status&& result, uint64_t instance_id);
 
   Config config_;
   Instance instance_;
@@ -49,7 +49,7 @@ class Group {
   Condition cond_;
   bool propose_end_;
   uint64_t instance_id_;
-  int result_;
+  Status result_;
 
   // No copying allowed
   Group(const Group&);

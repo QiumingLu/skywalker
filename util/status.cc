@@ -42,6 +42,9 @@ std::string Status::ToString() const {
       case kConflict:
         type = "Conflict: ";
         break;
+      case kMachineError:
+        type = "MachineError: ";
+        break;
       case kTimeout:
         type = "Timeout: ";
         break;
@@ -53,6 +56,9 @@ std::string Status::ToString() const {
         break;
       case kNotFound:
         type = "NotFound: ";
+        break;
+      case kNotSupported:
+        type = "NotSupported: ";
         break;
       default:
         snprintf(tmp, sizeof(tmp), "Unknown code(%d): ",

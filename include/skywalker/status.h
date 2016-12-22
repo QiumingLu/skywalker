@@ -21,6 +21,9 @@ class Status {
   static Status Conflict(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kConflict, msg, msg2);
   }
+  static Status MachineError(const Slice& msg, const Slice& msg2 = Slice()) {
+    return Status(kMachineError, msg, msg2);
+  }
   static Status Timeout(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kTimeout, msg, msg2);
   }
@@ -33,13 +36,18 @@ class Status {
   static Status NotFound(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kNotFound, msg, msg2);
   }
+  static Status NotSupported(const Slice& msg, const Slice& msg2 = Slice()) {
+    return Status(kNotSupported, msg, msg2);
+  }
 
   bool ok() const { return state_ == nullptr; }
   bool IsConflict() const {  return code() == kConflict; }
+  bool IsMachineError() const { return code() == kMachineError; }
   bool IsTimeout() const { return code() == kTimeout; }
   bool IsUnavailable() const { return code() == kUnavailable; }
   bool IsAlreadyExists() const { return code() == kAlreadyExists; }
   bool IsNotFound() const { return code() == kNotFound; }
+  bool IsNotSupported() const { return code() == kNotSupported; }
 
   std::string ToString() const;
 
@@ -49,10 +57,12 @@ class Status {
   enum Code {
     kOk = 0,
     kConflict = 1,
-    kTimeout = 2,
-    kUnavailable = 3,
-    kAlreadyExists = 4,
-    kNotFound = 5,
+    kMachineError = 2,
+    kTimeout = 3,
+    kUnavailable = 4,
+    kAlreadyExists = 5,
+    kNotFound = 6,
+    kNotSupported = 7,
   };
 
   Code code() const {
