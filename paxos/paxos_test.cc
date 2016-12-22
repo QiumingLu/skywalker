@@ -7,6 +7,7 @@
 #include <vector>
 #include <voyager/util/string_util.h>
 #include <voyager/util/logging.h>
+#include "skywalker/status.h"
 #include "skywalker/node.h"
 #include "skywalker/options.h"
 
@@ -51,7 +52,8 @@ int main(int argc, char** argv) {
     std::string value;
     std::getline(std::cin, value);
     uint64_t instance_id(0);
-    node->Propose(0, value, &instance_id);
+    skywalker::Status s = node->Propose(0, value, &instance_id);
+    printf("%s\n", s.ToString().c_str());
   }
 
   printf("paxos test end\n");

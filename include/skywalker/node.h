@@ -6,6 +6,7 @@
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
 #include "skywalker/state_machine.h"
+#include "skywalker/status.h"
 
 namespace skywalker {
 
@@ -17,18 +18,19 @@ class Node {
   Node() { }
   virtual ~Node() { }
 
-  virtual int Propose(uint32_t group_id,
-                      const Slice& value,
-                      uint64_t* instance_id,
-                      int machine_id = -1) = 0;
+  virtual Status Propose(uint32_t group_id,
+                         const Slice& value,
+                         uint64_t* instance_id,
+                         int machine_id = -1) = 0;
+
+  virtual Status AddMember(uint32_t group_id, const IpPort& i) = 0;
+  virtual Status RemoveMember(uint32_t group_id, const IpPort& i) = 0;
+  virtual Status ReplaceMember(uint32_t group_id,
+                               const IpPort& new_i, const IpPort& old_i) = 0;
 
   virtual void AddMachine(uint32_t group_id, StateMachine* machine) = 0;
   virtual void RemoveMachine(uint32_t group_id, StateMachine* machine) = 0;
 
-  virtual int AddMember(uint32_t group_id, const IpPort& i) = 0;
-  virtual int RemoveMember(uint32_t group_id, const IpPort& i) = 0;
-  virtual int ReplaceMember(uint32_t group_id,
-                            const IpPort& new_i, const IpPort& old_i) = 0;
 private:
   // No copying allowed
   Node(const Node&);

@@ -2,6 +2,7 @@
 #include "skywalker/logging.h"
 #include "util/mutexlock.h"
 #include "paxos/node_util.h"
+#include <unistd.h>
 
 namespace skywalker {
 
@@ -30,6 +31,7 @@ bool Group::Start() {
 }
 
 void Group::SyncData() {
+  // FIXME
   int i = 0;
   instance_.SyncData();
   while (true) {
@@ -41,19 +43,20 @@ void Group::SyncData() {
       uint64_t instance_id;
       std::string s;
       m.SerializeToString(&s);
-      int ret = OnPropose(s, &instance_id, machine_->GetMachineId());
-      if (ret == 0 || ret == 1) {
+      Status status = OnPropose(s, &instance_id, machine_->GetMachineId());
+      if (status.ok() || status.IsConflict()) {
         break;
       }
+      usleep(500*1000);
     } else {
       break;
     }
   }
 }
 
-int Group::OnPropose(const Slice& value,
-                     uint64_t* instance_id,
-                     int machine_id) {
+Status Group::OnPropose(const Slice& value,
+                        uint64_t* instance_id,
+                        int machine_id) {
   // FIXME
   MutexLock lock(&mutex_);
   propose_end_ = false;
@@ -68,7 +71,14 @@ int Group::OnPropose(const Slice& value,
   }
 
   *instance_id = instance_id_;
-  return result_;
+  if (result_ == 0) {
+    return Status::OK();
+  } else if (result_ == 1) {
+    return Status::Conflict("Propose new value failed! "
+                            "Because another value has been chosen.");
+  } else {
+    return Status::Timeout("Propose new value timeout, 1s");
+  }
 }
 
 void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
@@ -78,36 +88,16 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
 }
 
 void Group::ProposeComplete(int result, uint64_t instance_id) {
-  // FIXME
   MutexLock lock(&mutex_);
-  if (result == 0) {
-    SWLog(INFO, "Group::OnReceivePropose - propose new value success.\n");
-  } else if (result == 1) {
-    SWLog(INFO,
-          "Group::OnReceivePropose - propose new value failed! "
-          "Because another value has been chosen.\n");
-  } else if (result == 2) {
-    SWLog(INFO, "Group::OnReceivePropose - machines execute failed!\n");
-  } else {
-    SWLog(INFO, "Group::OnReceivePropose - propose new value timeout.\n");
-  }
   result_ = result;
   instance_id_ = instance_id;
   propose_end_ = true;
   cond_.Signal();
 }
 
-void Group::AddMachine(StateMachine* machine) {
-  instance_.AddMachine(machine);
-}
-
-void Group::RemoveMachine(StateMachine* machine) {
-  instance_.RemoveMachine(machine);
-}
-
-int Group::AddMember(const IpPort& ip) {
+Status Group::AddMember(const IpPort& ip) {
   if (!config_.HasSyncMembership()) {
-    return 2;
+    return Status::Unavailable("Membership hasn't been synchronized.");
   }
   bool res = false;
   uint64_t node_id(MakeNodeId(ip));
@@ -127,13 +117,13 @@ int Group::AddMember(const IpPort& ip) {
     uint64_t instance_id = 0;
     return OnPropose(s, &instance_id, machine_->GetMachineId());
   } else {
-    return 1;
+    return Status::AlreadyExists(Slice());
   }
 }
 
-int Group::RemoveMember(const IpPort& ip) {
+Status Group::RemoveMember(const IpPort& ip) {
   if (!config_.HasSyncMembership()) {
-    return 2;
+    return Status::Unavailable("Membership hasn't been synchronized.");
   }
   bool res = false;
   uint64_t node_id(MakeNodeId(ip));
@@ -153,13 +143,13 @@ int Group::RemoveMember(const IpPort& ip) {
     uint64_t instance_id = 0;
     return OnPropose(s, &instance_id, machine_->GetMachineId());
   } else {
-    return 1;
+    return Status::NotFound(Slice());
   }
 }
 
-int Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
+Status Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
   if (!config_.HasSyncMembership()) {
-    return 2;
+    return Status::Unavailable("Membership hasn't been synchronized.");
   }
 
   bool new_res = false;
@@ -180,13 +170,24 @@ int Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
   }
 
   if (new_res &&  (!old_res)) {
-    return 1;
+    return Status::OK();
   } else {
+    if (!new_res) {
+      m.add_node_id(new_node_id);
+    }
     std::string s;
     m.SerializeToString(&s);
     uint64_t instance_id = 0;
     return OnPropose(s, &instance_id, machine_->GetMachineId());
   }
+}
+
+void Group::AddMachine(StateMachine* machine) {
+  instance_.AddMachine(machine);
+}
+
+void Group::RemoveMachine(StateMachine* machine) {
+  instance_.RemoveMachine(machine);
 }
 
 }  // namespace skywalker

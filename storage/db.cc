@@ -36,11 +36,12 @@ int DB::Open(uint32_t group_id, const std::string& name) {
 int DB::Put(const WriteOptions& options,
             uint64_t instance_id,
             const std::string& value) {
-  char key[8];
-  memcpy(key, &instance_id, sizeof(uint64_t));
+  size_t size = sizeof(instance_id);
+  char key[size];
+  memcpy(key, &instance_id, size);
   leveldb::WriteOptions op;
   op.sync = options.sync;
-  leveldb::Status status = db_->Put(op, key, value);
+  leveldb::Status status = db_->Put(op, leveldb::Slice(key, size), value);
   if (!status.ok()) {
     SWLog(ERROR, "DB::Put - %s\n", status.ToString().c_str());
     return -1;
@@ -49,11 +50,12 @@ int DB::Put(const WriteOptions& options,
 }
 
 int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
-  char key[8];
-  memcpy(key, &instance_id, sizeof(uint64_t));
+  size_t size = sizeof(instance_id);
+  char key[size];
+  memcpy(key, &instance_id, size);
   leveldb::WriteOptions op;
   op.sync = options.sync;
-  leveldb::Status status = db_->Delete(op, key);
+  leveldb::Status status = db_->Delete(op, leveldb::Slice(key, size));
   if (!status.ok()) {
     SWLog(ERROR, "DB::Delete - %s\n", status.ToString().c_str());
     return -1;
@@ -62,10 +64,12 @@ int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
 }
 
 int DB::Get(uint64_t instance_id, std::string* value) {
-  char key[8];
+  size_t size = sizeof(instance_id);
+  char key[size];
   int ret = 0;
-  memcpy(key, &instance_id, sizeof(uint64_t));
-  leveldb::Status status = db_->Get(leveldb::ReadOptions(), key, value);
+  memcpy(key, &instance_id, size);
+  leveldb::Status status =
+      db_->Get(leveldb::ReadOptions(), leveldb::Slice(key, size), value);
   if (!status.ok()) {
     if (status.IsNotFound()) {
       ret = 1;
@@ -74,6 +78,7 @@ int DB::Get(uint64_t instance_id, std::string* value) {
       SWLog(ERROR, "DB::Get - %s\n", status.ToString().c_str());
     }
   }
+
   return ret;
 }
 
@@ -97,9 +102,10 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
 }
 
 int DB::SetMinChosenInstanceId(uint64_t id) {
-  char value[8];
-  memcpy(value, &id, sizeof(uint64_t));
-  return Put(WriteOptions(), kMinChosenKey, value);
+  size_t size = sizeof(id);
+  char value[size];
+  memcpy(value, &id, size);
+  return Put(WriteOptions(), kMinChosenKey, std::string(value, size));
 }
 
 int DB::GetMinChosenInstanceId(uint64_t* id) {

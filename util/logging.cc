@@ -10,7 +10,7 @@ namespace skywalker {
 
 void DefaultLogHandler(LogLevel level, const char* filename, int line,
                        const char* format, va_list ap) {
-  if (level >= LOGLEVEL_DEBUG) {
+  if (level >= LOGLEVEL_INFO) {
     static const char* loglevel_names[] = {
        "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
 

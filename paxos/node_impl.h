@@ -7,6 +7,7 @@
 #include "paxos/group.h"
 #include "network/network.h"
 #include "skywalker/slice.h"
+#include "skywalker/status.h"
 #include "skywalker/options.h"
 #include "skywalker/node.h"
 
@@ -19,19 +20,20 @@ class NodeImpl : public Node {
 
   bool StartWorking();
 
-  virtual int Propose(uint32_t group_id,
-                      const Slice& value,
-                      uint64_t* instance_id,
-                      int machine_id = -1);
+  virtual Status Propose(uint32_t group_id,
+                         const Slice& value,
+                         uint64_t* instance_id,
+                         int machine_id = -1);
+
+  virtual Status AddMember(uint32_t group_id, const IpPort& i);
+  virtual Status RemoveMember(uint32_t group_id, const IpPort& i);
+  virtual Status ReplaceMember(uint32_t group_id,
+                               const IpPort& new_i, const IpPort& old_i);
 
   virtual void AddMachine(uint32_t group_id, StateMachine* machine);
   virtual void RemoveMachine(uint32_t group_id, StateMachine* machine);
 
-  virtual int AddMember(uint32_t group_id, const IpPort& i);
-  virtual int RemoveMember(uint32_t group_id, const IpPort& i);
-  virtual int ReplaceMember(uint32_t group_id,
-                            const IpPort& new_i, const IpPort& old_i);
- private:
+private:
   void OnReceiveMessage(const Slice& s);
 
   const Options options_;

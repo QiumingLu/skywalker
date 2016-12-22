@@ -8,6 +8,7 @@
 #include "paxos/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
+#include "skywalker/status.h"
 #include "util/mutex.h"
 
 namespace skywalker {
@@ -23,18 +24,18 @@ class Group {
 
   void SyncData();
 
-  int OnPropose(const Slice& value,
+  Status OnPropose(const Slice& value,
                        uint64_t* instance_id,
                        int machine_id = -1);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
+  Status AddMember(const IpPort& ip);
+  Status RemoveMember(const IpPort& ip);
+  Status ReplaceMember(const IpPort& new_i, const IpPort& old_i);
+
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
-
-  int AddMember(const IpPort& ip);
-  int RemoveMember(const IpPort& ip);
-  int ReplaceMember(const IpPort& new_i, const IpPort& old_i);
 
  private:
   void ProposeComplete(int result, uint64_t instance_id);
