@@ -38,7 +38,7 @@ bool NodeImpl::StartWorking() {
   SWLog(DEBUG, "Node::Start - Network StartServer Successfully!\n");
 
   for (auto g : groups_) {
-    g.second->SyncData();
+    g.second->SyncMembership();
   }
   return ret;
 }

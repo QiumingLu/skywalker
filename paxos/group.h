@@ -22,7 +22,7 @@ class Group {
 
   bool Start();
 
-  void SyncData();
+  void SyncMembership();
 
   Status OnPropose(const Slice& value,
                        uint64_t* instance_id,
@@ -38,6 +38,10 @@ class Group {
   void RemoveMachine(StateMachine* machine);
 
  private:
+  void SyncMembershipInLoop();
+  void AddMemberInLoop(uint64_t node_id);
+  void RemoveMemberInLoop(uint64_t node_id);
+  void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id);
   void ProposeComplete(Status&& result, uint64_t instance_id);
 
   Config config_;

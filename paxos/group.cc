@@ -1,5 +1,4 @@
 #include "paxos/group.h"
-#include "skywalker/logging.h"
 #include "util/mutexlock.h"
 #include "paxos/node_util.h"
 #include <unistd.h>
@@ -14,44 +13,53 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       machine_(config_.GetMachine()),
       mutex_(),
       cond_(&mutex_) {
+  instance_.SetProposeCompleteCallback(
+      std::bind(&Group::ProposeComplete, this,
+                std::placeholders::_1, std::placeholders::_2));
+  instance_.AddMachine(machine_);
 }
 
 bool Group::Start() {
   bool ret = config_.Init();
   if (ret) {
-    ret = instance_.Init();
-    if (ret) {
-      instance_.SetProposeCompleteCallback(
-          std::bind(&Group::ProposeComplete, this,
-                    std::placeholders::_1, std::placeholders::_2));
-      instance_.AddMachine(machine_);
-    }
+    return instance_.Init();
   }
   return ret;
 }
 
-void Group::SyncData() {
-  // FIXME
+void Group::SyncMembership() {
   int i = 0;
-  instance_.SyncData();
   while (true) {
     if (i++ > 3) {
       instance_.SyncData();
     }
-    const Membership& m = config_.GetMembership();
-    if (!config_.HasSyncMembership()) {
-      uint64_t instance_id;
-      std::string s;
-      m.SerializeToString(&s);
-      Status status = OnPropose(s, &instance_id, machine_->GetMachineId());
-      if (status.ok() || status.IsConflict()) {
-        break;
-      }
-      usleep(500*1000);
-    } else {
+    MutexLock lock(&mutex_);
+    propose_end_ = false;
+    result_ = Status::OK();
+    loop_->QueueInLoop([this]() {
+      SyncMembershipInLoop();
+    });
+    while (!propose_end_) {
+      cond_.Wait();
+    }
+    if (result_.ok() || result_.IsConflict()) {
       break;
     }
+    usleep(30*1000);
   }
+}
+
+void Group::SyncMembershipInLoop() {
+  if (!config_.HasSyncMembership()) {
+    const Membership& m = config_.GetMembership();
+    std::string s;
+    m.SerializeToString(&s);
+    instance_.OnPropose(s, machine_->GetMachineId());
+  } else {
+     propose_end_ = true;
+     result_ = Status::OK();
+     cond_.Signal();
+   }
 }
 
 Status Group::OnPropose(const Slice& value,
@@ -80,99 +88,149 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
   });
 }
 
-void Group::ProposeComplete(Status&& result, uint64_t instance_id) {
+Status Group::AddMember(const IpPort& ip) {
+  uint64_t node_id(MakeNodeId(ip));
   MutexLock lock(&mutex_);
-  result_ = std::move(result);
-  instance_id_ = instance_id;
-  propose_end_ = true;
-  cond_.Signal();
+  propose_end_ = false;
+  result_ = Status::OK();
+  loop_->QueueInLoop([node_id, this] {
+    AddMemberInLoop(node_id);
+  });
+  while(!propose_end_) {
+    cond_.Wait();
+  }
+  return result_;
 }
 
-Status Group::AddMember(const IpPort& ip) {
+void Group::AddMemberInLoop(uint64_t node_id) {
   if (!config_.HasSyncMembership()) {
-    return Status::Unavailable("Membership hasn't been synchronized.");
-  }
-  bool res = false;
-  uint64_t node_id(MakeNodeId(ip));
-  const Membership& temp = config_.GetMembership();
+    result_ = Status::Unavailable("Membership hasn't been synchronized.");
+  } else {
+    bool res = false;
+    const Membership& temp = config_.GetMembership();
 
-  for (int i = 0; i < temp.node_id_size(); ++i) {
-    if (node_id == temp.node_id(i)) {
-      res = true;
-      break;
+    for (int i = 0; i < temp.node_id_size(); ++i) {
+      if (node_id == temp.node_id(i)) {
+        res = true;
+        break;
+      }
+    }
+    if (!res) {
+      Membership m(temp);
+      m.add_node_id(node_id);
+      std::string s;
+      m.SerializeToString(&s);
+      instance_.OnPropose(s, machine_->GetMachineId(), false);
+    } else {
+      result_ = Status::AlreadyExists(Slice());
     }
   }
-  if (!res) {
-    Membership m(temp);
-    m.add_node_id(node_id);
-    std::string s;
-    m.SerializeToString(&s);
-    uint64_t instance_id = 0;
-    return OnPropose(s, &instance_id, machine_->GetMachineId());
-  } else {
-    return Status::AlreadyExists(Slice());
+  if (!result_.ok()) {
+    propose_end_ = true;
+    cond_.Signal();
   }
 }
 
 Status Group::RemoveMember(const IpPort& ip) {
-  if (!config_.HasSyncMembership()) {
-    return Status::Unavailable("Membership hasn't been synchronized.");
-  }
-  bool res = false;
   uint64_t node_id(MakeNodeId(ip));
-  const Membership& temp = config_.GetMembership();
-  Membership m;
-  for (int i = 0; i < temp.node_id_size(); ++i) {
-    if (node_id == temp.node_id(i)) {
-      res = true;
+  MutexLock lock(&mutex_);
+  propose_end_ = false;
+  result_ = Status::OK();
+  loop_->QueueInLoop([node_id, this] {
+    RemoveMemberInLoop(node_id);
+  });
+  while(!propose_end_) {
+    cond_.Wait();
+  }
+  return result_;
+}
+
+void Group::RemoveMemberInLoop(uint64_t node_id) {
+  if (!config_.HasSyncMembership()) {
+    result_ = Status::Unavailable("Membership hasn't been synchronized.");
+  } else {
+    bool res = false;
+    const Membership& temp = config_.GetMembership();
+    Membership m;
+    for (int i = 0; i < temp.node_id_size(); ++i) {
+      if (node_id == temp.node_id(i)) {
+        res = true;
+      } else {
+        m.add_node_id(temp.node_id(i));
+      }
+    }
+
+    if (res) {
+      std::string s;
+      m.SerializeToString(&s);
+      instance_.OnPropose(s, machine_->GetMachineId(), false);
     } else {
-      m.add_node_id(temp.node_id(i));
+      result_ = Status::NotFound(Slice());
     }
   }
-
-  if (res) {
-    std::string s;
-    m.SerializeToString(&s);
-    uint64_t instance_id = 0;
-    return OnPropose(s, &instance_id, machine_->GetMachineId());
-  } else {
-    return Status::NotFound(Slice());
+  if (!result_.ok()) {
+    propose_end_ = true;
+    cond_.Signal();
   }
 }
 
 Status Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
-  if (!config_.HasSyncMembership()) {
-    return Status::Unavailable("Membership hasn't been synchronized.");
-  }
-
-  bool new_res = false;
-  bool old_res = false;
   uint64_t new_node_id(MakeNodeId(new_i));
   uint64_t old_node_id(MakeNodeId(old_i));
-  const Membership& temp = config_.GetMembership();
-  Membership m;
-  for (int i = 0; i < temp.node_id_size(); ++i) {
-    if (temp.node_id(i) == new_node_id) {
-      new_res = true;
-    }
-    if (temp.node_id(i) == old_node_id) {
-      old_res = true;
-    } else {
-      m.add_node_id(temp.node_id(i));
-    }
+  MutexLock lock(&mutex_);
+  propose_end_ = false;
+  result_ = Status::OK();
+  loop_->QueueInLoop([new_node_id, old_node_id, this] {
+    ReplaceMemberInLoop(new_node_id, old_node_id);
+  });
+  while(!propose_end_) {
+    cond_.Wait();
   }
+  return result_;
+}
 
-  if (new_res &&  (!old_res)) {
-    return Status::OK();
+void Group::ReplaceMemberInLoop(uint64_t new_node_id,
+                                uint64_t old_node_id) {
+  if (!config_.HasSyncMembership()) {
+    result_ = Status::Unavailable("Membership hasn't been synchronized.");
   } else {
-    if (!new_res) {
-      m.add_node_id(new_node_id);
+    bool new_res = false;
+    bool old_res = false;
+    const Membership& temp = config_.GetMembership();
+    Membership m;
+    for (int i = 0; i < temp.node_id_size(); ++i) {
+      if (temp.node_id(i) == new_node_id) {
+        new_res = true;
+      }
+      if (temp.node_id(i) == old_node_id) {
+        old_res = true;
+      } else {
+        m.add_node_id(temp.node_id(i));
+      }
     }
-    std::string s;
-    m.SerializeToString(&s);
-    uint64_t instance_id = 0;
-    return OnPropose(s, &instance_id, machine_->GetMachineId());
+
+    if (new_res &&  (!old_res)) {
+      result_ = Status::AlreadyExists(Slice());
+    } else {
+      if (!new_res) {
+        m.add_node_id(new_node_id);
+      }
+      std::string s;
+      m.SerializeToString(&s);
+      instance_.OnPropose(s, machine_->GetMachineId(), false);
+    }
   }
+  if (!result_.ok()) {
+    propose_end_ = true;
+    cond_.Signal();
+  }
+}
+
+void Group::ProposeComplete(Status&& result, uint64_t instance_id) {
+  result_ = std::move(result);
+  instance_id_ = instance_id;
+  propose_end_ = true;
+  cond_.Signal();
 }
 
 void Group::AddMachine(StateMachine* machine) {

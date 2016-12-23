@@ -2,8 +2,6 @@
 #define SKYWALKER_PAXOS_CONFIG_H_
 
 #include <stdint.h>
-#include <set>
-
 #include "network/messager.h"
 #include "storage/db.h"
 #include "machine/inside_machine.h"
@@ -56,7 +54,6 @@ class Config {
   uint32_t sync_interval_;
 
   bool has_sync_membership_;
-
   Membership membership_;
   Membership followers_;
 

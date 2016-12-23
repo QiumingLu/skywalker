@@ -10,6 +10,7 @@
 #include "skywalker/status.h"
 #include "skywalker/node.h"
 #include "skywalker/options.h"
+#include "skywalker/status.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {
@@ -46,6 +47,12 @@ int main(int argc, char** argv) {
 
   skywalker::Node* node = nullptr;
   bool res = skywalker::Node::Start(options, &node);
+  if (res) {
+    for (uint32_t i = 0; i < options.group_size; ++i) {
+      skywalker::Status status = node->AddMember(i, options.ipport);
+      printf("%s\n", status.ToString().c_str());
+    }
+  }
 
   while (res) {
     printf("please enter value:\n");

@@ -17,7 +17,12 @@ class Status {
   void operator=(const Status& s);
   void operator=(Status&& s);
 
-  static Status OK() { return Status(); }
+  static Status OK() {
+    return Status();
+  }
+  static Status InvalidNode(const Slice& msg, const Slice& msg2 = Slice()) {
+    return Status(kInvalidNode, msg, msg2);
+  }
   static Status Conflict(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kConflict, msg, msg2);
   }
@@ -41,6 +46,7 @@ class Status {
   }
 
   bool ok() const { return state_ == nullptr; }
+  bool IsInvalidNode() const { return code() == kInvalidNode; }
   bool IsConflict() const {  return code() == kConflict; }
   bool IsMachineError() const { return code() == kMachineError; }
   bool IsTimeout() const { return code() == kTimeout; }
@@ -56,13 +62,14 @@ class Status {
 
   enum Code {
     kOk = 0,
-    kConflict = 1,
-    kMachineError = 2,
-    kTimeout = 3,
-    kUnavailable = 4,
-    kAlreadyExists = 5,
-    kNotFound = 6,
-    kNotSupported = 7,
+    kInvalidNode = 1,
+    kConflict = 2,
+    kMachineError = 3,
+    kTimeout = 4,
+    kUnavailable = 5,
+    kAlreadyExists = 6,
+    kNotFound = 7,
+    kNotSupported = 8,
   };
 
   Code code() const {

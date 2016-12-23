@@ -26,7 +26,8 @@ class Node {
   virtual Status AddMember(uint32_t group_id, const IpPort& i) = 0;
   virtual Status RemoveMember(uint32_t group_id, const IpPort& i) = 0;
   virtual Status ReplaceMember(uint32_t group_id,
-                               const IpPort& new_i, const IpPort& old_i) = 0;
+                               const IpPort& new_i,
+                               const IpPort& old_i) = 0;
 
   virtual void AddMachine(uint32_t group_id, StateMachine* machine) = 0;
   virtual void RemoveMachine(uint32_t group_id, StateMachine* machine) = 0;

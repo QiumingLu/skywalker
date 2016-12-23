@@ -39,6 +39,9 @@ std::string Status::ToString() const {
       case kOk:
         type = "OK";
         break;
+      case kInvalidNode:
+        type = "InvalidNode";
+        break;
       case kConflict:
         type = "Conflict: ";
         break;

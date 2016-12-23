@@ -31,13 +31,17 @@ bool Instance::Init() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
+  learner_.AskForLearn();
+
   SWLog(INFO,
         "Instance::Init - now instance_id=%" PRIu64".\n", instance_id_);
   return ret;
 }
 
 void Instance::SyncData() {
-  learner_.AskForLearn();
+  loop_->QueueInLoop([this]() {
+    learner_.AskForLearn();
+  });
 }
 
 void Instance::AddMachine(StateMachine* machine) {
@@ -50,20 +54,24 @@ void Instance::RemoveMachine(StateMachine* machine) {
   machines_.erase(machine->GetMachineId());
 }
 
-void Instance::OnPropose(const Slice& value, int machine_id) {
-  assert(!is_proposing_);
+void Instance::OnPropose(const Slice& value, int machine_id, bool check) {
+  if (check && !config_->IsValidNodeId(config_->GetNodeId())) {
+    Slice msg("this node is not in the membership, please add it firstly.");
+    propose_cb_(Status::InvalidNode(msg), instance_id_);
+  } else {
+    assert(!is_proposing_);
+    propose_value_.set_machine_id(machine_id);
+    propose_value_.set_user_data(value.data(), value.size());
+    proposer_.NewPropose(propose_value_);
 
-  propose_value_.set_machine_id(machine_id);
-  propose_value_.set_user_data(value.data(), value.size());
-  proposer_.NewPropose(propose_value_);
-
-  propose_timer_ = loop_->RunAfter(1000, [this]() {
-    proposer_.QuitPropose();
-    is_proposing_ = false;
-    propose_cb_(Status::Timeout("proposal time out of one second."),
-                instance_id_);
-  });
-  is_proposing_ = true;
+    propose_timer_ = loop_->RunAfter(1000, [this]() {
+      proposer_.QuitPropose();
+      is_proposing_ = false;
+      Slice msg("proposal time out of one second.");
+      propose_cb_(Status::Timeout(msg), instance_id_);
+    });
+    is_proposing_ = true;
+  }
 }
 
 void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
@@ -146,12 +154,12 @@ void Instance::CheckLearn() {
            propose_value_.user_data() == learned_value.user_data()) {
           propose_cb_(Status::OK(), instance_id_);
         } else {
-          propose_cb_(Status::Conflict("another value has been chosen."),
-                      instance_id_);
+          Slice msg("another value has been chosen.");
+          propose_cb_(Status::Conflict(msg), instance_id_);
         }
       } else {
-        propose_cb_(Status::MachineError("machine execute failed."),
-                    instance_id_);
+        Slice msg("machine execute failed.");
+        propose_cb_(Status::MachineError(msg), instance_id_);
       }
       loop_->Remove(propose_timer_);
       is_proposing_ = false;
