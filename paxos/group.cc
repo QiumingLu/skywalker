@@ -138,7 +138,7 @@ void Group::AddMemberInLoop(uint64_t node_id) {
   }
   if (!result_.ok()) {
     propose_end_ = true;
-    cond_.Signal();
+    cond_.SignalAll();
   }
 }
 
@@ -187,7 +187,7 @@ void Group::RemoveMemberInLoop(uint64_t node_id) {
   }
   if (!result_.ok()) {
     propose_end_ = true;
-    cond_.Signal();
+    cond_.SignalAll();
   }
 }
 
@@ -245,7 +245,7 @@ void Group::ReplaceMemberInLoop(uint64_t new_node_id,
   }
   if (!result_.ok()) {
     propose_end_ = true;
-    cond_.Signal();
+    cond_.SignalAll();
   }
 }
 
@@ -253,7 +253,7 @@ void Group::ProposeComplete(Status&& result, uint64_t instance_id) {
   result_ = std::move(result);
   instance_id_ = instance_id;
   propose_end_ = true;
-  cond_.Signal();
+  cond_.SignalAll();
 }
 
 void Group::AddMachine(StateMachine* machine) {
