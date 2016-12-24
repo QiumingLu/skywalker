@@ -12,7 +12,9 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       loop_(config_.GetLoop()),
       machine_(config_.GetMachine()),
       mutex_(),
-      cond_(&mutex_) {
+      cond_(&mutex_),
+      last_finish_(true),
+      propose_end_(false) {
   instance_.SetProposeCompleteCallback(
       std::bind(&Group::ProposeComplete, this,
                 std::placeholders::_1, std::placeholders::_2));
@@ -65,11 +67,14 @@ void Group::SyncMembershipInLoop() {
 Status Group::OnPropose(const Slice& value,
                         uint64_t* instance_id,
                         int machine_id) {
-  // FIXME
+  // FIXME:releasize non-blocking by using a deque or another...?
   MutexLock lock(&mutex_);
+  while (!last_finish_) {
+    cond_.Wait();
+  }
+  last_finish_ = false;
   propose_end_ = false;
   instance_id_ = 0;
-  result_ = Status::NotSupported(Slice());
   loop_->QueueInLoop([value, machine_id, this]() {
     instance_.OnPropose(value, machine_id);
   });
@@ -77,8 +82,9 @@ Status Group::OnPropose(const Slice& value,
   while (!propose_end_) {
     cond_.Wait();
   }
-
   *instance_id = instance_id_;
+  last_finish_ = true;
+  cond_.Signal();
   return result_;
 }
 
@@ -91,14 +97,19 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
 Status Group::AddMember(const IpPort& ip) {
   uint64_t node_id(MakeNodeId(ip));
   MutexLock lock(&mutex_);
+  while (!last_finish_) {
+    cond_.Wait();
+  }
+  last_finish_ = false;
   propose_end_ = false;
-  result_ = Status::OK();
   loop_->QueueInLoop([node_id, this] {
     AddMemberInLoop(node_id);
   });
-  while(!propose_end_) {
+  while (!propose_end_) {
     cond_.Wait();
   }
+  last_finish_ = true;
+  cond_.Signal();
   return result_;
 }
 
@@ -134,14 +145,20 @@ void Group::AddMemberInLoop(uint64_t node_id) {
 Status Group::RemoveMember(const IpPort& ip) {
   uint64_t node_id(MakeNodeId(ip));
   MutexLock lock(&mutex_);
+  while (!last_finish_) {
+    cond_.Wait();
+  }
+  last_finish_ = false;
   propose_end_ = false;
   result_ = Status::OK();
   loop_->QueueInLoop([node_id, this] {
     RemoveMemberInLoop(node_id);
   });
-  while(!propose_end_) {
+  while (!propose_end_) {
     cond_.Wait();
   }
+  last_finish_ = true;
+  cond_.Signal();
   return result_;
 }
 
@@ -178,6 +195,10 @@ Status Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
   uint64_t new_node_id(MakeNodeId(new_i));
   uint64_t old_node_id(MakeNodeId(old_i));
   MutexLock lock(&mutex_);
+  while (!last_finish_) {
+    cond_.Wait();
+  }
+  last_finish_ = false;
   propose_end_ = false;
   result_ = Status::OK();
   loop_->QueueInLoop([new_node_id, old_node_id, this] {
@@ -186,6 +207,8 @@ Status Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
   while(!propose_end_) {
     cond_.Wait();
   }
+  last_finish_ = false;
+  cond_.Signal();
   return result_;
 }
 

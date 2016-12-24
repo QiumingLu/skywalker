@@ -67,7 +67,7 @@ void Instance::OnPropose(const Slice& value, int machine_id, bool check) {
     propose_timer_ = loop_->RunAfter(1000, [this]() {
       proposer_.QuitPropose();
       is_proposing_ = false;
-      Slice msg("proposal time out of one second.");
+      Slice msg("proposal time more than a second.");
       propose_cb_(Status::Timeout(msg), instance_id_);
     });
     is_proposing_ = true;

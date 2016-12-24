@@ -63,6 +63,7 @@ int main(int argc, char** argv) {
     printf("%s\n", s.ToString().c_str());
   }
 
+  delete node;
   printf("paxos test end\n");
 
   return 0;

@@ -51,6 +51,7 @@ class Group {
 
   Mutex mutex_;
   Condition cond_;
+  bool last_finish_;
   bool propose_end_;
   uint64_t instance_id_;
   Status result_;

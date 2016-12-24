@@ -30,6 +30,9 @@ class NodeImpl : public Node {
   virtual Status ReplaceMember(uint32_t group_id,
                                const IpPort& new_i, const IpPort& old_i);
 
+  virtual void AddMachine(StateMachine* machine);
+  virtual void RemoveMachine(StateMachine* machine);
+
   virtual void AddMachine(uint32_t group_id, StateMachine* machine);
   virtual void RemoveMachine(uint32_t group_id, StateMachine* machine);
 

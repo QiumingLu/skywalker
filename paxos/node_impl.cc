@@ -82,6 +82,19 @@ Status NodeImpl::ReplaceMember(uint32_t group_id,
   return groups_[group_id]->ReplaceMember(new_i, old_i);
 }
 
+void NodeImpl::AddMachine(StateMachine* machine) {
+  for (auto g : groups_) {
+    g.second->AddMachine(machine);
+  }
+}
+
+void NodeImpl::RemoveMachine(StateMachine* machine) {
+  for (auto g : groups_) {
+    g.second->RemoveMachine(machine);
+  }
+}
+
+
 void NodeImpl::AddMachine(uint32_t group_id, StateMachine* machine) {
   assert(groups_.find(group_id) != groups_.end());
   groups_[group_id]->AddMachine(machine);
