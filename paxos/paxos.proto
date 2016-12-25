@@ -48,6 +48,11 @@ message Content {
   CheckPointMessage checkpoint_msg = 5;
 }
 
+message Membership {
+  uint64 version = 1;
+  repeated uint64 node_id = 2;
+}
+
 message AcceptorState {
   uint64 instance_id = 1;
   uint64 promised_id = 2;
@@ -57,7 +62,8 @@ message AcceptorState {
   PaxosValue accepted_value = 6;
 }
 
-message Membership {
+message MasterState {
   uint64 version = 1;
-  repeated uint64 node_id = 2;
+  uint64 node_id = 2;
+  uint64 lease_time = 3;
 }

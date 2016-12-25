@@ -1,6 +1,8 @@
 #include "paxos/config.h"
 #include "paxos/node_util.h"
 #include "skywalker/logging.h"
+#include "util/timerlist.h"
+#include "util/mutexlock.h"
 
 namespace skywalker {
 
@@ -11,11 +13,10 @@ Config::Config(uint32_t group_id, uint64_t node_id,
       log_storage_path_(options.log_storage_path),
       log_sync_(options.log_sync),
       sync_interval_(options.sync_interval),
-      has_sync_membership_(false),
       db_(new DB()),
       messager_(new Messager(this, network)),
-      machine_(new InsideMachine(this)),
-      loop_(new RunLoop()) {
+      loop_(new RunLoop()),
+      bg_loop_(new RunLoop()) {
 
   char name[8];
   if (log_storage_path_[log_storage_path_.size() - 1] != '/') {
@@ -26,19 +27,14 @@ Config::Config(uint32_t group_id, uint64_t node_id,
 
   log_storage_path_ += name;
 
-  membership_.set_version(0);
-  for (auto i : options.membership) {
-    membership_.add_node_id(MakeNodeId(i));
-  }
-
   for (auto i : options.followers) {
     followers_.add_node_id(MakeNodeId(i));
   }
 }
 
 Config::~Config() {
+  delete bg_loop_;
   delete loop_;
-  delete machine_;
   delete messager_;
   delete db_;
 }
@@ -50,23 +46,10 @@ bool Config::Init() {
           log_storage_path_.c_str());
     return false;
   }
-  Membership m;
-  ret = db_->GetMembership(&m);
-  if (ret == 0) {
-    has_sync_membership_ = true;
-    membership_ = m;
-  }
   loop_->Loop();
-  return true;
-}
+  bg_loop_->Loop();
 
-bool Config::IsValidNodeId(uint64_t node_id) const {
-  for (int i = 0; i < membership_.node_id_size(); ++i) {
-    if (node_id == membership_.node_id(i)) {
-      return true;
-    }
-  }
-  return false;
+  return true;
 }
 
 }  // namespace skywalker

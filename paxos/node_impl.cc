@@ -39,7 +39,9 @@ bool NodeImpl::StartWorking() {
 
   for (auto g : groups_) {
     g.second->SyncMembership();
+    g.second->SyncMaster();
   }
+
   return ret;
 }
 
@@ -82,6 +84,13 @@ Status NodeImpl::ReplaceMember(uint32_t group_id,
   return groups_[group_id]->ReplaceMember(new_i, old_i);
 }
 
+void NodeImpl::GetMembership(uint32_t group_id,
+                             std::vector<IpPort>* result) const {
+  std::map<uint32_t, Group*>::const_iterator it = groups_.find(group_id);
+  assert(it != groups_.end());
+  it->second->GetMembership(result);
+}
+
 void NodeImpl::AddMachine(StateMachine* machine) {
   for (auto g : groups_) {
     g.second->AddMachine(machine);
@@ -94,7 +103,6 @@ void NodeImpl::RemoveMachine(StateMachine* machine) {
   }
 }
 
-
 void NodeImpl::AddMachine(uint32_t group_id, StateMachine* machine) {
   assert(groups_.find(group_id) != groups_.end());
   groups_[group_id]->AddMachine(machine);
@@ -103,6 +111,34 @@ void NodeImpl::AddMachine(uint32_t group_id, StateMachine* machine) {
 void NodeImpl::RemoveMachine(uint32_t group_id, StateMachine* machine) {
   assert(groups_.find(group_id) != groups_.end());
   groups_[group_id]->RemoveMachine(machine);
+}
+
+void NodeImpl::SetMasterLeaseTime(uint64_t micros) {
+  for (auto g : groups_) {
+    g.second->SetMasterLeaseTime(micros);
+  }
+}
+
+void NodeImpl::SetMasterLeaseTime(uint32_t group_id, uint64_t micros) {
+  assert(groups_.find(group_id) != groups_.end());
+  groups_[group_id]->SetMasterLeaseTime(micros);
+}
+
+void NodeImpl::GetMaster(uint32_t group_id, IpPort* i) const {
+  std::map<uint32_t, Group*>::const_iterator it = groups_.find(group_id);
+  assert(it != groups_.end());
+  it->second->GetMaster(i);
+}
+
+bool NodeImpl::IsMaster(uint32_t group_id) const {
+  std::map<uint32_t, Group*>::const_iterator it = groups_.find(group_id);
+  assert(it != groups_.end());
+  return it->second->IsMaster();
+}
+
+void NodeImpl::RetireMaster(uint32_t group_id) {
+  assert(groups_.find(group_id) != groups_.end());
+  groups_[group_id]->RetireMaster();
 }
 
 bool Node::Start(const Options& options, Node** nodeptr) {

@@ -56,6 +56,10 @@ class Node {
                                const IpPort& new_i,
                                const IpPort& old_i) = 0;
 
+  // Return the membership.
+  virtual void GetMembership(uint32_t group_id,
+                             std::vector<IpPort>* result) const = 0;
+
   // Add a state machine to all groups.
   virtual void AddMachine(StateMachine* machine) = 0;
 
@@ -67,6 +71,21 @@ class Node {
 
   // Remove a state machine from a specific group.
   virtual void RemoveMachine(uint32_t group_id, StateMachine* machine) = 0;
+
+  // Set the master's lease time for all groups. default micros = 5000*1000.
+  virtual void SetMasterLeaseTime(uint64_t micros) = 0;
+
+  // Set the master's lease time for a specific group. default micros = 5000*1000.
+  virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros) = 0;
+
+  // Return the master, if have master, store the result in *i, else i=nullptr.
+  virtual void GetMaster(uint32_t group_id, IpPort* i) const = 0;
+
+  // Check whether I'm master or not.
+  virtual bool IsMaster(uint32_t group_id) const = 0;
+
+  // Retire master.
+  virtual void RetireMaster(uint32_t group_id) = 0;
 
 private:
   // No copying allowed

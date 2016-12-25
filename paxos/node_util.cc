@@ -14,13 +14,11 @@ uint64_t MakeNodeId(const IpPort& i) {
   return node_id;
 }
 
-IpPort ParseNodeId(uint64_t node_id) {
-  IpPort i;
-  i.port = static_cast<uint16_t>(node_id & (0xffffffff));
+void ParseNodeId(uint64_t node_id, IpPort* i) {
+  i->port = static_cast<uint16_t>(node_id & (0xffffffff));
   in_addr addr;
   addr.s_addr = static_cast<in_addr_t>(node_id >> 32);
-  i.ip = std::string(inet_ntoa(addr));
-  return i;
+  i->ip = std::string(inet_ntoa(addr));
 }
 
 }  // namespace skywalker

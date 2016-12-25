@@ -7,26 +7,35 @@ namespace skywalker {
 
 Group::Group(uint32_t group_id, uint64_t node_id,
              const Options& options, Network* network)
-    : config_(group_id, node_id, options, network),
+    : node_id_(node_id),
+      config_(group_id, node_id, options, network),
       instance_(&config_),
       loop_(config_.GetLoop()),
-      machine_(config_.GetMachine()),
+      bg_loop_(config_.GetBGLoop()),
+      lease_timeout_(5000 * 1000),
+      retrie_master_(false),
+      membership_machine_(options, &config_),
+      master_machine_(&config_),
       mutex_(),
       cond_(&mutex_),
       last_finish_(true),
       propose_end_(false) {
+
   instance_.SetProposeCompleteCallback(
       std::bind(&Group::ProposeComplete, this,
                 std::placeholders::_1, std::placeholders::_2));
-  instance_.AddMachine(machine_);
+  instance_.AddMachine(&membership_machine_);
+  instance_.AddMachine(&master_machine_);
 }
 
 bool Group::Start() {
-  bool ret = config_.Init();
-  if (ret) {
-    return instance_.Init();
+  if(config_.Init() && instance_.Init()) {
+    membership_machine_.Recover();
+    master_machine_.Recover();
+    return true;
+  } else {
+    return false;
   }
-  return ret;
 }
 
 void Group::SyncMembership() {
@@ -35,15 +44,14 @@ void Group::SyncMembership() {
     if (i++ > 3) {
       instance_.SyncData();
     }
-    MutexLock lock(&mutex_);
-    propose_end_ = false;
-    result_ = Status::OK();
-    loop_->QueueInLoop([this]() {
-      SyncMembershipInLoop();
-    });
-    while (!propose_end_) {
-      cond_.Wait();
+    if (!membership_machine_.HasSyncMembership()) {
+      Membership m(membership_machine_.GetMembership());
+      std::string s;
+      m.SerializeToString(&s);
+      uint64_t id;
+      OnPropose(s, &id, membership_machine_.GetMachineId());
     }
+
     if (result_.ok() || result_.IsConflict()) {
       break;
     }
@@ -51,23 +59,45 @@ void Group::SyncMembership() {
   }
 }
 
-void Group::SyncMembershipInLoop() {
-  if (!config_.HasSyncMembership()) {
-    const Membership& m = config_.GetMembership();
+void Group::SyncMaster() {
+  bg_loop_->QueueInLoop([this]() {
+    TryBeMaster();
+  });
+}
+
+void Group::TryBeMaster() {
+  MasterState state(master_machine_.GetMasterState());
+  if (state.lease_time() <= NowMicros() ||
+      (state.node_id() == node_id_ && !retrie_master_)) {
+    state.set_node_id(node_id_);
+    state.set_lease_time(lease_timeout_);
     std::string s;
-    m.SerializeToString(&s);
-    instance_.OnPropose(s, machine_->GetMachineId());
+    state.SerializeToString(&s);
+    uint64_t i;
+    OnPropose(s, &i, master_machine_.GetMachineId());
+    state = master_machine_.GetMasterState();
+  }
+  if (retrie_master_) {
+    retrie_master_ = false;
+  }
+  if (state.node_id() == node_id_) {
+    next_try_be_master_time_ = state.lease_time() - 200*1000;
   } else {
-     propose_end_ = true;
-     result_ = Status::OK();
-     cond_.Signal();
-   }
+    next_try_be_master_time_ = state.lease_time();
+  }
+  bg_loop_->RunAt(next_try_be_master_time_, [this]() {
+    TryBeMaster();
+  });
 }
 
 Status Group::OnPropose(const Slice& value,
                         uint64_t* instance_id,
-                        int machine_id) {
-  // FIXME:releasize non-blocking by using a deque or another...?
+                        int machine_id,
+                        bool check_valid) {
+  if (check_valid && !membership_machine_.IsValidNodeId(node_id_)) {
+    Slice msg("this node is not in the membership, please add it firstly.");
+    return Status::InvalidNode(msg);
+  }
   MutexLock lock(&mutex_);
   while (!last_finish_) {
     cond_.Wait();
@@ -88,6 +118,13 @@ Status Group::OnPropose(const Slice& value,
   return result_;
 }
 
+void Group::ProposeComplete(Status&& result, uint64_t instance_id) {
+  result_ = std::move(result);
+  instance_id_ = instance_id;
+  propose_end_ = true;
+  cond_.SignalAll();
+}
+
 void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
   loop_->QueueInLoop([c, this]() {
     instance_.OnReceiveContent(c);
@@ -95,79 +132,37 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
 }
 
 Status Group::AddMember(const IpPort& ip) {
-  uint64_t node_id(MakeNodeId(ip));
-  MutexLock lock(&mutex_);
-  while (!last_finish_) {
-    cond_.Wait();
-  }
-  last_finish_ = false;
-  propose_end_ = false;
-  loop_->QueueInLoop([node_id, this] {
-    AddMemberInLoop(node_id);
-  });
-  while (!propose_end_) {
-    cond_.Wait();
-  }
-  last_finish_ = true;
-  cond_.Signal();
-  return result_;
-}
-
-void Group::AddMemberInLoop(uint64_t node_id) {
-  if (!config_.HasSyncMembership()) {
-    result_ = Status::Unavailable("Membership hasn't been synchronized.");
+  if (!membership_machine_.HasSyncMembership()) {
+    return Status::Unavailable("Membership hasn't been synchronized.");
   } else {
+    uint64_t node_id(MakeNodeId(ip));
     bool res = false;
-    const Membership& temp = config_.GetMembership();
-
-    for (int i = 0; i < temp.node_id_size(); ++i) {
-      if (node_id == temp.node_id(i)) {
+    Membership m(membership_machine_.GetMembership());
+    for (int i = 0; i < m.node_id_size(); ++i) {
+      if (node_id == m.node_id(i)) {
         res = true;
         break;
       }
     }
-    if (!res) {
-      Membership m(temp);
+    if (res) {
+      return Status::AlreadyExists(Slice());
+    } else {
       m.add_node_id(node_id);
       std::string s;
       m.SerializeToString(&s);
-      instance_.OnPropose(s, machine_->GetMachineId(), false);
-    } else {
-      result_ = Status::AlreadyExists(Slice());
+      uint64_t id;
+      return OnPropose(s, &id, membership_machine_.GetMachineId(), false);
     }
-  }
-  if (!result_.ok()) {
-    propose_end_ = true;
-    cond_.SignalAll();
   }
 }
 
 Status Group::RemoveMember(const IpPort& ip) {
-  uint64_t node_id(MakeNodeId(ip));
-  MutexLock lock(&mutex_);
-  while (!last_finish_) {
-    cond_.Wait();
-  }
-  last_finish_ = false;
-  propose_end_ = false;
-  result_ = Status::OK();
-  loop_->QueueInLoop([node_id, this] {
-    RemoveMemberInLoop(node_id);
-  });
-  while (!propose_end_) {
-    cond_.Wait();
-  }
-  last_finish_ = true;
-  cond_.Signal();
-  return result_;
-}
-
-void Group::RemoveMemberInLoop(uint64_t node_id) {
-  if (!config_.HasSyncMembership()) {
-    result_ = Status::Unavailable("Membership hasn't been synchronized.");
+  if (!membership_machine_.HasSyncMembership()) {
+    return Status::Unavailable("Membership hasn't been synchronized.");
   } else {
+    uint64_t node_id(MakeNodeId(ip));
     bool res = false;
-    const Membership& temp = config_.GetMembership();
+    Membership temp(membership_machine_.GetMembership());
     Membership m;
     for (int i = 0; i < temp.node_id_size(); ++i) {
       if (node_id == temp.node_id(i)) {
@@ -177,49 +172,26 @@ void Group::RemoveMemberInLoop(uint64_t node_id) {
       }
     }
 
-    if (res) {
+    if (!res) {
+      return Status::NotFound(Slice());
+    } else {
       std::string s;
       m.SerializeToString(&s);
-      instance_.OnPropose(s, machine_->GetMachineId(), false);
-    } else {
-      result_ = Status::NotFound(Slice());
+      uint64_t id;
+      return OnPropose(s, &id, membership_machine_.GetMachineId(), false);
     }
-  }
-  if (!result_.ok()) {
-    propose_end_ = true;
-    cond_.SignalAll();
   }
 }
 
 Status Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
-  uint64_t new_node_id(MakeNodeId(new_i));
-  uint64_t old_node_id(MakeNodeId(old_i));
-  MutexLock lock(&mutex_);
-  while (!last_finish_) {
-    cond_.Wait();
-  }
-  last_finish_ = false;
-  propose_end_ = false;
-  result_ = Status::OK();
-  loop_->QueueInLoop([new_node_id, old_node_id, this] {
-    ReplaceMemberInLoop(new_node_id, old_node_id);
-  });
-  while(!propose_end_) {
-    cond_.Wait();
-  }
-  last_finish_ = false;
-  cond_.Signal();
-  return result_;
-}
-
-void Group::ReplaceMemberInLoop(uint64_t new_node_id,
-                                uint64_t old_node_id) {
-  if (!config_.HasSyncMembership()) {
-    result_ = Status::Unavailable("Membership hasn't been synchronized.");
+  if (!membership_machine_.HasSyncMembership()) {
+    return Status::Unavailable("Membership hasn't been synchronized.");
   } else {
+    uint64_t new_node_id(MakeNodeId(new_i));
+    uint64_t old_node_id(MakeNodeId(old_i));
     bool new_res = false;
     bool old_res = false;
-    const Membership& temp = config_.GetMembership();
+    Membership temp(membership_machine_.GetMembership());
     Membership m;
     for (int i = 0; i < temp.node_id_size(); ++i) {
       if (temp.node_id(i) == new_node_id) {
@@ -233,27 +205,21 @@ void Group::ReplaceMemberInLoop(uint64_t new_node_id,
     }
 
     if (new_res &&  (!old_res)) {
-      result_ = Status::AlreadyExists(Slice());
+      return Status::AlreadyExists(Slice());
     } else {
       if (!new_res) {
         m.add_node_id(new_node_id);
       }
       std::string s;
       m.SerializeToString(&s);
-      instance_.OnPropose(s, machine_->GetMachineId(), false);
+      uint64_t id;
+      return OnPropose(s, &id, membership_machine_.GetMachineId(), false);
     }
-  }
-  if (!result_.ok()) {
-    propose_end_ = true;
-    cond_.SignalAll();
   }
 }
 
-void Group::ProposeComplete(Status&& result, uint64_t instance_id) {
-  result_ = std::move(result);
-  instance_id_ = instance_id;
-  propose_end_ = true;
-  cond_.SignalAll();
+void Group::GetMembership(std::vector<IpPort>* result) const {
+  membership_machine_.GetMembership(result);
 }
 
 void Group::AddMachine(StateMachine* machine) {
@@ -262,6 +228,30 @@ void Group::AddMachine(StateMachine* machine) {
 
 void Group::RemoveMachine(StateMachine* machine) {
   instance_.RemoveMachine(machine);
+}
+
+void Group::SetMasterLeaseTime(uint64_t micros) {
+  bg_loop_->QueueInLoop([micros, this]() {
+    if (micros < (1000*1000)) {
+      lease_timeout_ = 1000 * 1000;
+    } else {
+      lease_timeout_ = micros;
+    }
+  });
+}
+
+void Group::GetMaster(IpPort* i) const {
+  master_machine_.GetMaster(i);
+}
+
+bool Group::IsMaster() const {
+  return master_machine_.IsMaster();
+}
+
+void Group::RetireMaster() {
+  bg_loop_->QueueInLoop([this]() {
+    retrie_master_ = true;
+  });
 }
 
 }  // namespace skywalker

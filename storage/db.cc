@@ -7,8 +7,8 @@
 
 namespace {
 const uint64_t kMinChosenKey = UINTMAX_MAX;
-const uint64_t kMasterVariables = (UINTMAX_MAX - 1);
-const uint64_t kMembership = (UINTMAX_MAX - 2);
+const uint64_t kMembership = (UINTMAX_MAX - 1);
+const uint64_t kMasterState = (UINTMAX_MAX - 2);
 }
 
 namespace skywalker {
@@ -89,7 +89,7 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
   while (it->Valid()) {
     uint64_t id = 0;
     memcpy(&id, it->key().data(), it->key().size());
-    if(id == kMasterVariables || id == kMinChosenKey || id == kMembership) {
+    if(id == kMinChosenKey || id == kMembership || id == kMasterState)  {
       it->Prev();
     } else {
       *instance_id = id;
@@ -140,12 +140,27 @@ int DB::GetMembership(Membership* m) {
   }
 }
 
-int DB::SetMasterVariables(const std::string& s) {
-  return Put(WriteOptions(), kMasterVariables, s);
+int DB::SetMasterState(const MasterState& state) {
+  std::string s;
+  if (!state.SerializeToString(&s)) {
+    SWLog(ERROR, "DB::SetMasterState - state.SerializeToString failed!\n");
+    return -1;
+  }
+  return Put(WriteOptions(), kMasterState, s);
 }
 
-int DB::GetMasterVariavles(std::string* s) {
-  return Get(kMasterVariables, s);
+int DB::GetMasterState(MasterState* state) {
+  std::string s;
+  int ret = Get(kMasterState, &s);
+  if (ret != 0) {
+    return ret;
+  }
+  if (state->ParseFromString(s)) {
+    return 0;
+  } else {
+    SWLog(ERROR, "DB::GetMasterState - state.ParseFromString failed!\n");
+    return -1;
+  }
 }
 
 }  // namespace skywalker

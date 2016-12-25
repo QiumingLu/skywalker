@@ -10,6 +10,8 @@
 #include "skywalker/slice.h"
 #include "skywalker/status.h"
 #include "util/mutex.h"
+#include "machine/membership_machine.h"
+#include "machine/master_machine.h"
 
 namespace skywalker {
 
@@ -23,31 +25,43 @@ class Group {
   bool Start();
 
   void SyncMembership();
+  void SyncMaster();
 
   Status OnPropose(const Slice& value,
                        uint64_t* instance_id,
-                       int machine_id = -1);
+                       int machine_id = -1,
+                       bool check_valid = true);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
   Status AddMember(const IpPort& ip);
   Status RemoveMember(const IpPort& ip);
   Status ReplaceMember(const IpPort& new_i, const IpPort& old_i);
+  void GetMembership(std::vector<IpPort>* result) const;
 
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
 
+  void SetMasterLeaseTime(uint64_t micros);
+  void GetMaster(IpPort* i) const;
+  bool IsMaster() const;
+  void RetireMaster();
+
  private:
-  void SyncMembershipInLoop();
-  void AddMemberInLoop(uint64_t node_id);
-  void RemoveMemberInLoop(uint64_t node_id);
-  void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id);
+  void TryBeMaster();
   void ProposeComplete(Status&& result, uint64_t instance_id);
 
+  const uint64_t node_id_;
   Config config_;
   Instance instance_;
   RunLoop* loop_;
-  InsideMachine* machine_;
+  RunLoop* bg_loop_;
+
+  uint64_t lease_timeout_;
+  uint64_t next_try_be_master_time_;
+  bool retrie_master_;
+  MembershipMachine membership_machine_;
+  MasterMachine master_machine_;
 
   Mutex mutex_;
   Condition cond_;

@@ -2,7 +2,6 @@
 #define SKYWALKER_PAXOS_LEARNER_H_
 
 #include "paxos/ballot_number.h"
-#include "paxos/runloop.h"
 #include "paxos/paxos.pb.h"
 #include "util/random.h"
 
@@ -56,8 +55,6 @@ class Learner {
   bool is_learning_;
   bool has_learned_;
   PaxosValue learned_value_;
-
-  RunLoop bg_loop_;
 
   // No copying allowed
   Learner(const Learner&);

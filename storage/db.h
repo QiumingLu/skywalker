@@ -39,8 +39,8 @@ class DB {
   int SetMembership(const Membership& v);
   int GetMembership(Membership* v);
 
-  int SetMasterVariables(const std::string& s);
-  int GetMasterVariavles(std::string* s);
+  int SetMasterState(const MasterState& state);
+  int GetMasterState(MasterState* state);
 
  private:
   leveldb::DB* db_;

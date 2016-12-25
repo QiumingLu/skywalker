@@ -17,7 +17,6 @@ Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
       rand_(static_cast<uint32_t>(NowMicros())),
       is_learning_(false),
       has_learned_(false) {
-  bg_loop_.Loop();
 }
 
 void Learner::SetInstanceId(uint64_t instance_id) {
@@ -103,7 +102,7 @@ void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
   uint64_t node_id = msg.node_id();
   uint64_t from = msg.instance_id();
   uint64_t to = instance_id_;
-  bg_loop_.QueueInLoop([node_id, from, to, this] {
+  config_->GetBGLoop()->QueueInLoop([node_id, from, to, this] {
     ASyncSend(node_id, from, to);
   });
 }

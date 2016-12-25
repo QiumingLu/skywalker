@@ -9,7 +9,7 @@ namespace skywalker {
 
 extern uint64_t MakeNodeId(const IpPort& i);
 
-extern IpPort ParseNodeId(uint64_t node_id);
+extern void ParseNodeId(uint64_t node_id, IpPort* i);
 
 }  // namespace skywalker
 

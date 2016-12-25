@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include "network/messager.h"
 #include "storage/db.h"
-#include "machine/inside_machine.h"
 #include "skywalker/options.h"
 #include "paxos/runloop.h"
+#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -20,11 +20,8 @@ class Config {
 
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }
-  InsideMachine* GetMachine() const { return machine_; }
   RunLoop* GetLoop() const { return loop_; }
-
-  void SetHasSyncMembership() { has_sync_membership_ = true; }
-  bool HasSyncMembership() { return has_sync_membership_; }
+  RunLoop* GetBGLoop() const { return bg_loop_; }
 
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
@@ -40,10 +37,7 @@ class Config {
 
   void SetMembership(const Membership& m) { membership_ = m; }
   const Membership& GetMembership() const { return membership_; }
-
   const Membership& GetFollowers() const { return followers_; }
-
-  bool IsValidNodeId(uint64_t node_id) const;
 
  private:
   uint32_t group_id_;
@@ -53,14 +47,13 @@ class Config {
   bool log_sync_;
   uint32_t sync_interval_;
 
-  bool has_sync_membership_;
-  Membership membership_;
-  Membership followers_;
-
   DB* db_;
   Messager* messager_;
-  InsideMachine* machine_;
   RunLoop* loop_;
+  RunLoop* bg_loop_;
+
+  Membership membership_;
+  Membership followers_;
 
   // No copying allowed
   Config(const Config&);

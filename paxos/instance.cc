@@ -54,24 +54,19 @@ void Instance::RemoveMachine(StateMachine* machine) {
   machines_.erase(machine->GetMachineId());
 }
 
-void Instance::OnPropose(const Slice& value, int machine_id, bool check) {
-  if (check && !config_->IsValidNodeId(config_->GetNodeId())) {
-    Slice msg("this node is not in the membership, please add it firstly.");
-    propose_cb_(Status::InvalidNode(msg), instance_id_);
-  } else {
-    assert(!is_proposing_);
-    propose_value_.set_machine_id(machine_id);
-    propose_value_.set_user_data(value.data(), value.size());
-    proposer_.NewPropose(propose_value_);
+void Instance::OnPropose(const Slice& value, int machine_id) {
+  assert(!is_proposing_);
+  propose_value_.set_machine_id(machine_id);
+  propose_value_.set_user_data(value.data(), value.size());
+  proposer_.NewPropose(propose_value_);
 
-    propose_timer_ = loop_->RunAfter(1000, [this]() {
-      proposer_.QuitPropose();
-      is_proposing_ = false;
-      Slice msg("proposal time more than a second.");
-      propose_cb_(Status::Timeout(msg), instance_id_);
-    });
-    is_proposing_ = true;
-  }
+  propose_timer_ = loop_->RunAfter(1000, [this]() {
+    proposer_.QuitPropose();
+    is_proposing_ = false;
+    Slice msg("proposal time more than a second.");
+    propose_cb_(Status::Timeout(msg), instance_id_);
+  });
+  is_proposing_ = true;
 }
 
 void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {

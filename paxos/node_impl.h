@@ -29,12 +29,20 @@ class NodeImpl : public Node {
   virtual Status RemoveMember(uint32_t group_id, const IpPort& i);
   virtual Status ReplaceMember(uint32_t group_id,
                                const IpPort& new_i, const IpPort& old_i);
+  virtual void GetMembership(uint32_t group_id,
+                             std::vector<IpPort>* result) const;
 
   virtual void AddMachine(StateMachine* machine);
   virtual void RemoveMachine(StateMachine* machine);
 
   virtual void AddMachine(uint32_t group_id, StateMachine* machine);
   virtual void RemoveMachine(uint32_t group_id, StateMachine* machine);
+
+  virtual void SetMasterLeaseTime(uint64_t micros);
+  virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros);
+  virtual void GetMaster(uint32_t group_id, IpPort* i) const;
+  virtual bool IsMaster(uint32_t group_id) const;
+  virtual void RetireMaster(uint32_t group_id);
 
 private:
   void OnReceiveMessage(const Slice& s);

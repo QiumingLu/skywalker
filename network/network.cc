@@ -19,7 +19,8 @@ Network::~Network() {
 }
 
 void Network::StartServer(const std::function<void (const Slice&) >& cb) {
-  IpPort i(ParseNodeId(my_node_id_));
+  IpPort i;
+  ParseNodeId(my_node_id_, &i);
   voyager::SockAddr addr(i.ip, i.port);
   server_ = new voyager::TcpServer(loop_, addr);
 
@@ -82,7 +83,8 @@ void Network::SendMessageInLoop(uint64_t node_id,
   if (it != connection_map_.end()) {
     it->second->SendMessage(s);
   } else {
-    IpPort i(ParseNodeId(node_id));
+    IpPort i;
+    ParseNodeId(node_id, &i);
     voyager::SockAddr addr(i.ip, i.port);
     voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
 
