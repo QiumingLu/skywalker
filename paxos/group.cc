@@ -81,11 +81,11 @@ void Group::TryBeMaster() {
     retrie_master_ = false;
   }
   if (state.node_id() == node_id_) {
-    next_try_be_master_time_ = state.lease_time() - 200*1000;
+    next_try_be_master_time_ = state.lease_time() - 200 * 1000;
   } else {
     next_try_be_master_time_ = state.lease_time();
   }
-  bg_loop_->RunAt(next_try_be_master_time_, [this]() {
+  bg_loop_->RunAt((next_try_be_master_time_/1000), [this]() {
     TryBeMaster();
   });
 }

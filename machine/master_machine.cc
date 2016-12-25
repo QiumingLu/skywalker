@@ -27,7 +27,11 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
     if (ret == 0) {
       state.set_version(instance_id);
       state.set_lease_time(NowMicros() + state.lease_time());
-      SetMasterState(state);
+      SWLog(INFO,
+            "the new master is %" PRIu64", "
+            "version:%" PRIu64", lease_time:%" PRIu64".\n",
+            state.node_id(), state.version(), state.lease_time());
+     SetMasterState(state);
       return true;
     } else {
       SWLog(ERROR, "MasterMachine::Execute - update master state failed.\n");
