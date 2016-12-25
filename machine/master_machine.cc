@@ -10,6 +10,9 @@ namespace skywalker {
 MasterMachine::MasterMachine(Config* config)
     : config_(config),
       db_(config->GetDB()) {
+  state_.set_version(0);
+  state_.set_node_id(0);
+  state_.set_lease_time(0);
 }
 
 void MasterMachine::Recover() {

@@ -98,6 +98,7 @@ Status Group::OnPropose(const Slice& value,
     Slice msg("this node is not in the membership, please add it firstly.");
     return Status::InvalidNode(msg);
   }
+  // FIXME
   MutexLock lock(&mutex_);
   while (!last_finish_) {
     cond_.Wait();
