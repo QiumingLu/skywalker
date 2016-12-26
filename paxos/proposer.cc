@@ -90,10 +90,10 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
     } else if (counter_.IsRejectedOnThisRound() ||
                counter_.IsReceiveAllOnThisRound()) {
       SWLog(DEBUG, "Proposer::OnPrepareReply - "
-            "Prepare not pass, reprepare about 20ms later.\n");
+            "Prepare not pass, reprepare about 30ms later.\n");
       preparing_ = false;
       RemoveRetryTimer();
-      AddRetryTimer(rand_.Uniform(10) + 10);
+      AddRetryTimer((rand_.Uniform(15) + 15) * 1000);
     }
   }
   SetMaxProposalId(msg);
@@ -141,10 +141,10 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
     } else if (counter_.IsRejectedOnThisRound() ||
                counter_.IsReceiveAllOnThisRound()) {
       SWLog(DEBUG, "Proposer::OnAccpetReply - "
-            "Accept not pass, reprepare about 20ms later.\n");
+            "Accept not pass, reprepare about 30ms later.\n");
       accepting_ = false;
       RemoveRetryTimer();
-      AddRetryTimer(rand_.Uniform(10) + 10);
+      AddRetryTimer((rand_.Uniform(15) + 15) * 1000);
     }
   }
 

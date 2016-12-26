@@ -52,4 +52,13 @@ bool Config::Init() {
   return true;
 }
 
+bool Config::IsValidNodeId(uint64_t node_id) const {
+  for (int i = 0; i < membership_.node_id_size(); ++i) {
+    if (node_id == membership_.node_id(i)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace skywalker

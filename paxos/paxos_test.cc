@@ -47,19 +47,12 @@ int main(int argc, char** argv) {
 
   skywalker::Node* node = nullptr;
   bool res = skywalker::Node::Start(options, &node);
-  if (res) {
-    for (uint32_t i = 0; i < options.group_size; ++i) {
-      skywalker::Status status = node->AddMember(i, options.ipport);
-      printf("%s\n", status.ToString().c_str());
-    }
-  }
 
   while (res) {
     printf("please enter value:\n");
     std::string value;
     std::getline(std::cin, value);
-    uint64_t instance_id(0);
-    skywalker::Status s = node->Propose(0, value, &instance_id);
+    skywalker::Status s = node->Propose(0, value);
     printf("%s\n", s.ToString().c_str());
   }
 

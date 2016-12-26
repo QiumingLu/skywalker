@@ -27,10 +27,9 @@ class Group {
   void SyncMembership();
   void SyncMaster();
 
-  Status OnPropose(const Slice& value,
-                       uint64_t* instance_id,
-                       int machine_id = -1,
-                       bool check_valid = true);
+  Status OnPropose(const Slice& value, int machine_id);
+  Status OnPropose(const Slice& value, struct MachineContext* context,
+                   uint64_t* instance_id);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
@@ -49,6 +48,10 @@ class Group {
 
  private:
   void TryBeMaster();
+  void AddMemberInLoop(uint64_t node_id, struct MachineContext* context);
+  void RemoveMemberInLoop(uint64_t node_id, struct MachineContext* context);
+  void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
+                           struct MachineContext* context);
   void ProposeComplete(Status&& result, uint64_t instance_id);
 
   const uint64_t node_id_;

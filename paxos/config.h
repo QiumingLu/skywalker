@@ -38,6 +38,7 @@ class Config {
   void SetMembership(const Membership& m) { membership_ = m; }
   const Membership& GetMembership() const { return membership_; }
   const Membership& GetFollowers() const { return followers_; }
+  bool IsValidNodeId(uint64_t node_id) const;
 
  private:
   uint32_t group_id_;

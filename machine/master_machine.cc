@@ -23,18 +23,15 @@ void MasterMachine::Recover() {
 }
 
 bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
-                            const std::string& value) {
+                            const std::string& value,
+                            struct MachineContext* /* context */) {
   MasterState state;
   if (state.ParseFromString(value)) {
     int ret = db_->SetMasterState(state);
     if (ret == 0) {
       state.set_version(instance_id);
       state.set_lease_time(NowMicros() + state.lease_time());
-      SWLog(INFO,
-            "the new master is %" PRIu64", "
-            "version:%" PRIu64", lease_time:%" PRIu64".\n",
-            state.node_id(), state.version(), state.lease_time());
-     SetMasterState(state);
+      SetMasterState(state);
       return true;
     } else {
       SWLog(ERROR, "MasterMachine::Execute - update master state failed.\n");
@@ -57,7 +54,7 @@ MasterState MasterMachine::GetMasterState() const {
 
 void MasterMachine::GetMaster(IpPort* i) const {
   MutexLock lock(&mutex_);
-  if (state_.lease_time() < NowMicros()) {
+  if (state_.lease_time() > NowMicros()) {
     ParseNodeId(state_.node_id(), i);
   } else {
     i = nullptr;
@@ -67,7 +64,7 @@ void MasterMachine::GetMaster(IpPort* i) const {
 bool MasterMachine::IsMaster() const {
   MutexLock lock(&mutex_);
   if (state_.node_id() == config_->GetNodeId() &&
-      state_.lease_time() < NowMicros()) {
+      state_.lease_time() > NowMicros()) {
     return true;
   }
   return false;

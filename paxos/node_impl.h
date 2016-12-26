@@ -22,8 +22,12 @@ class NodeImpl : public Node {
 
   virtual Status Propose(uint32_t group_id,
                          const Slice& value,
-                         uint64_t* instance_id,
                          int machine_id = -1);
+
+  virtual Status Propose(uint32_t group_id,
+                         const Slice& value,
+                         struct MachineContext* context,
+                         uint64_t* instance_id);
 
   virtual Status AddMember(uint32_t group_id, const IpPort& i);
   virtual Status RemoveMember(uint32_t group_id, const IpPort& i);

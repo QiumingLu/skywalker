@@ -45,10 +45,19 @@ bool NodeImpl::StartWorking() {
   return ret;
 }
 
-Status NodeImpl::Propose(uint32_t group_id, const Slice& value,
-                         uint64_t *instance_id, int machine_id) {
+Status NodeImpl::Propose(uint32_t group_id,
+                         const Slice& value,
+                         int machine_id) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnPropose(value, instance_id, machine_id);
+  return groups_[group_id]->OnPropose(value, machine_id);
+}
+
+Status NodeImpl::Propose(uint32_t group_id,
+                         const Slice& value,
+                         struct MachineContext* context,
+                         uint64_t *instance_id) {
+  assert(groups_.find(group_id) != groups_.end());
+  return groups_[group_id]->OnPropose(value, context, instance_id);
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {
@@ -60,8 +69,9 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
         "which content_type=%d, group_id=%" PRIu32", version=%" PRIu32".\n",
         c->type(), c->group_id(), c->version());
 
-  if (groups_.find(c->group_id()) != groups_.end()) {
-    groups_[c->group_id()]->OnReceiveContent(c);
+  std::map<uint32_t, Group*>::iterator it = groups_.find(c->group_id());
+  if (it != groups_.end()) {
+    it->second->OnReceiveContent(c);
   } else {
     SWLog(ERROR, "NodeImpl::OnReceiveMessage - "
           "group_id=%" PRIu32" is wrong!\n", c->group_id());

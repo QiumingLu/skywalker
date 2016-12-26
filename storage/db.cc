@@ -66,10 +66,10 @@ int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
 int DB::Get(uint64_t instance_id, std::string* value) {
   size_t size = sizeof(instance_id);
   char key[size];
-  int ret = 0;
   memcpy(key, &instance_id, size);
   leveldb::Status status =
       db_->Get(leveldb::ReadOptions(), leveldb::Slice(key, size), value);
+  int ret = 0;
   if (!status.ok()) {
     if (status.IsNotFound()) {
       ret = 1;
@@ -88,8 +88,8 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
   it->SeekToLast();
   while (it->Valid()) {
     uint64_t id = 0;
-    memcpy(&id, it->key().data(), it->key().size());
-    if(id == kMinChosenKey || id == kMembership || id == kMasterState)  {
+    memcpy(&id, it->key().data(), sizeof(id));
+    if(id == kMinChosenKey || id == kMembership || id == kMasterState) {
       it->Prev();
     } else {
       *instance_id = id;

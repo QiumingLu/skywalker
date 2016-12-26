@@ -31,7 +31,7 @@ class Condition {
   ~Condition();
 
   void Wait();
-  bool Wait(uint64_t millisecond);
+  bool Wait(uint64_t micros_second);
   void Signal();
   void SignalAll();
 

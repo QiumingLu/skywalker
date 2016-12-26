@@ -28,7 +28,8 @@ void MembershipMachine::Recover() {
 }
 
 bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
-                                const std::string& value) {
+                                const std::string& value,
+                                struct MachineContext* /* context */) {
   Membership m;
   if (m.ParseFromString(value)) {
     int ret = db_->SetMembership(m);
@@ -36,6 +37,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
       m.set_version(instance_id);
       MutexLock lock(&mutex_);
       membership_ = m;
+      // copy to config.
       config_->SetMembership(m);
       if (!has_sync_membership_) {
         has_sync_membership_ = true;
@@ -50,8 +52,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
   return false;
 }
 
-Membership MembershipMachine::GetMembership() const {
-  MutexLock lock(&mutex_);
+const Membership& MembershipMachine::GetMembership() const {
   return membership_;
 }
 
@@ -67,17 +68,6 @@ void MembershipMachine::GetMembership(std::vector<IpPort>* result) const {
 bool MembershipMachine::HasSyncMembership() const {
   MutexLock lock(&mutex_);
   return has_sync_membership_;
-}
-
-
-bool MembershipMachine::IsValidNodeId(uint64_t node_id) const {
-  MutexLock lock(&mutex_);
-  for (int i = 0; i < membership_.node_id_size(); ++i) {
-    if (node_id == membership_.node_id(i)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 }  // namespace skywalker

@@ -40,7 +40,7 @@ class Instance {
 
   uint64_t GetInstanceId() const { return instance_id_; }
 
-  void OnPropose(const Slice& value, int machine_id);
+  void OnPropose(const Slice& value, struct MachineContext* context);
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
   void OnPaxosMessage(const PaxosMessage& msg);
@@ -60,6 +60,7 @@ class Instance {
   uint64_t instance_id_;
 
   bool is_proposing_;
+  MachineContext* context_;
   PaxosValue propose_value_;
   ProposeCompleteCallback propose_cb_;
   TimerId propose_timer_;

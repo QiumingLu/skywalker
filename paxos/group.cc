@@ -12,7 +12,7 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       instance_(&config_),
       loop_(config_.GetLoop()),
       bg_loop_(config_.GetBGLoop()),
-      lease_timeout_(5000 * 1000),
+      lease_timeout_(10 * 1000 * 1000),
       retrie_master_(false),
       membership_machine_(options, &config_),
       master_machine_(&config_),
@@ -39,6 +39,7 @@ bool Group::Start() {
 }
 
 void Group::SyncMembership() {
+  instance_.SyncData();
   int i = 0;
   while (true) {
     if (i++ > 3) {
@@ -48,8 +49,7 @@ void Group::SyncMembership() {
       Membership m(membership_machine_.GetMembership());
       std::string s;
       m.SerializeToString(&s);
-      uint64_t id;
-      OnPropose(s, &id, membership_machine_.GetMachineId());
+      OnPropose(s, membership_machine_.GetMachineId());
     }
 
     if (result_.ok() || result_.IsConflict()) {
@@ -73,31 +73,38 @@ void Group::TryBeMaster() {
     state.set_lease_time(lease_timeout_);
     std::string s;
     state.SerializeToString(&s);
-    uint64_t i;
-    OnPropose(s, &i, master_machine_.GetMachineId());
-    state = master_machine_.GetMasterState();
+    // FIXME
+    Status status = OnPropose(s, master_machine_.GetMachineId());
+    if(status.ok()) {
+      state = master_machine_.GetMasterState();
+    } else {
+      state.set_lease_time(NowMicros() + lease_timeout_);
+    }
   }
   if (retrie_master_) {
     retrie_master_ = false;
   }
   if (state.node_id() == node_id_) {
-    next_try_be_master_time_ = state.lease_time() - 200 * 1000;
+    next_try_be_master_time_ = state.lease_time() - 500 * 1000;
   } else {
     next_try_be_master_time_ = state.lease_time();
   }
-  bg_loop_->RunAt((next_try_be_master_time_/1000), [this]() {
+  bg_loop_->RunAt(next_try_be_master_time_, [this]() {
     TryBeMaster();
   });
 }
 
+Status Group::OnPropose(const Slice& value, int machine_id) {
+  MachineContext context;
+  context.machine_id = machine_id;
+  context.user_data = nullptr;
+  uint64_t instance_id;
+  return OnPropose(value, &context, &instance_id);
+}
+
 Status Group::OnPropose(const Slice& value,
-                        uint64_t* instance_id,
-                        int machine_id,
-                        bool check_valid) {
-  if (check_valid && !membership_machine_.IsValidNodeId(node_id_)) {
-    Slice msg("this node is not in the membership, please add it firstly.");
-    return Status::InvalidNode(msg);
-  }
+                        struct MachineContext* context,
+                        uint64_t* instance_id) {
   // FIXME
   MutexLock lock(&mutex_);
   while (!last_finish_) {
@@ -106,8 +113,8 @@ Status Group::OnPropose(const Slice& value,
   last_finish_ = false;
   propose_end_ = false;
   instance_id_ = 0;
-  loop_->QueueInLoop([value, machine_id, this]() {
-    instance_.OnPropose(value, machine_id);
+  loop_->QueueInLoop([value, context, this]() {
+    instance_.OnPropose(value, context);
   });
 
   while (!propose_end_) {
@@ -133,89 +140,145 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
 }
 
 Status Group::AddMember(const IpPort& ip) {
-  if (!membership_machine_.HasSyncMembership()) {
-    return Status::Unavailable("Membership hasn't been synchronized.");
+  uint64_t node_id(MakeNodeId(ip));
+  MachineContext* context = new MachineContext();
+  context->machine_id = membership_machine_.GetMachineId();
+  MutexLock lock(&mutex_);
+  while (!last_finish_) {
+    cond_.Wait();
+  }
+  last_finish_ = false;
+  propose_end_ = false;
+  loop_->QueueInLoop([node_id, context, this] {
+    AddMemberInLoop(node_id, context);
+  });
+  while (!propose_end_) {
+    cond_.Wait();
+  }
+  last_finish_ = true;
+  cond_.Signal();
+  delete context;
+  return result_;
+}
+
+void Group::AddMemberInLoop(uint64_t node_id, struct MachineContext* context) {
+  bool res = false;
+  const Membership& temp(membership_machine_.GetMembership());
+  for (int i = 0; i < temp.node_id_size(); ++i) {
+    if (node_id == temp.node_id(i)) {
+      res = true;
+      break;
+    }
+  }
+  if (res) {
+    result_ = Status::OK();
+    propose_end_ = true;
+    cond_.SignalAll();
   } else {
-    uint64_t node_id(MakeNodeId(ip));
-    bool res = false;
-    Membership m(membership_machine_.GetMembership());
-    for (int i = 0; i < m.node_id_size(); ++i) {
-      if (node_id == m.node_id(i)) {
-        res = true;
-        break;
-      }
-    }
-    if (res) {
-      return Status::AlreadyExists(Slice());
-    } else {
-      m.add_node_id(node_id);
-      std::string s;
-      m.SerializeToString(&s);
-      uint64_t id;
-      return OnPropose(s, &id, membership_machine_.GetMachineId(), false);
-    }
+    Membership m(temp);
+    m.add_node_id(node_id);
+    std::string s;
+    m.SerializeToString(&s);
+    instance_.OnPropose(s, context);
   }
 }
 
 Status Group::RemoveMember(const IpPort& ip) {
-  if (!membership_machine_.HasSyncMembership()) {
-    return Status::Unavailable("Membership hasn't been synchronized.");
-  } else {
-    uint64_t node_id(MakeNodeId(ip));
-    bool res = false;
-    Membership temp(membership_machine_.GetMembership());
-    Membership m;
-    for (int i = 0; i < temp.node_id_size(); ++i) {
-      if (node_id == temp.node_id(i)) {
-        res = true;
-      } else {
-        m.add_node_id(temp.node_id(i));
-      }
-    }
+  uint64_t node_id(MakeNodeId(ip));
+  MachineContext* context = new MachineContext();
+  context->machine_id = membership_machine_.GetMachineId();
+  MutexLock lock(&mutex_);
+  while (!last_finish_) {
+    cond_.Wait();
+  }
+  last_finish_ = false;
+  propose_end_ = false;
+  loop_->QueueInLoop([node_id, context, this] {
+    RemoveMemberInLoop(node_id, context);
+  });
+  while (!propose_end_) {
+    cond_.Wait();
+  }
+  last_finish_ = true;
+  cond_.Signal();
+  delete context;
+  return result_;
+}
 
-    if (!res) {
-      return Status::NotFound(Slice());
+void Group::RemoveMemberInLoop(uint64_t node_id, struct MachineContext* context) {
+  bool res = false;
+  const Membership& temp(membership_machine_.GetMembership());
+  Membership m;
+  for (int i = 0; i < temp.node_id_size(); ++i) {
+    if (node_id == temp.node_id(i)) {
+     res = true;
     } else {
-      std::string s;
-      m.SerializeToString(&s);
-      uint64_t id;
-      return OnPropose(s, &id, membership_machine_.GetMachineId(), false);
+      m.add_node_id(temp.node_id(i));
     }
+  }
+
+  if (!res) {
+    result_ = Status::OK();
+    propose_end_ = true;
+    cond_.SignalAll();
+  } else {
+    std::string s;
+    m.SerializeToString(&s);
+    instance_.OnPropose(s, context);
   }
 }
 
 Status Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i) {
-  if (!membership_machine_.HasSyncMembership()) {
-    return Status::Unavailable("Membership hasn't been synchronized.");
-  } else {
-    uint64_t new_node_id(MakeNodeId(new_i));
-    uint64_t old_node_id(MakeNodeId(old_i));
-    bool new_res = false;
-    bool old_res = false;
-    Membership temp(membership_machine_.GetMembership());
-    Membership m;
-    for (int i = 0; i < temp.node_id_size(); ++i) {
-      if (temp.node_id(i) == new_node_id) {
-        new_res = true;
-      }
-      if (temp.node_id(i) == old_node_id) {
-        old_res = true;
-      } else {
-        m.add_node_id(temp.node_id(i));
-      }
-    }
+  uint64_t new_node_id(MakeNodeId(new_i));
+  uint64_t old_node_id(MakeNodeId(old_i));
+  MachineContext* context = new MachineContext();
+  context->machine_id = membership_machine_.GetMachineId();
+  MutexLock lock(&mutex_);
+  while (!last_finish_) {
+    cond_.Wait();
+  }
+  last_finish_ = false;
+  propose_end_ = false;
+  loop_->QueueInLoop([new_node_id, old_node_id, context, this] {
+    ReplaceMemberInLoop(new_node_id, old_node_id, context);
+  });
+  while(!propose_end_) {
+    cond_.Wait();
+  }
+  last_finish_ = false;
+  cond_.Signal();
+  delete context;
+  return result_;
+}
 
-    if (new_res &&  (!old_res)) {
-      return Status::AlreadyExists(Slice());
-    } else {
-      if (!new_res) {
-        m.add_node_id(new_node_id);
-      }
-      std::string s;
-      m.SerializeToString(&s);
-      uint64_t id;
-      return OnPropose(s, &id, membership_machine_.GetMachineId(), false);
+void Group::ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
+                                  struct MachineContext* context) {
+  bool new_res = false;
+  bool old_res = false;
+  const Membership& temp(membership_machine_.GetMembership());
+  Membership m;
+  for (int i = 0; i < temp.node_id_size(); ++i) {
+    if (temp.node_id(i) == new_node_id) {
+      new_res = true;
     }
+    if (temp.node_id(i) == old_node_id) {
+      old_res = true;
+    } else {
+      m.add_node_id(temp.node_id(i));
+    }
+  }
+
+  if (new_res &&  (!old_res)) {
+    result_ = Status::OK();
+    propose_end_ = true;
+    cond_.SignalAll();
+  } else {
+    if (!new_res) {
+      m.add_node_id(new_node_id);
+    }
+    std::string s;
+    m.SerializeToString(&s);
+    instance_.OnPropose(s, context);
   }
 }
 
@@ -233,8 +296,8 @@ void Group::RemoveMachine(StateMachine* machine) {
 
 void Group::SetMasterLeaseTime(uint64_t micros) {
   bg_loop_->QueueInLoop([micros, this]() {
-    if (micros < (1000*1000)) {
-      lease_timeout_ = 1000 * 1000;
+    if (micros < (5 *1000 * 1000)) {
+      lease_timeout_ = 5 * 1000 * 1000;
     } else {
       lease_timeout_ = micros;
     }

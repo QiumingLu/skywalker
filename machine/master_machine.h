@@ -24,7 +24,8 @@ class MasterMachine : public StateMachine {
   bool IsMaster() const;
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
-                       const std::string& value);
+                       const std::string& value,
+                       struct MachineContext* /* context */);
 
  private:
   Config* config_;

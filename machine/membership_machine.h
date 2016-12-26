@@ -16,13 +16,13 @@ class MembershipMachine : public StateMachine {
 
   void Recover();
 
-  Membership GetMembership() const;
+  const Membership& GetMembership() const;
   void GetMembership(std::vector<IpPort>* result) const;
-  bool IsValidNodeId(uint64_t node_id) const;
   bool HasSyncMembership() const;
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
-                       const std::string& value);
+                       const std::string& value,
+                       struct MachineContext* /* context */);
 
  public:
   Config* config_;
@@ -32,7 +32,7 @@ class MembershipMachine : public StateMachine {
   bool has_sync_membership_;
   Membership membership_;
 
-  // No cpying allowed
+  // No copying allowed
   MembershipMachine(const MembershipMachine&);
   void operator=(const MembershipMachine&);
 };

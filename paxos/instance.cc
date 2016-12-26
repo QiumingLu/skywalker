@@ -31,8 +31,6 @@ bool Instance::Init() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
-  learner_.AskForLearn();
-
   SWLog(INFO,
         "Instance::Init - now instance_id=%" PRIu64".\n", instance_id_);
   return ret;
@@ -54,13 +52,25 @@ void Instance::RemoveMachine(StateMachine* machine) {
   machines_.erase(machine->GetMachineId());
 }
 
-void Instance::OnPropose(const Slice& value, int machine_id) {
+void Instance::OnPropose(const Slice& value,
+                         struct MachineContext* context) {
+  if (!config_->IsValidNodeId(config_->GetNodeId())) {
+    Slice msg("this node is not in the membership, please add it firstly.");
+    propose_cb_(Status::InvalidNode(msg), instance_id_);
+    return;
+  }
+
   assert(!is_proposing_);
-  propose_value_.set_machine_id(machine_id);
+  context_ = context;
+  if (context != nullptr) {
+    propose_value_.set_machine_id(context->machine_id);
+  } else {
+    propose_value_.set_machine_id(-1);
+  }
   propose_value_.set_user_data(value.data(), value.size());
   proposer_.NewPropose(propose_value_);
 
-  propose_timer_ = loop_->RunAfter(1000, [this]() {
+  propose_timer_ = loop_->RunAfter(1000*1000, [this]() {
     proposer_.QuitPropose();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
@@ -141,12 +151,19 @@ void Instance::OnCheckPointMessage(const CheckPointMessage& msg) {
 void Instance::CheckLearn() {
   if (learner_.HasLearned()) {
     const PaxosValue& learned_value(learner_.GetLearnedValue());
+    bool my = false;
+    if (propose_value_.machine_id() == learned_value.machine_id() &&
+        propose_value_.user_data() == learned_value.user_data()) {
+      my = true;
+    } else {
+      context_ = nullptr;
+    }
+
     bool success = MachineExecute(learned_value);
 
     if (is_proposing_) {
       if (success) {
-       if (propose_value_.machine_id() == learned_value.machine_id() &&
-           propose_value_.user_data() == learned_value.user_data()) {
+       if (my) {
           propose_cb_(Status::OK(), instance_id_);
         } else {
           Slice msg("another value has been chosen.");
@@ -166,6 +183,7 @@ void Instance::CheckLearn() {
       proposer_.SetNoSkipPrepare();
     }
   }
+  context_ = nullptr;
 }
 
 bool Instance::MachineExecute(const PaxosValue& value) {
@@ -176,7 +194,7 @@ bool Instance::MachineExecute(const PaxosValue& value) {
     if (i != machines_.end()) {
       assert(i->second != nullptr);
       return i->second->Execute(
-          config_->GetGroupId(), instance_id_, value.user_data());
+          config_->GetGroupId(), instance_id_, value.user_data(), context_);
     }
   }
   return true;

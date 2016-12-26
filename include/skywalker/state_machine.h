@@ -6,6 +6,16 @@
 
 namespace skywalker {
 
+struct MachineContext {
+  int machine_id;
+  void* user_data;
+
+  MachineContext()
+      : machine_id(-1),
+        user_data(nullptr) {
+  }
+};
+
 class StateMachine {
  public:
   StateMachine();
@@ -15,7 +25,8 @@ class StateMachine {
 
   virtual bool Execute(uint32_t group_idx,
                        uint64_t instance_id,
-                       const std::string& value) = 0;
+                       const std::string& value,
+                       struct MachineContext* context = nullptr) = 0;
  private:
   int id_;
 
