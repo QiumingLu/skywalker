@@ -75,7 +75,7 @@ void Group::TryBeMaster() {
     state.SerializeToString(&s);
     // FIXME
     Status status = OnPropose(s, master_machine_.GetMachineId());
-    if(status.ok()) {
+    if(status.ok() || status.IsConflict()) {
       state = master_machine_.GetMasterState();
     } else {
       state.set_lease_time(NowMicros() + lease_timeout_);
