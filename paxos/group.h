@@ -28,7 +28,7 @@ class Group {
   void SyncMaster();
 
   Status OnPropose(const Slice& value, int machine_id);
-  Status OnPropose(const Slice& value, struct MachineContext* context,
+  Status OnPropose(const Slice& value, MachineContext* context,
                    uint64_t* instance_id);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
@@ -47,19 +47,24 @@ class Group {
   void RetireMaster();
 
  private:
+  typedef std::function<void ()> Func;
+
+  void SyncMembershipInLoop(MachineContext* context);
   void TryBeMaster();
-  void AddMemberInLoop(uint64_t node_id, struct MachineContext* context);
-  void RemoveMemberInLoop(uint64_t node_id, struct MachineContext* context);
+  void TryBeMasterInLoop(MachineContext* context);
+  void AddMemberInLoop(uint64_t node_id, MachineContext* context);
+  void RemoveMemberInLoop(uint64_t node_id, MachineContext* context);
   void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
-                           struct MachineContext* context);
+                           MachineContext* context);
+  Status NewPropose(const Func& f, uint64_t* instance_id = nullptr);
   void ProposeComplete(Status&& result, uint64_t instance_id);
 
   const uint64_t node_id_;
   Config config_;
   Instance instance_;
   RunLoop* loop_;
-  RunLoop* bg_loop_;
 
+  RunLoop bg_loop_;
   uint64_t lease_timeout_;
   uint64_t next_try_be_master_time_;
   bool retrie_master_;

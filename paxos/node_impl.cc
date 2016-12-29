@@ -54,7 +54,7 @@ Status NodeImpl::Propose(uint32_t group_id,
 
 Status NodeImpl::Propose(uint32_t group_id,
                          const Slice& value,
-                         struct MachineContext* context,
+                         MachineContext* context,
                          uint64_t *instance_id) {
   assert(groups_.find(group_id) != groups_.end());
   return groups_[group_id]->OnPropose(value, context, instance_id);

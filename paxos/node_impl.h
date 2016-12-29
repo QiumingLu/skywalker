@@ -26,7 +26,7 @@ class NodeImpl : public Node {
 
   virtual Status Propose(uint32_t group_id,
                          const Slice& value,
-                         struct MachineContext* context,
+                         MachineContext* context,
                          uint64_t* instance_id);
 
   virtual Status AddMember(uint32_t group_id, const IpPort& i);

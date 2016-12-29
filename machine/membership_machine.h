@@ -22,7 +22,7 @@ class MembershipMachine : public StateMachine {
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value,
-                       struct MachineContext* /* context */);
+                       MachineContext* /* context */);
 
  public:
   Config* config_;

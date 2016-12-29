@@ -40,7 +40,7 @@ class Instance {
 
   uint64_t GetInstanceId() const { return instance_id_; }
 
-  void OnPropose(const Slice& value, struct MachineContext* context);
+  void OnPropose(const Slice& value, MachineContext* context);
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
   void OnPaxosMessage(const PaxosMessage& msg);

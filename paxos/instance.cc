@@ -53,7 +53,7 @@ void Instance::RemoveMachine(StateMachine* machine) {
 }
 
 void Instance::OnPropose(const Slice& value,
-                         struct MachineContext* context) {
+                         MachineContext* context) {
   if (!config_->IsValidNodeId(config_->GetNodeId())) {
     Slice msg("this node is not in the membership, please add it firstly.");
     propose_cb_(Status::InvalidNode(msg), instance_id_);

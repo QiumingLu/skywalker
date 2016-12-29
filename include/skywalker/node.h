@@ -36,7 +36,7 @@ class Node {
                          int machine_id = -1) = 0;
   virtual Status Propose(uint32_t group_id,
                          const Slice& value,
-                         struct MachineContext* context,
+                         MachineContext* context,
                          uint64_t* instance_id) = 0;
 
   // Add a new node to the paxos membership.

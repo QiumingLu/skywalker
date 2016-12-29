@@ -29,7 +29,7 @@ void MembershipMachine::Recover() {
 
 bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
                                 const std::string& value,
-                                struct MachineContext* /* context */) {
+                                MachineContext* /* context */) {
   Membership m;
   if (m.ParseFromString(value)) {
     int ret = db_->SetMembership(m);

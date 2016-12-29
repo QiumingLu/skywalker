@@ -48,7 +48,7 @@ void Learner::AskForLearn() {
   msg->set_instance_id(instance_id_);
   messager_->BroadcastMessage(messager_->PackMessage(msg));
 
-  uint64_t delay = (30000 + rand_.Uniform(10000)) * 1000;
+  uint64_t delay = 1000 * (30 * 1000 + rand_.Uniform(10 * 1000));
   config_->GetLoop()->RunAfter(delay, [this]() {
     AskForLearn();
   });
