@@ -66,7 +66,6 @@ class Group {
 
   RunLoop bg_loop_;
   uint64_t lease_timeout_;
-  uint64_t next_try_be_master_time_;
   bool retrie_master_;
   MembershipMachine membership_machine_;
   MasterMachine master_machine_;

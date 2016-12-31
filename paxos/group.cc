@@ -81,10 +81,11 @@ void Group::SyncMaster() {
 
 void Group::TryBeMaster() {
   MasterState state(master_machine_.GetMasterState());
-  if (state.lease_time() <= NowMicros() ||
+  uint64_t now = NowMicros();
+  if (state.lease_time() <= now ||
       (state.node_id() == node_id_ && !retrie_master_)) {
-    MachineContext *context(
-        new MachineContext(master_machine_.GetMachineId()));
+    MachineContext *context(new MachineContext(master_machine_.GetMachineId(),
+                                               reinterpret_cast<void*>(&now)));
     Func f(std::bind(&Group::TryBeMasterInLoop, this, context));
     Status status = NewPropose(f);
     if(status.ok() || status.IsConflict()) {
@@ -97,12 +98,7 @@ void Group::TryBeMaster() {
   if (retrie_master_) {
     retrie_master_ = false;
   }
-  if (state.node_id() == node_id_) {
-    next_try_be_master_time_ = state.lease_time() - 200 * 1000;
-  } else {
-    next_try_be_master_time_ = state.lease_time();
-  }
-  bg_loop_.RunAt(next_try_be_master_time_, [this]() {
+  bg_loop_.RunAt(state.lease_time(), [this]() {
     TryBeMaster();
   });
 }

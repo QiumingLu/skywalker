@@ -24,13 +24,19 @@ void MasterMachine::Recover() {
 
 bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             const std::string& value,
-                            MachineContext* /* context */) {
+                            MachineContext* context) {
   MasterState state;
   if (state.ParseFromString(value)) {
     int ret = db_->SetMasterState(state);
     if (ret == 0) {
       state.set_version(instance_id);
-      state.set_lease_time(NowMicros() + state.lease_time());
+      if (state.node_id() == config_->GetNodeId()) {
+        assert(context != nullptr && context->user_data != nullptr);
+        state.set_lease_time(
+            *(reinterpret_cast<uint64_t*>(context->user_data)));
+      } else {
+        state.set_lease_time(NowMicros() + state.lease_time());
+      }
       SetMasterState(state);
       SWLog(INFO, "MasterMachine::Execute - now the master's "
             "version=%" PRIu64", node_id=%" PRIu64", lease_time=%" PRIu64"\n",
