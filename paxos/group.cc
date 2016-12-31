@@ -84,8 +84,10 @@ void Group::TryBeMaster() {
   uint64_t now = NowMicros();
   if (state.lease_time() <= now ||
       (state.node_id() == node_id_ && !retrie_master_)) {
-    MachineContext *context(new MachineContext(master_machine_.GetMachineId(),
-                                               reinterpret_cast<void*>(&now)));
+    uint64_t lease_time = now + lease_timeout_;
+    MachineContext *context(
+        new MachineContext(master_machine_.GetMachineId(),
+                           reinterpret_cast<void*>(&lease_time)));
     Func f(std::bind(&Group::TryBeMasterInLoop, this, context));
     Status status = NewPropose(f);
     if(status.ok() || status.IsConflict()) {

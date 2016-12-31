@@ -13,7 +13,8 @@ Instance::Instance(Config* config)
       learner_(config, this, &acceptor_),
       proposer_(config, this),
       instance_id_(0),
-      is_proposing_(false) {
+      is_proposing_(false),
+      context_(nullptr) {
 }
 
 Instance::~Instance() {
