@@ -17,7 +17,7 @@ MasterMachine::MasterMachine(Config* config)
 
 void MasterMachine::Recover() {
   int ret = db_->GetMasterState(&state_);
-  if (ret == 0 && (state_.node_id() != config_.GetNodeId())) {
+  if (ret == 0 && (state_.node_id() != config_->GetNodeId())) {
     state_.set_lease_time(NowMicros() + state_.lease_time());
   }
 }
