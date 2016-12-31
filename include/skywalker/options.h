@@ -26,6 +26,7 @@ struct Options {
   bool log_sync;
   uint32_t sync_interval;
   uint32_t group_size;
+  bool use_master_;
   IpPort ipport;
   std::vector<IpPort> membership;
   std::vector<IpPort> followers;

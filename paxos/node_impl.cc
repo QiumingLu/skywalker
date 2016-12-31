@@ -39,7 +39,9 @@ bool NodeImpl::StartWorking() {
 
   for (auto g : groups_) {
     g.second->SyncMembership();
-    g.second->SyncMaster();
+    if (options_.use_master_) {
+      g.second->SyncMaster();
+    }
   }
 
   return ret;

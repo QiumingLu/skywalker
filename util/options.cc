@@ -7,6 +7,7 @@ Options::Options()
       log_sync(true),
       sync_interval(0),
       group_size(1),
+      use_master_(true),
       ipport(),
       membership(),
       followers() {

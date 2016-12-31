@@ -72,6 +72,8 @@ void Instance::OnPropose(const Slice& value,
 
   propose_timer_ = loop_->RunAfter(1000*1000, [this]() {
     proposer_.QuitPropose();
+    context_ = nullptr;
+    propose_value_.Clear();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
     propose_cb_(Status::Timeout(msg), instance_id_);
@@ -178,12 +180,13 @@ void Instance::CheckLearn() {
     }
 
     if (success) {
+      context_ = nullptr;
+      propose_value_.Clear();
       NextInstance();
     } else {
       proposer_.SetNoSkipPrepare();
     }
   }
-  context_ = nullptr;
 }
 
 bool Instance::MachineExecute(const PaxosValue& value) {

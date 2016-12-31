@@ -31,9 +31,12 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
     if (ret == 0) {
       state.set_version(instance_id);
       if (state.node_id() == config_->GetNodeId()) {
-        assert(context != nullptr && context->user_data != nullptr);
-        state.set_lease_time(
-            *(reinterpret_cast<uint64_t*>(context->user_data)));
+        if (context != nullptr && context->user_data != nullptr) {
+          state.set_lease_time(
+              *(reinterpret_cast<uint64_t*>(context->user_data)));
+        } else {
+          state.set_lease_time(NowMicros() + state.lease_time());
+        }
       } else {
         state.set_lease_time(NowMicros() + state.lease_time());
       }
