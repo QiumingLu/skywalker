@@ -31,7 +31,6 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             MachineContext* context) {
   MasterState state;
   if (state.ParseFromString(value)) {
-    SWLog(INFO, "%" PRIu64", %" PRIu64"", state.version(), state_.version());
     if (state.version() < state_.version()) {
       return true;
     }
