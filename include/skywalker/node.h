@@ -85,7 +85,8 @@ class Node {
 
   // Returns the master.
   // If have master, store the result in *i, else i=nullptr.
-  virtual void GetMaster(uint32_t group_id, IpPort* i) const = 0;
+  virtual void GetMaster(uint32_t group_id,
+                         IpPort* i, uint64_t* version) const = 0;
 
   // Check whether I'm master or not.
   virtual bool IsMaster(uint32_t group_id) const = 0;

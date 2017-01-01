@@ -17,8 +17,13 @@ MasterMachine::MasterMachine(Config* config)
 
 void MasterMachine::Recover() {
   int ret = db_->GetMasterState(&state_);
-  if (ret == 0 && (state_.node_id() != config_->GetNodeId())) {
-    state_.set_lease_time(NowMicros() + state_.lease_time());
+  if (ret == 0) {
+    SWLog(INFO, "%" PRIu64"\n", state_.version());
+    if (state_.node_id() != config_->GetNodeId()) {
+      state_.set_lease_time(NowMicros() + state_.lease_time());
+    } else {
+      state_.set_lease_time(0);
+    }
   }
 }
 
@@ -27,15 +32,18 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             MachineContext* context) {
   MasterState state;
   if (state.ParseFromString(value)) {
+    if (state.version() < state_.version()) {
+      return true;
+    }
+    state.set_version(instance_id);
     int ret = db_->SetMasterState(state);
     if (ret == 0) {
-      state.set_version(instance_id);
       if (state.node_id() == config_->GetNodeId()) {
         if (context != nullptr && context->user_data != nullptr) {
           state.set_lease_time(
               *(reinterpret_cast<uint64_t*>(context->user_data)));
         } else {
-          state.set_lease_time(NowMicros() + state.lease_time());
+          state.set_lease_time(0);
         }
       } else {
         state.set_lease_time(NowMicros() + state.lease_time());
@@ -64,9 +72,10 @@ MasterState MasterMachine::GetMasterState() const {
   return state_;
 }
 
-void MasterMachine::GetMaster(IpPort* i) const {
+void MasterMachine::GetMaster(IpPort* i, uint64_t* version) const {
   MutexLock lock(&mutex_);
   if (state_.lease_time() > NowMicros()) {
+    *version = state_.version();
     ParseNodeId(state_.node_id(), i);
   } else {
     i = nullptr;

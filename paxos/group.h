@@ -42,7 +42,7 @@ class Group {
   void RemoveMachine(StateMachine* machine);
 
   void SetMasterLeaseTime(uint64_t micros);
-  void GetMaster(IpPort* i) const;
+  void GetMaster(IpPort* i, uint64_t* version) const;
   bool IsMaster() const;
   void RetireMaster();
 
