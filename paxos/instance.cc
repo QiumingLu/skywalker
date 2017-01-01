@@ -101,11 +101,13 @@ void Instance::OnPaxosMessage(const PaxosMessage& msg) {
         "msg.proposal_id=%" PRIu64", msg.proposal_node_id=%" PRIu64", "
         "msg.pre_accepted_id=%" PRIu64", msg.pre_accepted_node_id=%" PRIu64", "
         "msg.reject_for_promised_id=%" PRIu64", "
-        "msg.now_instance_id=%" PRIu64"\n",
+        "msg.now_instance_id=%" PRIu64", "
+        "msg.value=%s\n",
         msg.type(), msg.node_id(), msg.instance_id(),
         msg.proposal_id(), msg.proposal_node_id(),
         msg.pre_accepted_id(), msg.pre_accepted_node_id(),
-        msg.rejected_id(), msg.now_instance_id());
+        msg.rejected_id(), msg.now_instance_id(),
+        msg.value().user_data().c_str());
 
   switch(msg.type()) {
     case PREPARE:
