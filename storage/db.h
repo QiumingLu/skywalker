@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 #include <leveldb/db.h>
+#include <leveldb/comparator.h>
 #include "paxos/paxos.pb.h"
 
 namespace skywalker {
@@ -13,6 +14,21 @@ struct WriteOptions {
 
   WriteOptions()
       : sync(true) {
+  }
+};
+
+class Comparator : public leveldb::Comparator {
+ public:
+  virtual int Compare(const leveldb::Slice& a,
+                      const leveldb::Slice& b) const;
+
+  virtual const char* Name() const { return "SkyWalker Comparator"; }
+
+  virtual void FindShortestSeparator(std::string* start,
+                                     const leveldb::Slice& limit) const {
+  }
+
+  virtual void FindShortSuccessor(std::string* key) const {
   }
 };
 
@@ -44,6 +60,7 @@ class DB {
 
  private:
   leveldb::DB* db_;
+  Comparator comparator_;
 
   // No copying allowed
   DB(const DB&);

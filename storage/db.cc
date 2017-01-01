@@ -13,6 +13,20 @@ const uint64_t kMasterState = (UINTMAX_MAX - 2);
 
 namespace skywalker {
 
+int Comparator::Compare(const leveldb::Slice& a,
+                        const leveldb::Slice& b) const {
+  size_t size = sizeof(uint64_t);
+  assert(a.size() == size && b.size() == size);
+  uint64_t key;
+  uint64_t key2;
+  memcpy(&key, a.data(), size);
+  memcpy(&key2, b.data(), size);
+  if (key == key2) {
+    return 0;
+  }
+  return key > key2 ? 1 : -1;
+}
+
 DB::DB()
     : db_(nullptr) {
 }
@@ -23,6 +37,7 @@ DB::~DB() {
 
 int DB::Open(uint32_t group_id, const std::string& name) {
   leveldb::Options options;
+  options.comparator = &comparator_;
   options.create_if_missing = true;
   options.write_buffer_size = 1024 * 1024 + group_id * 10 * 1024;
   leveldb::Status status = leveldb::DB::Open(options, name, &db_);

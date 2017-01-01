@@ -32,6 +32,7 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
   MasterState state;
   if (state.ParseFromString(value)) {
     if (state.version() < state_.version()) {
+      assert(state.version() + 1 == state_.version());
       return true;
     }
     assert(state.version() == state_.version());
