@@ -31,14 +31,10 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             MachineContext* context) {
   MasterState state;
   if (state.ParseFromString(value)) {
-    if (state.version() < state_.version()) {
-      assert(state.version() + 1 == state_.version());
-      return true;
-    }
     assert(state.version() == state_.version());
-    state.set_version(instance_id);
     int ret = db_->SetMasterState(state);
     if (ret == 0) {
+      state.set_version(instance_id);
       if (state.node_id() == config_->GetNodeId()) {
         if (context != nullptr && context->user_data != nullptr) {
           state.set_lease_time(

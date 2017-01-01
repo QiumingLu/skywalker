@@ -107,9 +107,7 @@ void Group::TryBeMaster() {
 
 void Group::TryBeMasterInLoop(MachineContext* context) {
   MasterState state(master_machine_.GetMasterState());
-  if (state.version() >= instance_.GetInstanceId()) {
-    ProposeComplete(Status::AlreadyExists(Slice()), instance_.GetInstanceId());
-  } else if (state.lease_time() <= NowMicros()) {
+  if (state.lease_time() <= NowMicros()) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
     std::string s;
