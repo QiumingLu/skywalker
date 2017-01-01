@@ -73,8 +73,6 @@ void Instance::OnPropose(const Slice& value,
 
   propose_timer_ = loop_->RunAfter(1000*1000, [this]() {
     proposer_.QuitPropose();
-    context_ = nullptr;
-    propose_value_.Clear();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
     propose_cb_(Status::Timeout(msg), instance_id_);
@@ -155,7 +153,8 @@ void Instance::CheckLearn() {
   if (learner_.HasLearned()) {
     const PaxosValue& learned_value(learner_.GetLearnedValue());
     bool my = false;
-    if (propose_value_.machine_id() == learned_value.machine_id() &&
+    if (is_proposing_ &&
+        propose_value_.machine_id() == learned_value.machine_id() &&
         propose_value_.user_data() == learned_value.user_data()) {
       my = true;
     } else {
@@ -181,8 +180,6 @@ void Instance::CheckLearn() {
     }
 
     if (success) {
-      context_ = nullptr;
-      propose_value_.Clear();
       NextInstance();
     } else {
       proposer_.SetNoSkipPrepare();
