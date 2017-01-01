@@ -49,7 +49,7 @@ class NodeImpl : public Node {
   virtual bool IsMaster(uint32_t group_id) const;
   virtual void RetireMaster(uint32_t group_id);
 
-private:
+ private:
   void OnReceiveMessage(const Slice& s);
 
   const Options options_;

@@ -18,7 +18,6 @@ MasterMachine::MasterMachine(Config* config)
 void MasterMachine::Recover() {
   int ret = db_->GetMasterState(&state_);
   if (ret == 0) {
-    SWLog(INFO, "%" PRIu64"\n", state_.version());
     if (state_.node_id() != config_->GetNodeId()) {
       state_.set_lease_time(NowMicros() + state_.lease_time());
     } else {
@@ -35,6 +34,7 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
     if (state.version() < state_.version()) {
       return true;
     }
+    assert(state.version() == state_.version());
     state.set_version(instance_id);
     int ret = db_->SetMasterState(state);
     if (ret == 0) {
