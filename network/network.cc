@@ -32,7 +32,7 @@ void Network::StartServer(const std::function<void (const Slice&) >& cb) {
         uint32_t len;
         memcpy(&len, buf->Peek(), size);
         if (buf->ReadableSize() >= len) {
-          cb(Slice(buf->Peek() + size, len));
+          cb(Slice(buf->Peek() + size, len-size));
           buf->Retrieve(len);
         } else {
           break;
