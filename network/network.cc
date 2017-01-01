@@ -68,11 +68,14 @@ void Network::SendMessage(uint64_t node_id,
 void Network::SendMessage(const Membership& m,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([this, m, content_ptr] () {
-    std::string s;
-    bool res = content_ptr->SerializeToString(&s);
+    size_t size = sizeof(uint32_t);
+    char buf[size] = {0};
+    std::string s(buf, size);
+    bool res = content_ptr->AppendToString(&s);
     if (res) {
-      // FIXME
-      s += "\r\n";
+      uint32_t len = static_cast<uint32_t>(s.size());
+      memcpy(buf, &len, size);
+      s.replace(s.begin(), s.begin() + size, buf, size);
       for (int i = 0; i < m.node_id_size(); ++i) {
         if (m.node_id(i) != my_node_id_) {
           SendMessageInLoop(m.node_id(i), s);
