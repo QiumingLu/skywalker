@@ -1,0 +1,15 @@
+syntax = "proto3"
+
+package journey;
+
+service JourneyService {
+  rpc Put(RequestMessage) returns (ResponseMessage) { }
+  rpc Delete(RequestMessage) returns (RequestMessage) { }
+  rpc Get(RequestMessage) returns (ResponseMessage) { }
+}
+
+message RequestMessage {
+}
+
+message ResponseMessage {
+}

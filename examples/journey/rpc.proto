@@ -1,0 +1,17 @@
+syntax = "proto3"
+
+package journey;
+
+message MessageType {
+  REQUEST = 0;
+  RESPONSE = 1;
+}
+
+message RpcMessage {
+  MessageType type = 1;
+  int32 id = 2;
+  string service_name = 3;
+  string method_name = 4;
+  bytes request_data = 5;
+  bytes response_data = 6;
+}
