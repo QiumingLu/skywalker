@@ -50,7 +50,8 @@ void Network::SendMessage(uint64_t node_id,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([node_id, content_ptr, this] () {
     size_t size = sizeof(uint32_t);
-    char buf[size] = {0};
+    char buf[size];
+    memset(buf, 0, size);
     std::string s(buf, size);
     bool res = content_ptr->AppendToString(&s);
     if (res) {
@@ -69,7 +70,8 @@ void Network::SendMessage(const Membership& m,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([this, m, content_ptr] () {
     size_t size = sizeof(uint32_t);
-    char buf[size] = {0};
+    char buf[size];
+    memset(buf, 0, size);
     std::string s(buf, size);
     bool res = content_ptr->AppendToString(&s);
     if (res) {
