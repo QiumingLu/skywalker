@@ -3,10 +3,13 @@
 
 #include <map>
 #include <string>
+#include <google/protobuf/service.h>
 #include <voyager/core/eventloop.h>
 #include <voyager/core/sockaddr.h>
 #include <voyager/core/tcp_connection.h>
 #include <voyager/core/tcp_server.h>
+
+#include "rpc.pb.h"
 
 namespace journey {
 
@@ -18,9 +21,13 @@ class RpcServer {
   void RegisterService(google::protobuf::Service* service);
 
  private:
-  void OnConnection(const voyager::TcpConnectionPtr& p);
-  void OnCloseConnection(const voyager::TcpConnectionPtr& p);
+  void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
+  void OnRequest(const voyager::TcpConnectionPtr& p,
+                 const RpcMessage& msg);
+  void Done(const voyager::TcpConnectionPtr& p,
+            google::protobuf::Message* response, int id);
 
+  voyager::TcpServer server_;
   std::map<std::string, google::protobuf::Service*> services_;
 };
 

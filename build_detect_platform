@@ -85,9 +85,12 @@ case "$TARGET_OS" in
     exit 1
 esac
 
-$PREFIX/third_party/protobuf/bin/protoc -I$PREFIX/paxos --cpp_out=$PREFIX/paxos $PREFIX/paxos/paxos.proto
-
 DIRS="$PREFIX/machine $PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util"
+
+PROTOC=$PREFIX/third_party/protobuf/bin/protoc 
+PROTOS_PATH=$PREFIX
+PROTOS=`find $DIRS -name '*.proto'`
+$PROTOC -I $PROTOS_PATH --cpp_out=$PROTOS_PATH $PROTOS
 
 set -f 
 PRUNE_TEST="-name *test*.cc -prune"

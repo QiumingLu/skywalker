@@ -1,0 +1,23 @@
+#ifndef JOURNEY_RPC_CODEC_H_
+#define JOURNEY_RPC_CODEC_H_
+
+#include <string>
+#include <google/protobuf/message.h>
+#include <voyager/core/buffer.h>
+
+namespace journey {
+
+class RpcCodec {
+ public:
+  RpcCodec() { }
+  bool ParseFromBuffer(voyager::Buffer* buf,
+                       google::protobuf::Message* message);
+  bool SerializeToString(const google::protobuf::Message& msg,
+                         std::string* s);
+ private:
+  static const size_t kHeaderSize = sizeof(uint32_t);
+};
+
+}  // namespace journey
+
+#endif  // JOURNEY_RPC_CODEC_H_

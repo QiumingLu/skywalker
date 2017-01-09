@@ -9,16 +9,17 @@
 #include <voyager/port/mutexlock.h>
 #include <voyager/core/tcp_connection.h>
 #include <voyager/core/buffer.h>
+#include "rpc.pb.h"
 
 namespace journey {
 
 class RpcChannel : public google::protobuf::RpcChannel {
  public:
-  RpcChannel(const voyager::TcpConnectionPtr& p);
+  RpcChannel();
   virtual ~RpcChannel();
 
-  void SetService(const std::map<std::string, google::protobuf::Service*>& s) {
-    services_ = s;
+  void SetTcpConnectionPtr(const voyager::TcpConnectionPtr& p) {
+    conn_ = p;
   }
 
   virtual void CallMethod(const google::protobuf::MethodDescriptor* method,
@@ -27,19 +28,25 @@ class RpcChannel : public google::protobuf::RpcChannel {
                           google::protobuf::Message* response,
                           google::protobuf::Closure* done);
 
-  void OnMessage(const voyager::TcpConnectionPtr& p, Buffer* buf);
+  void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
 
  private:
-  typedef std::pair<google::protobuf::Message*,
-                    google::protobuf::Closure*> CallData;
-  void OnRpcMessage(const RpcMessage& msg_ptr);
-  void Done(google::protobuf::Message* response, int id);
+  struct CallData {
+    google::protobuf::Message* response;
+    google::protobuf::Closure* done;
+    CallData()
+        : response(nullptr), done(nullptr) {
+    }
+    CallData(google::protobuf::Message* r, google::protobuf::Closure* d)
+        : response(r), done(d) {
+    }
+  };
+  void OnResponse(const RpcMessage& msg);
 
   voyager::TcpConnectionPtr conn_;
   voyager::port::SequenceNumber num_;
   voyager::port::Mutex mutex_;
   std::map<int, CallData> call_map_;
-  std::map<std::string, google::protobuf::Service*> services_;
 };
 
 }  // namespace journey

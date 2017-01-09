@@ -9,7 +9,7 @@
 # (1) Production use (optimized mode)
       OPT ?= -O2 -DNDEBUG
 # (2) Debug mode, w/full line-level debugging symbols
-#      OPT ?= -g2
+#     OPT ?= -g2
 # (3) Profiling mode: opt, but w/debugging symbols
 #     OPT ?= -O2 -g2 -DNDEBUG
 #--------------------------------------------------------------------
@@ -22,10 +22,9 @@ $(shell CC="$(CC)" CXX="$(CXX)" TARGET_OS="$(TARGET_OS)" \
 include build_config.mk
 
 TESTS = \
-	paxos/paxos_test
 
 UTILS = \
-	paxos/paxos_bench
+	paxos/paxos_test \
 
 # Put the object files in a subdirectory, but the application at the top of 
 # the object dir
@@ -91,9 +90,6 @@ $(STATIC_ALLOBJS): | STATIC_OBJDIRS
 $(STATIC_OUTDIR)/libskywalker.a:$(STATIC_LIBOBJECTS)
 	rm -f $@
 	ar -rs $@ $(STATIC_LIBOBJECTS)
-
-$(STATIC_OUTDIR)/paxos_bench:paxos/paxos_bench.cc $(STATIC_LIBOBJECTS)
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) paxos/paxos_bench.cc $(STATIC_LIBOBJECTS) -o $@ $(LIBS)
 
 $(STATIC_OUTDIR)/paxos_test:paxos/paxos_test.cc $(STATIC_LIBOBJECTS)
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) paxos/paxos_test.cc $(STATIC_LIBOBJECTS) -o $@ $(LIBS)
