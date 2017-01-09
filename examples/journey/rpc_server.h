@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <google/protobuf/service.h>
+#include <google/protobuf/stubs/callback.h>
 #include <voyager/core/eventloop.h>
 #include <voyager/core/sockaddr.h>
 #include <voyager/core/tcp_connection.h>
@@ -22,10 +23,8 @@ class RpcServer {
 
  private:
   void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
-  void OnRequest(const voyager::TcpConnectionPtr& p,
-                 const RpcMessage& msg);
-  void Done(const voyager::TcpConnectionPtr& p,
-            google::protobuf::Message* response, int id);
+  void OnRequest(const voyager::TcpConnectionPtr& p, const RpcMessage& msg);
+  void Done(voyager::TcpConnectionPtr p, int id);
 
   voyager::TcpServer server_;
   std::map<std::string, google::protobuf::Service*> services_;

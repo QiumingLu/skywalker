@@ -31,7 +31,7 @@ journey_client: rpc.pb.o rpc_codec.o rpc_channel.o \
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 journey_server: rpc.pb.o rpc_codec.o rpc_server.o \
-                journey.pb.o journey_server.o
+                journey.pb.o journey_service_impl.o journey_server.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 %.pb.cc: %.proto

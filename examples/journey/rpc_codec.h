@@ -15,7 +15,7 @@ class RpcCodec {
   bool SerializeToString(const google::protobuf::Message& msg,
                          std::string* s);
  private:
-  static const size_t kHeaderSize = sizeof(uint32_t);
+  static const int kHeaderSize = 4;
 };
 
 }  // namespace journey

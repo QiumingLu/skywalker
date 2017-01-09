@@ -48,18 +48,19 @@ void RpcServer::OnRequest(const voyager::TcpConnectionPtr& p,
       if (request->ParseFromString(msg.data())) {
         google::protobuf::Message* response =
             service->GetResponsePrototype(method).New();
+        p->SetUserData(response);
         service->CallMethod(
             method, nullptr, request, response,
-   //         NewCallback(std::bind(&RpcServer::Done, this, p, response, msg.id())));
-            NewCallback(this, &RpcServer::Done, p, response, msg.id()));
+            google::protobuf::NewCallback(this, &RpcServer::Done, p, msg.id()));
       }
       delete request;
     }
   }
 }
 
-void RpcServer::Done(const voyager::TcpConnectionPtr& p,
-                     google::protobuf::Message* response, int id) {
+void RpcServer::Done(voyager::TcpConnectionPtr p, int id) {
+  google::protobuf::Message* response =
+      reinterpret_cast<google::protobuf::Message*>(p->UserData());
   RpcMessage msg;
   msg.set_id(id);
   msg.set_data(response->SerializeAsString());
