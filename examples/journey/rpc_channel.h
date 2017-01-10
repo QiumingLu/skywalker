@@ -49,6 +49,10 @@ class RpcChannel : public google::protobuf::RpcChannel {
   voyager::port::SequenceNumber num_;
   voyager::port::Mutex mutex_;
   std::map<int, CallData> call_map_;
+
+  // No copying allowed
+  RpcChannel(const RpcChannel&);
+  void operator=(const RpcChannel&);
 };
 
 }  // namespace journey

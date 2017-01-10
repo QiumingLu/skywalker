@@ -21,7 +21,11 @@ class JourneyServiceImpl : public JourneyService {
                    const journey::RequestMessage* request,
                    journey::ResponseMessage* response,
                    google::protobuf::Closure* done);
+ private:
 
+  // No copying allowed
+  JourneyServiceImpl(const JourneyServiceImpl&);
+  void operator=(const JourneyServiceImpl&);
 };
 
 }  // namespace journey

@@ -16,6 +16,10 @@ class RpcCodec {
                          std::string* s);
  private:
   static const int kHeaderSize = 4;
+
+  // No copying allowed
+  RpcCodec(const RpcCodec&);
+  void operator=(const RpcCodec&);
 };
 
 }  // namespace journey

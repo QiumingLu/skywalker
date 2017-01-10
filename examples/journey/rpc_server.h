@@ -28,6 +28,10 @@ class RpcServer {
 
   voyager::TcpServer server_;
   std::map<std::string, google::protobuf::Service*> services_;
+
+  // No copying allowed
+  RpcServer(const RpcServer&);
+  void operator=(const RpcServer&);
 };
 
 }  // namespace journey
