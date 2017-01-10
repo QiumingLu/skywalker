@@ -10,6 +10,7 @@
 #include <voyager/core/tcp_connection.h>
 #include <voyager/core/buffer.h>
 #include "rpc.pb.h"
+#include "rpc_codec.h"
 
 namespace journey {
 
@@ -43,6 +44,7 @@ class RpcChannel : public google::protobuf::RpcChannel {
   };
   void OnResponse(const RpcMessage& msg);
 
+  RpcCodec codec_;
   voyager::TcpConnectionPtr conn_;
   voyager::port::SequenceNumber num_;
   voyager::port::Mutex mutex_;

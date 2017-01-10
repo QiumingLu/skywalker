@@ -7,7 +7,7 @@ bool RpcCodec::ParseFromBuffer(voyager::Buffer* buf,
   if (buf->ReadableSize() > kHeaderSize) {
     int size;
     memcpy(&size, buf->Peek(), kHeaderSize);
-    if (buf->ReadableSize() >= size) {
+    if (buf->ReadableSize() >= static_cast<size_t>(size)) {
       message->ParseFromArray(buf->Peek() + kHeaderSize, size - kHeaderSize);
       buf->Retrieve(size);
       return true;

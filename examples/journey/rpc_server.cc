@@ -35,6 +35,7 @@ void RpcServer::OnMessage(const voyager::TcpConnectionPtr& p,
 
 void RpcServer::OnRequest(const voyager::TcpConnectionPtr& p,
                           const RpcMessage& msg) {
+  ErrorCode error;
   auto it = services_.find(msg.service_name());
   if (it != services_.end()) {
     google::protobuf::Service* service = it->second;
@@ -49,11 +50,29 @@ void RpcServer::OnRequest(const voyager::TcpConnectionPtr& p,
         google::protobuf::Message* response =
             service->GetResponsePrototype(method).New();
         p->SetUserData(response);
+        int id = msg.id();
         service->CallMethod(
             method, nullptr, request, response,
-            google::protobuf::NewCallback(this, &RpcServer::Done, p, msg.id()));
+            google::protobuf::NewCallback(this, &RpcServer::Done, p, id));
+        error = OK;
+      } else {
+        error = INVALID_REQUEST;
       }
       delete request;
+    } else {
+      error = INVALID_METHOD;
+    }
+  } else {
+    error = INVALID_SERVICE;
+  }
+  if (error != OK) {
+    RpcMessage msg;
+    msg.set_id(msg.id());
+    msg.set_error(error);
+    RpcCodec codec;
+    std::string s;
+    if (codec.SerializeToString(msg, &s)) {
+      p->SendMessage(s);
     }
   }
 }

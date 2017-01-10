@@ -26,14 +26,13 @@ void Network::StartServer(const std::function<void (const Slice&) >& cb) {
 
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
-    size_t size = sizeof(uint32_t);
     while (true) {
-      if (buf->ReadableSize() > size) {
-        uint32_t len;
-        memcpy(&len, buf->Peek(), size);
-        if (buf->ReadableSize() >= len) {
-          cb(Slice(buf->Peek() + size, len-size));
-          buf->Retrieve(len);
+      if (buf->ReadableSize() > kHeaderSize) {
+        int size;
+        memcpy(&size, buf->Peek(), kHeaderSize);
+        if (buf->ReadableSize() >= static_cast<size_t>(size)) {
+          cb(Slice(buf->Peek() + kHeaderSize, size - kHeaderSize));
+          buf->Retrieve(size);
         } else {
           break;
         }
@@ -49,15 +48,12 @@ void Network::StartServer(const std::function<void (const Slice&) >& cb) {
 void Network::SendMessage(uint64_t node_id,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([node_id, content_ptr, this] () {
-    size_t size = sizeof(uint32_t);
-    char buf[size];
-    memset(buf, 0, size);
-    std::string s(buf, size);
+    char buf[kHeaderSize];
+    int size = content_ptr->ByteSize() + kHeaderSize;
+    memcpy(buf, &size, kHeaderSize);
+    std::string s(buf, kHeaderSize);
     bool res = content_ptr->AppendToString(&s);
     if (res) {
-      uint32_t len = static_cast<uint32_t>(s.size());
-      memcpy(buf, &len, size);
-      s.replace(s.begin(), s.begin() + size, buf, size);
       SendMessageInLoop(node_id, s);
     } else {
       SWLog(ERROR,
@@ -69,15 +65,12 @@ void Network::SendMessage(uint64_t node_id,
 void Network::SendMessage(const Membership& m,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([this, m, content_ptr] () {
-    size_t size = sizeof(uint32_t);
-    char buf[size];
-    memset(buf, 0, size);
-    std::string s(buf, size);
+    char buf[kHeaderSize];
+    int size = content_ptr->ByteSize() + kHeaderSize;
+    memcpy(buf, &size, kHeaderSize);
+    std::string s(buf, kHeaderSize);
     bool res = content_ptr->AppendToString(&s);
     if (res) {
-      uint32_t len = static_cast<uint32_t>(s.size());
-      memcpy(buf, &len, size);
-      s.replace(s.begin(), s.begin() + size, buf, size);
       for (int i = 0; i < m.node_id_size(); ++i) {
         if (m.node_id(i) != my_node_id_) {
           SendMessageInLoop(m.node_id(i), s);

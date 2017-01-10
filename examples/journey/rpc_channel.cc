@@ -25,9 +25,8 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   msg.set_method_name(method->name());
   msg.set_data(request->SerializeAsString());
 
-  RpcCodec codec;
   std::string s;
-  if (codec.SerializeToString(msg, &s)) {
+  if (codec_.SerializeToString(msg, &s)) {
     conn_->SendMessage(s);
     voyager::port::MutexLock lock(&mutex_);
     call_map_[id] = CallData(response, done);
@@ -36,12 +35,11 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
 void RpcChannel::OnMessage(const voyager::TcpConnectionPtr& p,
                            voyager::Buffer* buf) {
-  RpcCodec codec;
   RpcMessage msg;
-  bool res = codec.ParseFromBuffer(buf, &msg);
+  bool res = codec_.ParseFromBuffer(buf, &msg);
   while (res) {
     OnResponse(msg);
-    res = codec.ParseFromBuffer(buf, &msg);
+    res = codec_.ParseFromBuffer(buf, &msg);
   }
 }
 
@@ -61,8 +59,8 @@ void RpcChannel::OnResponse(const RpcMessage& msg) {
     if (data.done) {
       data.done->Run();
     }
+    delete data.response;
   }
-  delete data.response;
 }
 
 }  // namespace journey
