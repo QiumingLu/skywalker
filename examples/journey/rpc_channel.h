@@ -2,24 +2,23 @@
 #define JOURNEY_RPC_CHANNEL_H_
 
 #include <map>
-#include <string>
 #include <google/protobuf/service.h>
-#include <voyager/port/atomic_sequence_num.h>
-#include <voyager/port/mutex.h>
-#include <voyager/port/mutexlock.h>
-#include <voyager/core/tcp_connection.h>
-#include <voyager/core/buffer.h>
+#include "voyager/port/atomic_sequence_num.h"
+#include "voyager/port/mutex.h"
+#include "voyager/port/mutexlock.h"
+#include "voyager/core/tcp_connection.h"
+#include "voyager/core/buffer.h"
 #include "rpc.pb.h"
 #include "rpc_codec.h"
 
-namespace journey {
+namespace voyager {
 
 class RpcChannel : public google::protobuf::RpcChannel {
  public:
   RpcChannel();
   virtual ~RpcChannel();
 
-  void SetTcpConnectionPtr(const voyager::TcpConnectionPtr& p) {
+  void SetTcpConnectionPtr(const TcpConnectionPtr& p) {
     conn_ = p;
   }
 
@@ -29,7 +28,7 @@ class RpcChannel : public google::protobuf::RpcChannel {
                           google::protobuf::Message* response,
                           google::protobuf::Closure* done);
 
-  void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
+  void OnMessage(const TcpConnectionPtr& p, Buffer* buf);
 
  private:
   struct CallData {
@@ -42,12 +41,13 @@ class RpcChannel : public google::protobuf::RpcChannel {
         : response(r), done(d) {
     }
   };
+
   void OnResponse(const RpcMessage& msg);
 
   RpcCodec codec_;
-  voyager::TcpConnectionPtr conn_;
-  voyager::port::SequenceNumber num_;
-  voyager::port::Mutex mutex_;
+  TcpConnectionPtr conn_;
+  port::SequenceNumber num_;
+  port::Mutex mutex_;
   std::map<int, CallData> call_map_;
 
   // No copying allowed
@@ -55,6 +55,6 @@ class RpcChannel : public google::protobuf::RpcChannel {
   void operator=(const RpcChannel&);
 };
 
-}  // namespace journey
+}  // namespace voyager
 
 #endif  // JOURNEY_RPC_CHANNEL_H_

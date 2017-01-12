@@ -44,7 +44,7 @@ class NodeImpl : public Node {
 
   virtual void SetMasterLeaseTime(uint64_t micros);
   virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros);
-  virtual void GetMaster(uint32_t group_id,
+  virtual bool GetMaster(uint32_t group_id,
                          IpPort* i, uint64_t* version) const;
   virtual bool IsMaster(uint32_t group_id) const;
   virtual void RetireMaster(uint32_t group_id);

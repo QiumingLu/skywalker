@@ -1,7 +1,7 @@
 #include "rpc_channel.h"
-#include "rpc_codec.h"
+#include "voyager/util/logging.h"
 
-namespace journey {
+namespace voyager {
 
 RpcChannel::RpcChannel() {
 }
@@ -28,17 +28,21 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
   std::string s;
   if (codec_.SerializeToString(msg, &s)) {
     conn_->SendMessage(s);
-    voyager::port::MutexLock lock(&mutex_);
+    port::MutexLock lock(&mutex_);
     call_map_[id] = CallData(response, done);
   }
 }
 
-void RpcChannel::OnMessage(const voyager::TcpConnectionPtr& p,
-                           voyager::Buffer* buf) {
+void RpcChannel::OnMessage(const TcpConnectionPtr& p, Buffer* buf) {
   RpcMessage msg;
   bool res = codec_.ParseFromBuffer(buf, &msg);
   while (res) {
-    OnResponse(msg);
+    if (msg.error() == OK) {
+      OnResponse(msg);
+    } else {
+      VOYAGER_LOG(ERROR) << "RpcChannel::OnMessage - ErrorCode:"
+                         << msg.error();
+    }
     res = codec_.ParseFromBuffer(buf, &msg);
   }
 }
@@ -47,7 +51,7 @@ void RpcChannel::OnResponse(const RpcMessage& msg) {
   int id = msg.id();
   CallData data;
   {
-    voyager::port::MutexLock lock(&mutex_);
+    port::MutexLock lock(&mutex_);
     auto it = call_map_.find(id);
     if (it != call_map_.end()) {
       data = it->second;
@@ -63,4 +67,4 @@ void RpcChannel::OnResponse(const RpcMessage& msg) {
   }
 }
 
-}  // namespace journey
+}  // namespace voyager

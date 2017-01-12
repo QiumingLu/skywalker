@@ -1,10 +1,10 @@
 #include "rpc_server.h"
 #include "rpc_codec.h"
 
-namespace journey {
+namespace voyager {
 
-RpcServer::RpcServer(voyager::EventLoop* loop,
-                     const voyager::SockAddr& addr)
+RpcServer::RpcServer(EventLoop* loop,
+                     const SockAddr& addr)
     : server_(loop, addr) {
   server_.SetMessageCallback(
       std::bind(&RpcServer::OnMessage, this,
@@ -22,8 +22,7 @@ void RpcServer::RegisterService(google::protobuf::Service* service) {
   services_[desc->full_name()] = service;
 }
 
-void RpcServer::OnMessage(const voyager::TcpConnectionPtr& p,
-                          voyager::Buffer* buf) {
+void RpcServer::OnMessage(const TcpConnectionPtr& p, Buffer* buf) {
   RpcCodec codec;
   RpcMessage msg;
   bool res = codec.ParseFromBuffer(buf, &msg);
@@ -33,7 +32,7 @@ void RpcServer::OnMessage(const voyager::TcpConnectionPtr& p,
   }
 }
 
-void RpcServer::OnRequest(const voyager::TcpConnectionPtr& p,
+void RpcServer::OnRequest(const TcpConnectionPtr& p,
                           const RpcMessage& msg) {
   ErrorCode error;
   auto it = services_.find(msg.service_name());
@@ -49,11 +48,11 @@ void RpcServer::OnRequest(const voyager::TcpConnectionPtr& p,
       if (request->ParseFromString(msg.data())) {
         google::protobuf::Message* response =
             service->GetResponsePrototype(method).New();
-        p->SetUserData(response);
-        int id = msg.id();
+        p->SetUserData(new int(msg.id()));
         service->CallMethod(
             method, nullptr, request, response,
-            google::protobuf::NewCallback(this, &RpcServer::Done, p, id));
+            google::protobuf::NewCallback(
+                this, &RpcServer::Done, response, p));
         error = OK;
       } else {
         error = INVALID_REQUEST;
@@ -66,29 +65,30 @@ void RpcServer::OnRequest(const voyager::TcpConnectionPtr& p,
     error = INVALID_SERVICE;
   }
   if (error != OK) {
-    RpcMessage msg;
-    msg.set_id(msg.id());
-    msg.set_error(error);
+    RpcMessage reply_msg;
+    reply_msg.set_id(msg.id());
+    reply_msg.set_error(error);
     RpcCodec codec;
     std::string s;
-    if (codec.SerializeToString(msg, &s)) {
+    if (codec.SerializeToString(reply_msg, &s)) {
       p->SendMessage(s);
     }
   }
 }
 
-void RpcServer::Done(voyager::TcpConnectionPtr p, int id) {
-  google::protobuf::Message* response =
-      reinterpret_cast<google::protobuf::Message*>(p->UserData());
+void RpcServer::Done(google::protobuf::Message* response,
+                     TcpConnectionPtr p) {
+  int* id = reinterpret_cast<int*>(p->UserData());
   RpcMessage msg;
-  msg.set_id(id);
+  msg.set_id(*id);
   msg.set_data(response->SerializeAsString());
   RpcCodec codec;
   std::string s;
   if (codec.SerializeToString(msg, &s)) {
     p->SendMessage(s);
   }
+  delete id;
   delete response;
 }
 
-}  // namespace journey
+}  // namespace voyager

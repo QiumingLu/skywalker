@@ -9,7 +9,10 @@ PROTOBUF_INCLUDE=$(PREFIX)/third_party/protobuf/include
 PROTOBUF_LIBRARY=$(PREFIX)/third_party/protobuf/lib
 
 CXX = g++
-CXXFLAGS = -std=c++11 -g -pthread \
+CXXFLAGS = -std=c++11 -g -Wall -Wextra -Werror \
+		   -Wno-unused-parameter -Woverloaded-virtual \
+		   -Wpointer-arith -Wshadow -Wwrite-strings \
+		   -march=native -pthread \
 		   -I$(SKYWALKER_INCLUDE) -I$(VOYAGER_INCLUDE) \
 		   -I$(LEVELDB_INCLUDE) -I$(PROTOBUF_INCLUDE)
 
@@ -31,6 +34,7 @@ journey_client: rpc.pb.o rpc_codec.o rpc_channel.o \
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 journey_server: rpc.pb.o rpc_codec.o rpc_server.o \
+                journey_db.o journey_db_machine.o \
                 journey.pb.o journey_service_impl.o journey_server.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 

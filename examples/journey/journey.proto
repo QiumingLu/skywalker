@@ -5,13 +5,33 @@ package journey;
 option cc_generic_services = true;
 
 service JourneyService {
-  rpc Put(RequestMessage) returns (ResponseMessage) { }
-  rpc Delete(RequestMessage) returns (RequestMessage) { }
-  rpc Get(RequestMessage) returns (ResponseMessage) { }
+  rpc Propose(RequestMessage) returns (ResponseMessage) { }
+}
+
+enum ProposeType {
+  PROPOSE_TYPE_PUT = 0;
+  PROPOSE_TYPE_GET = 1;
+  PROPOSE_TYPE_DELETE = 2;
+}
+
+enum ProposeResult {
+  PROPOSE_RESULT_SUCCESS = 0;
+  PROPOSE_RESULT_FAIL = 1;
+  PROPOSE_RESULT_NOT_FOUND =2;
+  PROPOSE_RESULT_NOT_MASTER = 3;
 }
 
 message RequestMessage {
+  ProposeType type = 1;
+  bytes key = 2;
+  bytes value = 3;
 }
 
 message ResponseMessage {
+  ProposeResult result = 1;
+  bytes value = 2; 
+  bool has_master = 3;
+  string master_ip = 4;
+  uint32 master_port = 5;
+  uint64 master_version = 6;
 }

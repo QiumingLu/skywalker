@@ -5,28 +5,28 @@
 #include <string>
 #include <google/protobuf/service.h>
 #include <google/protobuf/stubs/callback.h>
-#include <voyager/core/eventloop.h>
-#include <voyager/core/sockaddr.h>
-#include <voyager/core/tcp_connection.h>
-#include <voyager/core/tcp_server.h>
+#include "voyager/core/eventloop.h"
+#include "voyager/core/sockaddr.h"
+#include "voyager/core/tcp_connection.h"
+#include "voyager/core/tcp_server.h"
 
 #include "rpc.pb.h"
 
-namespace journey {
+namespace voyager {
 
 class RpcServer {
  public:
-  RpcServer(voyager::EventLoop* loop, const voyager::SockAddr& addr);
+  RpcServer(EventLoop* loop, const SockAddr& addr);
 
   void Start();
   void RegisterService(google::protobuf::Service* service);
 
  private:
-  void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
-  void OnRequest(const voyager::TcpConnectionPtr& p, const RpcMessage& msg);
-  void Done(voyager::TcpConnectionPtr p, int id);
+  void OnMessage(const TcpConnectionPtr& p, Buffer* buf);
+  void OnRequest(const TcpConnectionPtr& p, const RpcMessage& msg);
+  void Done(google::protobuf::Message* response, TcpConnectionPtr p);
 
-  voyager::TcpServer server_;
+  TcpServer server_;
   std::map<std::string, google::protobuf::Service*> services_;
 
   // No copying allowed
@@ -34,6 +34,6 @@ class RpcServer {
   void operator=(const RpcServer&);
 };
 
-}  // namespace journey
+}  // namespace voyager
 
-#endif  // JOURNEY_RPC_SERVER_H_
+#endif  // JOURNEY_RPC_SERVER_H

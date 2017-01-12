@@ -20,7 +20,7 @@ class MasterMachine : public StateMachine {
   void SetMasterState(const MasterState& state);
   MasterState GetMasterState() const;
 
-  void GetMaster(IpPort* i, uint64_t* version) const;
+  bool GetMaster(IpPort* i, uint64_t* version) const;
   bool IsMaster() const;
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,

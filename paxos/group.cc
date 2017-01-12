@@ -291,8 +291,8 @@ void Group::SetMasterLeaseTime(uint64_t micros) {
   });
 }
 
-void Group::GetMaster(IpPort* i, uint64_t* version) const {
-  master_machine_.GetMaster(i, version);
+bool Group::GetMaster(IpPort* i, uint64_t* version) const {
+  return master_machine_.GetMaster(i, version);
 }
 
 bool Group::IsMaster() const {

@@ -84,8 +84,9 @@ class Node {
   virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros) = 0;
 
   // Returns the master.
-  // If have master, store the result in *i, else i=nullptr.
-  virtual void GetMaster(uint32_t group_id,
+  // If have master, store the result in *i and return true
+  // else return false.
+  virtual bool GetMaster(uint32_t group_id,
                          IpPort* i, uint64_t* version) const = 0;
 
   // Check whether I'm master or not.

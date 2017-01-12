@@ -27,7 +27,7 @@ void Network::StartServer(const std::function<void (const Slice&) >& cb) {
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
     while (true) {
-      if (buf->ReadableSize() > kHeaderSize) {
+      if (buf->ReadableSize() >= kHeaderSize) {
         int size;
         memcpy(&size, buf->Peek(), kHeaderSize);
         if (buf->ReadableSize() >= static_cast<size_t>(size)) {

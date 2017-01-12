@@ -72,14 +72,14 @@ MasterState MasterMachine::GetMasterState() const {
   return state_;
 }
 
-void MasterMachine::GetMaster(IpPort* i, uint64_t* version) const {
+bool MasterMachine::GetMaster(IpPort* i, uint64_t* version) const {
   MutexLock lock(&mutex_);
   if (state_.lease_time() > NowMicros()) {
     *version = state_.version();
     ParseNodeId(state_.node_id(), i);
-  } else {
-    i = nullptr;
+    return true;
   }
+  return false;
 }
 
 bool MasterMachine::IsMaster() const {

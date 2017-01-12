@@ -1,10 +1,10 @@
 #include "rpc_codec.h"
 
-namespace journey {
+namespace voyager {
 
-bool RpcCodec::ParseFromBuffer(voyager::Buffer* buf,
+bool RpcCodec::ParseFromBuffer(Buffer* buf,
                                google::protobuf::Message* message) {
-  if (buf->ReadableSize() > kHeaderSize) {
+  if (buf->ReadableSize() >= kHeaderSize) {
     int size;
     memcpy(&size, buf->Peek(), kHeaderSize);
     if (buf->ReadableSize() >= static_cast<size_t>(size)) {
@@ -25,4 +25,4 @@ bool RpcCodec::SerializeToString(const google::protobuf::Message& message,
   return message.AppendToString(s);
 }
 
-}  // namespace journey
+}  // namespace voyager

@@ -136,11 +136,11 @@ void NodeImpl::SetMasterLeaseTime(uint32_t group_id, uint64_t micros) {
   groups_[group_id]->SetMasterLeaseTime(micros);
 }
 
-void NodeImpl::GetMaster(uint32_t group_id,
+bool NodeImpl::GetMaster(uint32_t group_id,
                          IpPort* i, uint64_t* version) const {
   std::map<uint32_t, Group*>::const_iterator it = groups_.find(group_id);
   assert(it != groups_.end());
-  it->second->GetMaster(i, version);
+  return it->second->GetMaster(i, version);
 }
 
 bool NodeImpl::IsMaster(uint32_t group_id) const {

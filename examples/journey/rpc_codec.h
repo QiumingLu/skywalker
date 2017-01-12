@@ -1,16 +1,15 @@
 #ifndef JOURNEY_RPC_CODEC_H_
 #define JOURNEY_RPC_CODEC_H_
 
-#include <string>
 #include <google/protobuf/message.h>
-#include <voyager/core/buffer.h>
+#include "voyager/core/buffer.h"
 
-namespace journey {
+namespace voyager {
 
 class RpcCodec {
  public:
   RpcCodec() { }
-  bool ParseFromBuffer(voyager::Buffer* buf,
+  bool ParseFromBuffer(Buffer* buf,
                        google::protobuf::Message* message);
   bool SerializeToString(const google::protobuf::Message& msg,
                          std::string* s);
@@ -22,6 +21,6 @@ class RpcCodec {
   void operator=(const RpcCodec&);
 };
 
-}  // namespace journey
+}  // namespace voyager
 
 #endif  // JOURNEY_RPC_CODEC_H_
