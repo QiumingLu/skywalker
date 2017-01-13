@@ -48,16 +48,9 @@ void Network::StartServer(const std::function<void (const Slice&) >& cb) {
 void Network::SendMessage(uint64_t node_id,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([node_id, content_ptr, this] () {
-    char buf[kHeaderSize];
-    int size = content_ptr->ByteSize() + kHeaderSize;
-    memcpy(buf, &size, kHeaderSize);
-    std::string s(buf, kHeaderSize);
-    bool res = content_ptr->AppendToString(&s);
-    if (res) {
+    std::string s;
+    if (SerializeToString(content_ptr, &s)) {
       SendMessageInLoop(node_id, s);
-    } else {
-      SWLog(ERROR,
-            "Network::SendMessage - Content.SerializeToString error.\n");
     }
   });
 }
@@ -65,20 +58,13 @@ void Network::SendMessage(uint64_t node_id,
 void Network::SendMessage(const Membership& m,
                           const std::shared_ptr<Content>& content_ptr) {
   loop_->QueueInLoop([this, m, content_ptr] () {
-    char buf[kHeaderSize];
-    int size = content_ptr->ByteSize() + kHeaderSize;
-    memcpy(buf, &size, kHeaderSize);
-    std::string s(buf, kHeaderSize);
-    bool res = content_ptr->AppendToString(&s);
-    if (res) {
+    std::string s;
+    if (SerializeToString(content_ptr, &s)) {
       for (int i = 0; i < m.node_id_size(); ++i) {
         if (m.node_id(i) != my_node_id_) {
           SendMessageInLoop(m.node_id(i), s);
         }
       }
-    } else {
-      SWLog(ERROR,
-            "Network::SendMessage - Content.SerializeToString error.\n");
     }
   });
 }
@@ -100,7 +86,7 @@ void Network::SendMessageInLoop(uint64_t node_id,
       p->SendMessage(s);
     });
 
-    client->SetConnectFailureCallback([client, this]() {
+    client->SetConnectFailureCallback([client]() {
       delete client;
     });
 
@@ -112,6 +98,23 @@ void Network::SendMessageInLoop(uint64_t node_id,
 
     client->Connect(false);
   }
+}
+
+bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,
+                                std::string* s) {
+  char buf[kHeaderSize];
+  memset(buf, 0, kHeaderSize);
+  s->append(buf, kHeaderSize);
+  bool res = content_ptr->AppendToString(s);
+  if (res) {
+    int size = static_cast<int>(s->size());
+    memcpy(buf, &size, kHeaderSize);
+    s->replace(s->begin(), s->begin() + kHeaderSize, buf, kHeaderSize);
+  } else {
+    SWLog(ERROR,
+          "Network::SendMessage - Content.SerializeToString error.\n");
+  }
+  return res;
 }
 
 }  // namespace skywalker

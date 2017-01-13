@@ -34,6 +34,8 @@ class Network {
  private:
   static const int kHeaderSize = 4;
 
+  bool SerializeToString(const std::shared_ptr<Content>& content_ptr,
+                         std::string* s);
   void SendMessageInLoop(uint64_t node_id, const std::string& s);
 
   uint64_t my_node_id_;

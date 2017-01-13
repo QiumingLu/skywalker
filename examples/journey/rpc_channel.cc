@@ -37,9 +37,8 @@ void RpcChannel::OnMessage(const TcpConnectionPtr& p, Buffer* buf) {
   RpcMessage msg;
   bool res = codec_.ParseFromBuffer(buf, &msg);
   while (res) {
-    if (msg.error() == OK) {
-      OnResponse(msg);
-    } else {
+    OnResponse(msg);
+    if (msg.error() != OK) {
       VOYAGER_LOG(ERROR) << "RpcChannel::OnMessage - ErrorCode:"
                          << msg.error();
     }

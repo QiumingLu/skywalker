@@ -16,7 +16,7 @@ namespace voyager {
 
 class RpcServer {
  public:
-  RpcServer(EventLoop* loop, const SockAddr& addr);
+  RpcServer(EventLoop* loop, const SockAddr& addr, int thread_size = 1);
 
   void Start();
   void RegisterService(google::protobuf::Service* service);

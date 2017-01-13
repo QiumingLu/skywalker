@@ -4,8 +4,9 @@
 namespace voyager {
 
 RpcServer::RpcServer(EventLoop* loop,
-                     const SockAddr& addr)
-    : server_(loop, addr) {
+                     const SockAddr& addr,
+                     int thread_size)
+    : server_(loop, addr, "RpcServer", thread_size) {
   server_.SetMessageCallback(
       std::bind(&RpcServer::OnMessage, this,
                 std::placeholders::_1, std::placeholders::_2));

@@ -20,7 +20,10 @@ class JourneyServiceImpl : public JourneyService {
                        google::protobuf::Closure* done);
 
  private:
+  uint32_t Shard(const std::string& key);
+
   JourneyDBMachine machine_;
+  uint32_t group_size_;
   skywalker::Node* node_;
 
   // No copying allowed

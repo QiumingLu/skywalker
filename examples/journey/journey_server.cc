@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 
   skywalker::Options options;
   options.log_storage_path = std::string(path);
-
+  options.group_size = 3;
   std::vector<std::string> my;
   voyager::SplitStringUsing(std::string(argv[1]), ":", &my);
   options.ipport.ip = my[0];
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
   if (res) {
     voyager::EventLoop loop;
     voyager::SockAddr addr(options.ipport.ip, options.ipport.port + 1000);
-    voyager::RpcServer server(&loop, addr);
+    voyager::RpcServer server(&loop, addr, options.group_size);
     server.RegisterService(&service);
     server.Start();
     loop.Loop();
