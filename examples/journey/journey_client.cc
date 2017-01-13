@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include "rpc.pb.h"
 #include "rpc_channel.h"
 #include "journey.pb.h"
 
@@ -19,12 +20,18 @@ class JourneyClient {
   void Propose(const std::string& s);
 
  private:
-  void CreateNewChannel(const std::vector<std::string>& v,
-                        const std::string& key);
+  void CreateNewChannel(const voyager::SockAddr& addr,
+                        const std::string& key,
+                        const RequestMessage& request);
 
-  RequestMessage* CreateNewRequest(const std::vector<std::string>& v);
+  void CreateNewRequest(const std::vector<std::string>& v,
+                        RequestMessage* request);
 
-  void Done(RequestMessage* request, ResponseMessage* response);
+  void Done(ResponseMessage* response);
+
+  void HandleError(voyager::ErrorCode code);
+
+  void NextPropose();
 
   voyager::EventLoop* loop_;
   std::map<std::string, voyager::RpcChannel*> channels_;
@@ -50,45 +57,46 @@ void JourneyClient::Propose(const std::string& s) {
   std::string key(v[0]);
   key += ":";
   key += v[1];
+  RequestMessage request;
+  CreateNewRequest(v, &request);
+
   auto it = channels_.find(key);
   if (it != channels_.end()) {
-    RequestMessage *request = CreateNewRequest(v);
     ResponseMessage* response = new ResponseMessage();
     JourneyService_Stub stub(it->second);
     stub.Propose(
-        nullptr, request, response,
-        google::protobuf::NewCallback(
-            this, &JourneyClient::Done, request, response));
+        nullptr, &request, response,
+        google::protobuf::NewCallback(this, &JourneyClient::Done, response));
   } else {
-    CreateNewChannel(v, key);
+    voyager::SockAddr addr(v[0], atoi(&*(v[1].begin())));
+    CreateNewChannel(addr,key, request);
   }
 }
 
-void JourneyClient::CreateNewChannel(const std::vector<std::string>& v,
-                                     const std::string& key) {
-  voyager::SockAddr addr(v[0], atoi(&*(v[1].begin())));
+void JourneyClient::CreateNewChannel(const voyager::SockAddr& addr,
+                                     const std::string& key,
+                                     const RequestMessage& request) {
   voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
-  RequestMessage *request = CreateNewRequest(v);
 
   client->SetConnectionCallback(
       [key, request, this](const voyager::TcpConnectionPtr& p) {
-    voyager::RpcChannel *channel = new voyager::RpcChannel();
+    voyager::RpcChannel *channel = new voyager::RpcChannel(loop_);
     channels_[key] = channel;
     ResponseMessage* response = new ResponseMessage();
     channel->SetTcpConnectionPtr(p);
+    channel->SetErrorCallback(
+        std::bind(&JourneyClient::HandleError, this, std::placeholders::_1));
     p->SetMessageCallback(
         std::bind(&voyager::RpcChannel::OnMessage, channel,
                   std::placeholders::_1, std::placeholders::_2));
     JourneyService_Stub stub(channel);
     stub.Propose(
-        nullptr, request, response,
-        google::protobuf::NewCallback(
-            this, &JourneyClient::Done, request, response));
+        nullptr, &request, response,
+        google::protobuf::NewCallback(this, &JourneyClient::Done, response));
   });
 
-  client->SetConnectFailureCallback([client, request]() {
+  client->SetConnectFailureCallback([client]() {
     delete client;
-    delete request;
   });
 
   client->SetCloseCallback(
@@ -102,9 +110,8 @@ void JourneyClient::CreateNewChannel(const std::vector<std::string>& v,
   client->Connect(false);
 }
 
-RequestMessage* JourneyClient::CreateNewRequest(
-    const std::vector<std::string>& v) {
-  RequestMessage* request = new RequestMessage();
+void JourneyClient::CreateNewRequest(const std::vector<std::string>& v,
+                                     RequestMessage* request) {
   request->set_key(v[3]);
   if (v[2] == "put") {
     request->set_type(journey::PROPOSE_TYPE_PUT);
@@ -114,11 +121,9 @@ RequestMessage* JourneyClient::CreateNewRequest(
   } else {
     request->set_type(journey::PROPOSE_TYPE_DELETE);
   }
-  return request;
 }
 
-void JourneyClient::Done(RequestMessage* request,
-                         ResponseMessage* response) {
+void JourneyClient::Done(ResponseMessage* response) {
   const char* result;
   switch (response->result()) {
     case PROPOSE_RESULT_SUCCESS:
@@ -138,8 +143,8 @@ void JourneyClient::Done(RequestMessage* request,
       break;
   }
   printf("%s", result);
-  if (request->type() == PROPOSE_TYPE_GET
-      && response->result() == PROPOSE_RESULT_SUCCESS) {
+  if (response->result() == PROPOSE_RESULT_SUCCESS &&
+      !response->value().empty()) {
     printf(", value:%s", response->value().c_str());
   }
 
@@ -148,9 +153,18 @@ void JourneyClient::Done(RequestMessage* request,
            response->has_master(), response->master_ip().c_str(),
            response->master_port() + 1000);
   }
-  delete request;
 
-  printf("\n\n> ");
+  printf("\n");
+  NextPropose();
+}
+
+void JourneyClient::HandleError(voyager::ErrorCode code) {
+  printf("error code:%d\n", code);
+  NextPropose();
+}
+
+void JourneyClient::NextPropose() {
+  printf("> ");
   std::string s;
   std::getline(std::cin, s);
   this->Propose(s);
@@ -163,7 +177,6 @@ int main(int argc, char** argv) {
   printf("> ");
   std::string s;
   std::getline(std::cin, s);
-
   voyager::EventLoop loop;
   journey::JourneyClient client(&loop);
   client.Propose(s);

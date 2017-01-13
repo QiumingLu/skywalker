@@ -54,18 +54,18 @@ void RpcServer::OnRequest(const TcpConnectionPtr& p,
             method, nullptr, request, response,
             google::protobuf::NewCallback(
                 this, &RpcServer::Done, response, p));
-        error = OK;
+        error = ERROR_CODE_OK;
       } else {
-        error = INVALID_REQUEST;
+        error = ERROR_CODE_INVALID_REQUEST;
       }
       delete request;
     } else {
-      error = INVALID_METHOD;
+      error = ERROR_CODE_INVALID_METHOD;
     }
   } else {
-    error = INVALID_SERVICE;
+    error = ERROR_CODE_INVALID_SERVICE;
   }
-  if (error != OK) {
+  if (error != ERROR_CODE_OK) {
     RpcMessage reply_msg;
     reply_msg.set_id(msg.id());
     reply_msg.set_error(error);

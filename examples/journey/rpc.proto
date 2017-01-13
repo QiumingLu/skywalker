@@ -3,10 +3,12 @@ syntax = "proto3";
 package voyager;
 
 enum ErrorCode {
-  OK = 0;
-  INVALID_SERVICE = 1;
-  INVALID_METHOD =2;
-  INVALID_REQUEST = 3;
+  ERROR_CODE_OK = 0;
+  ERROR_CODE_TIMEOUT = 1;
+  ERROR_CODE_INVALID_SERVICE = 2;
+  ERROR_CODE_INVALID_METHOD =3;
+  ERROR_CODE_INVALID_REQUEST = 4;
+  ERROR_CODE_UNKNOWN = 5;
 }
 
 message RpcMessage {
