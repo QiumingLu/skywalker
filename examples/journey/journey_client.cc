@@ -38,7 +38,8 @@ class JourneyClient {
   void operator=(const JourneyClient&);
 };
 
-JourneyClient::JourneyClient(voyager::EventLoop* loop, const std::string& server)
+JourneyClient::JourneyClient(voyager::EventLoop* loop,
+                             const std::string& server)
     : loop_(loop),
       server_(server) {
 }
@@ -53,11 +54,10 @@ bool JourneyClient::GetLine(bool server) {
   printf("> ");
   std::string s;
   std::getline(std::cin, s);
-  bool no_quit = true;
   if (s == "quit") {
-    loop_->Exit();
     printf("bye!\n");
-    no_quit = false;
+    // FIXME
+    exit(0);
   } else if (!server) {
     v_.clear();
     size_t found = s.find_first_of(' ');
@@ -76,7 +76,7 @@ bool JourneyClient::GetLine(bool server) {
   } else {
     server_ = s;
   }
-  return no_quit;
+  return true;
 }
 
 void JourneyClient::Propose() {
@@ -106,7 +106,15 @@ void JourneyClient::Propose(const std::vector<std::string>& v) {
 void JourneyClient::CreateNewChannel(const RequestMessage& request) {
   std::vector<std::string> ipport;
   voyager::SplitStringUsing(server_, ":", &ipport);
-  assert(ipport.size() == 2);
+  if (ipport.size() != 2) {
+    printf("%s, invalid server_ip:server_port, "
+           "please enter new server_ip:server_port\n", server_.c_str());
+    if (GetLine(true)) {
+      Propose(v_);
+    }
+    return;
+  }
+
   voyager::SockAddr addr(ipport[0], std::stoi(ipport[1]));
   voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
 
@@ -129,8 +137,15 @@ void JourneyClient::CreateNewChannel(const RequestMessage& request) {
 
   client->SetConnectFailureCallback([client, this]() {
     delete client;
-    printf("connect failed. please enter new server_ip:server_port\n");
-    if (GetLine(true)) {
+    bool res = false;
+    if (channels_.empty()) {
+      printf("connect failed, please enter new server_ip:server_port\n");
+      res = GetLine(true);
+    } else {
+      server_ = channels_.begin()->first;
+      printf("connect failed, redirect to %s\n", server_.c_str());
+    }
+    if (res) {
       Propose(v_);
     }
   });
@@ -145,8 +160,9 @@ void JourneyClient::CreateNewChannel(const RequestMessage& request) {
       server_ = channels_.begin()->first;
     } else {
       printf("please enter new server_ip:server_port\n");
-      GetLine(true);
-      Propose();
+      if (GetLine(true)) {
+        Propose();
+      }
     }
   });
 
@@ -205,10 +221,10 @@ void JourneyClient::Done(ResponseMessage* response) {
 
   if (response->result() == PROPOSE_RESULT_NOT_MASTER
       && response->has_master()) {
-    printf(", redirect to %s:%d\n",
-           response->master_ip().c_str(), response->master_port() + 1000);
     server_ = response->master_ip();
+    server_ += ":";
     server_ += std::to_string(response->master_port() + 1000);
+    printf(", redirect to %s\n", server_.c_str());
     Propose(v_);
   } else {
     printf("\n");
