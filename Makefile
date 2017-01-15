@@ -7,9 +7,9 @@
 # to switch between compilation modes.
 #
 # (1) Production use (optimized mode)
-#     OPT ?= -O2 -DNDEBUG
+      OPT ?= -O2 -DNDEBUG
 # (2) Debug mode, w/full line-level debugging symbols
-      OPT ?= -g2
+#     OPT ?= -g2
 # (3) Profiling mode: opt, but w/debugging symbols
 #     OPT ?= -O2 -g2 -DNDEBUG
 #--------------------------------------------------------------------

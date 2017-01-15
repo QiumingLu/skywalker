@@ -31,7 +31,6 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
     if (state.version() < state_.version()) {
       return true;
     }
-    assert(state.version() == state_.version());
     state.set_version(instance_id);
     int ret = db_->SetMasterState(state);
     if (ret == 0) {
