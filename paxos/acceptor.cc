@@ -105,7 +105,7 @@ void Acceptor::NewChosenValue(const PaxosMessage& msg) {
   new_msg.set_node_id(msg.node_id());
   new_msg.set_instance_id(instance_id_);
   new_msg.set_proposal_id(msg.proposal_id());
-  instance_->OnPaxosMessage(msg);
+  instance_->OnPaxosMessage(new_msg);
 }
 
 bool Acceptor::ReadFromDB() {
