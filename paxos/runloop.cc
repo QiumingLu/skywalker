@@ -57,10 +57,9 @@ void RunLoop::ThreadFunc() {
     std::vector<Func> funcs;
     {
       MutexLock lock(&mutex_);
-      bool wait = true;
-      while (funcs_.empty() && wait) {
+      while (funcs_.empty()) {
         cond_.Wait(timeout);
-        wait = false;
+        break;
       }
       funcs.swap(funcs_);
     }

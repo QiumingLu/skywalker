@@ -25,31 +25,16 @@ extern void Log(LogLevel level, const char* filename, int line,
   ::skywalker::Log(                 \
     ::skywalker::LOGLEVEL_##LEVEL, __FILE__, __LINE__, format, ## __VA_ARGS__)
 
-template<typename T>
-T* CheckNotNull(const char* logmessage, T* ptr) {
-  if (ptr == nullptr) {
-    SWLog(FATAL, "%s\n", logmessage);
-  }
-  return ptr;
-}
-
-#define SKYWALKER_CHECK_NOTNULL(value)  \
-  ::skywalker::CheckNotNull("'" #value "' Must not be nullptr", (value))
-
 extern void DefaultLogHandler(LogLevel level, const char* filename, int line,
                               const char* format, va_list ap);
-
-
-extern void NullLogHandler(LogLevel /* level */,
-                           const char* /* filename */, int /* line */,
-                           const char* /* format */, va_list /* ap */);
-
 
 typedef void LogHandler(LogLevel level,
                         const char* filename, int line,
                         const char* format, va_list ap);
 
-extern LogHandler* SetLogHandler(LogHandler* new_func);
+extern LogHandler* SetLogHandler(LogHandler* new_handler);
+
+extern LogLevel SetLogLevel(LogLevel new_level);
 
 }  // namespace skywalker
 

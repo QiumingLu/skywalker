@@ -66,11 +66,6 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   std::shared_ptr<Content> c(new Content());
   c->ParseFromArray(s.data(), static_cast<int>(s.size()));
 
-  SWLog(DEBUG,
-        "NodeImpl::OnReceiveMessage - New Content, "
-        "which content_type=%d, group_id=%" PRIu32", version=%" PRIu32".\n",
-        c->type(), c->group_id(), c->version());
-
   std::map<uint32_t, Group*>::iterator it = groups_.find(c->group_id());
   if (it != groups_.end()) {
     it->second->OnReceiveContent(c);
