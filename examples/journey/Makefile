@@ -3,14 +3,16 @@ CXXFLAGS = -std=c++11 -g -Wall -Wextra -Werror \
 		   -Wno-unused-parameter -Woverloaded-virtual \
 		   -Wpointer-arith -Wshadow -Wwrite-strings \
 		   -march=native -pthread \
-		   -I/usr/local/include -I../../include 
+		   -I../../include -I../../third_party/leveldb/include \
+		   -I../../third_party/voyager/build/release-install/include 
 
-LDFLAGS = -L/usr/local/lib -L../../out-static\
+LDFLAGS = -L../../out-static -L../../third_party/leveldb/out-static \
+		  -L../../third_party/voyager/build/release-install/lib  \
 		  -lskywalker -lleveldb -lprotobuf \
 		  -lvoyager_rpc -lvoyager_core -lvoyager_port -lvoyager_util \
 		  -lpthread
 
-PROTOC = /usr/local/bin/protoc
+PROTOC = protoc
 
 PROTOS_PATH = .
 

@@ -166,7 +166,7 @@ void Proposer::NewChosenValue() {
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   msg->set_proposal_id(proposal_id_);
-  if (value_.ByteSizeLong() <= 128) {
+  if (value_.ByteSize() <= 128) {
     msg->set_allocated_value(new PaxosValue(value_));
   }
   std::shared_ptr<Content> c(messager_->PackMessage(msg));
