@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 #include <voyager/util/string_util.h>
+#include <voyager/rpc/rpc_server.h>
 #include <skywalker/node.h>
 #include "journey_service_impl.h"
-#include "rpc_server.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {

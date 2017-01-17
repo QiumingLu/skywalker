@@ -19,75 +19,15 @@ if test -z "$CXX"; then
   CXX=g++
 fi
 
-if test -z "$TMPDIR"; then
-  TMPDIR=/tmp
-fi
-
-# Detect OS
-if test -z "$TARGET_OS"; then
-  TARGET_OS=`uname -s`
-fi
-
-COMMON_FLAGS=
 PLATFORM_CCFLAGS=
-PLATFORM_CXXFLAGS="-std=c++11 -Wall -Wextra -Wno-unused-parameter -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -march=native"
-PLATFORM_LDFLAGS=
-PLATFORM_LIBS=
+PLATFORM_CXXFLAGS="-std=c++11 -Wall -Wextra -Wno-unused-parameter -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -march=native -pthread -I/usr/local/include"
+PLATFORM_LDFLAGS="-L/usr/local/lib"
+PLATFORM_LIBS="-lpthread -lprotobuf -lleveldb -lvoyager_rpc -lvoyager_core -lvoyager_port -lvoyager_util"
 
-case "$TARGET_OS" in
-  CYGWIN_*)
-    PLATFORM=OS_LINUX
-    COMMON_FLAGS="-lpthread -DOS_LINUX -DCYGWIN"
-    PLATFORM_LDFLAGS="-lpthread"
-    ;;
-  Linux)
-    PLATFORM=OS_LINUX
-    COMMON_FLAGS="-pthread -DOS_LINUX"
-    PLATFORM_LDFLAGS="-pthread"
-    ;;
-  Darwin)
-    PLATFORM=OS_MACOSX
-    COMMON_FLAGS="-DOS_MACOSX"
-    PLATFORM_LDFLAGS="-lpthread"
-    ;;
- SunOS)
-    PLATFORM=OS_SOLARIS
-    COMMON_FLAGS="-D_REENTRANT -DOS_SOLARIS"
-    PLATFORM_LIBS="-lpthread -lrt"
-    ;;
-  FreeBSD)
-    PLATFORM=OS_FREEBSD
-    COMMON_FLAGS="-D_REENTRANT -DOS_FREEBSD"
-    PLATFORM_LIBS="-lpthread"
-    ;;
-  NetBSD)
-    PLATFORM=OS_NETBSD
-    COMMON_FLAGS="-D_REENTRANT -DOS_NETBSD"
-    PLATFORM_LIBS="-lpthread -lgcc_s"
-    ;;
-  OpenBSD)
-    PLATFORM=OS_OPENBSD
-    COMMON_FLAGS="-D_REENTRANT -DOS_OPENBSD"
-    PLATFORM_LDFLAGS="-pthread"
-    ;;
-  DragonFly)
-    PLATFORM=OS_DRAGONFLYBSD
-    COMMON_FLAGS="-D_REENTRANT -DOS_DRAGONFLYBSD"
-    PLATFORM_LIBS="-lpthread"
-    ;;
-  HP-UX)
-    PLATFORM=OS_HPUX
-    COMMON_FLAGS="-D_REENTRANT -DOS_HPUX"
-    PLATFORM_LDFLAGS="-pthread"
-    ;;
-  *)
-    echo "Unknown platform!">&2
-    exit 1
-esac
 
 DIRS="$PREFIX/machine $PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util"
 
-PROTOC=$PREFIX/third_party/protobuf/bin/protoc 
+PROTOC=/usr/local/bin/protoc 
 PROTOS_PATH=$PREFIX
 PROTOS=`find $DIRS -name '*.proto'`
 $PROTOC -I $PROTOS_PATH --cpp_out=$PROTOS_PATH $PROTOS
@@ -100,77 +40,8 @@ PORTABLE_FILES=`find $DIRS $PRUNE_TEST -o $PRUNE_BENCH -o -name '*.cc' -print | 
 set +f
 echo "SOURCES=$PORTABLE_FILES" >> $OUTPUT
 
-PLATFORM_CCFLAGS="$PLATFORM_CCFLAGS $COMMON_FLAGS"
-PLATFORM_CXXFLAGS="$PLATFORM_CXXFLAGS $COMMON_FLAGS"
-
-VOYAGER_INCLUDE="$PREFIX/third_party/voyager/include"
-VOYAGER_LIBRARY="$PREFIX/third_party/voyager/lib"
-LEVELDB_INCLUDE="$PREFIX/third_party/leveldb/include"
-LEVELDB_LIBRARY="$PREFIX/third_party/leveldb/lib"
-PROTOBUF_INCLUDE="$PREFIX/third_party/protobuf/include"
-PROTOBUF_LIBRARY="$PREFIX/third_party/protobuf/lib"
-
-CXXOUTPUT="${TMPDIR}/skywalker_build_detect_platform-cxx.$$"
-
-# Test whether the c++ compiler support c++11.
-
-$CXX $PLATFORM_CXXFLAGS -x c++ - -o $CXXOUTPUT 2>/dev/null  <<EOF
-  #include <atomic>
-  int main() {}
-EOF
-
-if [ "$?" != 0 ]; then
-  echo "warning: the c++ compiler not support c++11, exit" >&2
-  exit 1
-fi
-
-# Test whether Voyager library is installed correctly
-
-PLATFORM_CXXFLAGS="$PLATFORM_CXXFLAGS -I$VOYAGER_INCLUDE"
-PLATFORM_LDFLAGS="$PLATFORM_LDFLAGS -L$VOYAGER_LIBRARY"
-PLATFORM_LIBS="$PLATFORM_LIBS -lvoyager_core -lvoyager_port -lvoyager_util"
-
-$CXX $PLATFORM_CXXFLAGS $PLATFORM_LDFLAGS $PLATFORM_LIBS -x c++ - -o $CXXOUTPUT 2>/dev/null <<EOF
-  #include <voyager/core/tcp_server.h>
-  int main() {}
-EOF
-
-if [ "$?" != 0 ]; then
-  echo "warning: the voyager library isn't installed, exit" >&2
-  exit 1
-fi
-
-PLATFORM_CXXFLAGS="$PLATFORM_CXXFLAGS -I$LEVELDB_INCLUDE"
-PLATFORM_LDFLAGS="$PLATFORM_LDFLAGS -L$LEVELDB_LIBRARY"
-PLATFORM_LIBS="$PLATFORM_LIBS -lleveldb"
-
-$CXX $PLATFORM_CXXFLAGS $PLATFORM_LDFLAGS $PLATFORM_LIBS -x c++ - -o $CXXOUTPUT 2>/dev/null <<EOF
-  #include <leveldb/db.h>
-  int main() {}
-EOF
-
-if [ "$?" != 0 ]; then
-  echo "warning: the leveldb library isn't installed, exit" >&2
-  exit 1
-fi
-
-PLATFORM_CXXFLAGS="$PLATFORM_CXXFLAGS -I$PROTOBUF_INCLUDE"
-PLATFORM_LDFLAGS="$PLATFORM_LDFLAGS -L$PROTOBUF_LIBRARY"
-PLATFORM_LIBS="$PLATFORM_LIBS -lprotobuf"
-
-$CXX $PLATFORM_CXXFLAGS $PLATFORM_LDFLAGS $PLATFORM_LIBS -x c++ - -o $CXXOUTPUT 2>/dev/null <<EOF
-  #include <google/protobuf/arena.h>
-  int main() {}
-EOF
-
-if [ "$?" != 0 ]; then
-  echo "warning: the protobuf library isn't installed, exit" >&2
-  exit 1
-fi
-
 echo "CC=$CC" >> $OUTPUT
 echo "CXX=$CXX" >> $OUTPUT
-echo "PLATFORM=$PLATFORM" >> $OUTPUT
 echo "PLATFORM_LDFLAGS=$PLATFORM_LDFLAGS" >> $OUTPUT
 echo "PLATFORM_LIBS=$PLATFORM_LIBS" >> $OUTPUT
 echo "PLATFORM_CCFLAGS=$PLATFORM_CCFLAGS" >> $OUTPUT

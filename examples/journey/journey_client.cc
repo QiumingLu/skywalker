@@ -1,13 +1,12 @@
-#include <voyager/util/string_util.h>
-#include <voyager/core/tcp_client.h>
-#include <voyager/core/sockaddr.h>
-#include <voyager/core/eventloop.h>
 #include <stdio.h>
 #include <iostream>
 #include <vector>
 #include <map>
-#include "rpc.pb.h"
-#include "rpc_channel.h"
+#include <voyager/util/string_util.h>
+#include <voyager/core/tcp_client.h>
+#include <voyager/core/sockaddr.h>
+#include <voyager/core/eventloop.h>
+#include <voyager/rpc/rpc_channel.h>
 #include "journey.pb.h"
 
 namespace journey {

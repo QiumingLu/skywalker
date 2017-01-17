@@ -1,27 +1,16 @@
-PREFIX = ../..
-SKYWALKER_INCLUDE=$(PREFIX)/include
-SKYWALKER_LIBRARY=$(PREFIX)/out-static
-VOYAGER_INCLUDE=$(PREFIX)/third_party/voyager/include
-VOYAGER_LIBRARY=$(PREFIX)/third_party/voyager/lib
-LEVELDB_INCLUDE=$(PREFIX)/third_party/leveldb/include
-LEVELDB_LIBRARY=$(PREFIX)/third_party/leveldb/lib
-PROTOBUF_INCLUDE=$(PREFIX)/third_party/protobuf/include
-PROTOBUF_LIBRARY=$(PREFIX)/third_party/protobuf/lib
-
 CXX = g++
 CXXFLAGS = -std=c++11 -g -Wall -Wextra -Werror \
 		   -Wno-unused-parameter -Woverloaded-virtual \
 		   -Wpointer-arith -Wshadow -Wwrite-strings \
 		   -march=native -pthread \
-		   -I$(SKYWALKER_INCLUDE) -I$(VOYAGER_INCLUDE) \
-		   -I$(LEVELDB_INCLUDE) -I$(PROTOBUF_INCLUDE)
+		   -I/usr/local/include -I../../include 
 
-LDFLAGS = -L$(SKYWALKER_LIBRARY) -L$(VOYAGER_LIBRARY) \
-		  -L$(LEVELDB_LIBRARY) -L$(PROTOBUF_LIBRARY) \
-		  -lskywalker -lvoyager_core -lvoyager_port -lvoyager_util \
-		  -lleveldb -lprotobuf -lpthread
+LDFLAGS = -L/usr/local/lib -L../../out-static\
+		  -lskywalker -lleveldb -lprotobuf \
+		  -lvoyager_rpc -lvoyager_core -lvoyager_port -lvoyager_util \
+		  -lpthread
 
-PROTOC = $(PREFIX)/third_party/protobuf/bin/protoc
+PROTOC = /usr/local/bin/protoc
 
 PROTOS_PATH = .
 
@@ -29,12 +18,10 @@ vpath %.proto $(PROTOS_PATH)
 
 all: journey_client journey_server
 
-journey_client: rpc.pb.o rpc_codec.o rpc_channel.o \
-                journey.pb.o journey_client.o
+journey_client: journey.pb.o journey_client.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-journey_server: rpc.pb.o rpc_codec.o rpc_server.o \
-                journey_db.o journey_db_machine.o \
+journey_server: journey_db.o journey_db_machine.o \
                 journey.pb.o journey_service_impl.o journey_server.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 

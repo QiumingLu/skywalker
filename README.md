@@ -8,24 +8,23 @@ A paxos library which can run on Linux, Mac OS X and FreeBSD, etc.
 编译方法：
 
 (1) LevelDB编译
-SkyWalker的编译流程是基于leveldb1.19版本，如果你自行下载了其他版本，可能有编译上的不同。
-
 进入third_party/leveldb目录。 
 执行 make，编译完成后会在当前目录生成out-static/libleveldb.a文件。 
-执行 mkdir lib，建立一个lib目录，然后执行 cd lib，执行 ln -s ../out-static/libleveldb.a,  
-libleveldb.a建立一个软链，SkyWalker通过lib这个目录来寻址静态库。 
+执行cp ./out-static/libleveldb.a /usr/local/lib, 将生成的libleveldb.a文件拷贝到/usr/local/lib中。
+执行cp -r include/* /usr/local/include, 将leveldb所需要的头文件拷贝到/usr/local/include中。
 
 (2) Protobuf编译
 进入third_party/protobuf目录。 
 执行 ./autogen.sh   
-执行 ./configure --disable-shared --prefix=[当前目录绝对路径], 这一步--prefix必须设置对。 
+执行 ./configure --prefix=/usr/local。 
 执行 make && make install
-编译完成后检查是否在当前目录成功生成bin,include,lib三个子目录。
 
 
 (3) Voyager编译
 进入third_party/voyager的根目录下。
-执行 sh build.sh，然后执行 cp -r ../build/release-install/* ./ 即可,若不再需要Voyager编译生成的文件,可以执行 rm -rf ../build 删除
+执行 sh build.sh。
+执行 cp -r ./build/release-install/lib/* /usr/local/lib, 将生成的lib文件拷贝到/usr/local/lib中。
+执行 cp -r ./build/release-install/include/* /usr/local/include, 将voyager所需要的头文件拷贝到/usr/local/include 中。
 
 (4) SkyWalker编译
 进入SkyWalker 主目录。执行 make 即可，生成目录out-static，里面包含libskywalker.a和一些可执行文件。
