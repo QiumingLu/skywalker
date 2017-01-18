@@ -14,7 +14,7 @@ A paxos library which can run on Linux, Mac OS X and FreeBSD, etc.
 (2) Protobuf编译(https://github.com/google/protobuf/blob/master/src/README.md) 
 进入third_party/protobuf目录 
 执行 ./autogen.sh   
-执行 ./configure --disable-shared
+执行 ./configure
 执行 make && sudo make install
 
 

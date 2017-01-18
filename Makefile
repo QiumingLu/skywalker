@@ -22,8 +22,6 @@ $(shell CC="$(CC)" CXX="$(CXX)" TARGET_OS="$(TARGET_OS)" \
 include build_config.mk
 
 TESTS = \
-
-UTILS = \
 	paxos/paxos_test \
 
 # Put the object files in a subdirectory, but the application at the top of 
@@ -43,9 +41,8 @@ STATIC_PROGRAMS := $(addprefix $(STATIC_OUTDIR)/, $(PROGNAMES))
 STATIC_LIBOBJECTS := $(addprefix $(STATIC_OUTDIR)/, $(SOURCES:.cc=.o)) 
 
 STATIC_TESTOBJS := $(addprefix $(STATIC_OUTDIR)/, $(addsuffix .o, $(TESTS)))
-STATIC_UTILOBJS := $(addprefix $(STATIC_OUTDIR)/, $(addsuffix .o, $(UTILS)))
 
-STATIC_ALLOBJS := $(STATIC_LIBOBJECTS) $(STATIC_TESTOBJS) $(STATIC_UTILOBJS)
+STATIC_ALLOBJS := $(STATIC_LIBOBJECTS) $(STATIC_TESTOBJS) 
 
 default: all
 
@@ -91,8 +88,8 @@ $(STATIC_OUTDIR)/libskywalker.a:$(STATIC_LIBOBJECTS)
 	rm -f $@
 	ar -rs $@ $(STATIC_LIBOBJECTS)
 
-$(STATIC_OUTDIR)/paxos_test:paxos/paxos_test.cc $(STATIC_LIBOBJECTS)
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) paxos/paxos_test.cc $(STATIC_LIBOBJECTS) -o $@ $(LIBS)
+$(STATIC_OUTDIR)/paxos_test:paxos/test/paxos_test.cc $(STATIC_LIBOBJECTS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) paxos/test/paxos_test.cc $(STATIC_LIBOBJECTS) -o $@ $(LIBS)
 
 $(STATIC_OUTDIR)/%.o: %.cc 
 	$(CXX) $(CXXFLAGS) -c $< -o $@ 
