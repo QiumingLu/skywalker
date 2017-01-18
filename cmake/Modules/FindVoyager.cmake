@@ -39,9 +39,14 @@ find_library(Voyager_RPC_LIBRARY NAMES voyager_rpc
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Voyager DEFAULT_MSG Voyager_INCLUDE Voyager_UTIL_LIBRARY Voyager_PORT_LIBRARY Voyager_CORE_LIBRARY Voyager_RPC_LIBRARY)
 
-if(LEVELDB_FOUND)
+if(VOYAGER_FOUND)
   set(Voyager_INCLUDE_DIRS ${Voyager_INCLUDE})
-  set(Voyager_LIBRARIES ${Voyager_UTIL_LIBRARY} ${Voyager_PORT_LIBRARY} ${Voyager_CORE_LIBRARY} ${Voyager_RPC_LIBRARY})
+  set(Voyager_LIBRARIES 
+    ${Voyager_RPC_LIBRARY}
+    ${Voyager_CORE_LIBRARY} 
+    ${Voyager_PORT_LIBRARY}
+    ${Voyager_UTIL_LIBRARY}
+    )
   mark_as_advanced(Voyager_INCLUDE Voyager_LIBRARY)
   message(STATUS "Found Voyager (include: ${Voyager_INCLUDE}, library: ${Voyager_LIBRARIES})")
 endif()  

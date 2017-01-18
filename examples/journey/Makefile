@@ -10,7 +10,7 @@ CXXFLAGS = -std=c++11 -g -Wall -Wextra \
 
 LDFLAGS = -L/usr/local/lib -I/usr/lib \
 		  -L../../out-static \
-		  -L../../third_party/leveldb/out-static \
+		  -L../../third_party/leveldb/out-shared \
 		  -L../../third_party/voyager/build/release-install/lib  \
 		  -lskywalker -lleveldb -lprotobuf \
 		  -lvoyager_rpc -lvoyager_core -lvoyager_port -lvoyager_util \

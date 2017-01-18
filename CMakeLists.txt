@@ -67,17 +67,17 @@ include(cmake/Targets.cmake)
 
 message(STATUS ${SkyWalker_LINKER_LIBS})
 
-add_library(skywalker SHARED ${skywalker_SRCS})
-add_library(skywalker_static STATIC ${skywalker_SRCS})
-set_target_properties(skywalker_static PROPERTIES OUTPUT_NAME "skywalker")
-set_target_properties(skywalker PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-set_target_properties(skywalker_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-set_target_properties(skywalker PROPERTIES VERSION 1.0 SOVERSION 1)
-
+#add_library(skywalker SHARED ${skywalker_SRCS})
+#add_library(skywalker_static STATIC ${skywalker_SRCS})
+#set_target_properties(skywalker_static PROPERTIES OUTPUT_NAME "skywalker")
+#set_target_properties(skywalker PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+#set_target_properties(skywalker_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+#set_target_properties(skywalker PROPERTIES VERSION 1.0 SOVERSION 1)
+add_library(skywalker ${skywalker_SRCS})
 target_link_libraries(skywalker ${SkyWalker_LINKER_LIBS})
-
 install(DIRECTORY ${SkyWalker_INCLUDE_DIR}/skywalker DESTINATION include)
-install(TARGETS skywalker_static LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
+install(TARGETS skywalker DESTINATION lib)
+#install(TARGETS skywalker_static LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 
 if (NOT CMAKE_BUILD_NO_EXAMPLES)
   add_subdirectory(examples/journey)
