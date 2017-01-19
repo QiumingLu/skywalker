@@ -4,7 +4,7 @@
 #include <vector>
 #include <functional>
 
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 #include "skywalker/slice.h"
 #include "util/thread.h"
 #include "util/mutex.h"

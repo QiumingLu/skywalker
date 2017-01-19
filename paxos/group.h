@@ -5,7 +5,7 @@
 
 #include "paxos/config.h"
 #include "paxos/instance.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
 #include "skywalker/status.h"

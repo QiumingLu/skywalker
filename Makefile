@@ -54,7 +54,6 @@ check: $(STATIC_PROGRAMS)
 clean:
 	-rm -rf out-static
 	-rm -f build_config.mk
-	-rm -rf ./paxos/paxos.pb.*
 
 $(STATIC_OUTDIR):
 	mkdir $@
@@ -74,19 +73,24 @@ $(STATIC_OUTDIR)/storage: | $(STATIC_OUTDIR)
 $(STATIC_OUTDIR)/util: | $(STATIC_OUTDIR)
 	mkdir $@
 
+$(STATIC_OUTDIR)/proto: | $(STATIC_OUTDIR)
+	mkdir $@
+
 .PHONY: STATIC_OBJDIRS
 STATIC_OBJDIRS: \
   $(STATIC_OUTDIR)/machine \
   $(STATIC_OUTDIR)/network \
   $(STATIC_OUTDIR)/storage \
   $(STATIC_OUTDIR)/paxos \
-  $(STATIC_OUTDIR)/util
+  $(STATIC_OUTDIR)/util \
+  $(STATIC_OUTDIR)/proto \
 
 $(STATIC_ALLOBJS): | STATIC_OBJDIRS
 
 $(STATIC_OUTDIR)/libskywalker.a:$(STATIC_LIBOBJECTS)
 	rm -f $@
 	ar -rs $@ $(STATIC_LIBOBJECTS)
+	rm -rf ./proto/*.pb.*
 
 $(STATIC_OUTDIR)/paxos_test:paxos/test/paxos_test.cc $(STATIC_LIBOBJECTS)
 	$(CXX) $(LDFLAGS) $(CXXFLAGS) paxos/test/paxos_test.cc $(STATIC_LIBOBJECTS) -o $@ $(LIBS)

@@ -8,7 +8,7 @@
 #include "paxos/acceptor.h"
 #include "paxos/learner.h"
 #include "paxos/proposer.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 #include "skywalker/slice.h"
 #include "skywalker/status.h"
 #include "skywalker/state_machine.h"

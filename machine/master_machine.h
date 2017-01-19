@@ -3,7 +3,7 @@
 
 #include "skywalker/state_machine.h"
 #include "skywalker/options.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 #include "storage/db.h"
 #include "util/mutex.h"
 

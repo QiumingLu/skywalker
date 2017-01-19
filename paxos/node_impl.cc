@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "paxos/node_util.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {

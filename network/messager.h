@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "network/network.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 
 namespace skywalker {
 

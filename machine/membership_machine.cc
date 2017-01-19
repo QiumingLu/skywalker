@@ -1,7 +1,7 @@
 #include "machine/membership_machine.h"
 #include "paxos/config.h"
 #include "skywalker/logging.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 #include "util/mutexlock.h"
 #include "paxos/node_util.h"
 

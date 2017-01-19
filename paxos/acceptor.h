@@ -4,7 +4,7 @@
 #include <string>
 
 #include "paxos/ballot_number.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 
 namespace skywalker {
 

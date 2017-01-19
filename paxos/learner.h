@@ -2,7 +2,7 @@
 #define SKYWALKER_PAXOS_LEARNER_H_
 
 #include "paxos/ballot_number.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 #include "util/random.h"
 
 namespace skywalker {

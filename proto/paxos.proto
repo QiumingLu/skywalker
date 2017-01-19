@@ -1,0 +1,69 @@
+syntax = "proto3";
+package skywalker;
+
+enum MessageType {
+  PREPARE = 0;
+  PREPARE_REPLY = 1;
+  ACCEPT = 2;
+  ACCEPT_REPLY = 3;
+  NEW_CHOSEN_VALUE = 4;
+  ASK_FOR_LEARN = 5;
+  SEND_LEARNED_VALUE = 6;
+  SEND_NOW_INSTANCE_ID = 7;
+  COMFIRM_ASK_FOR_LEARN = 8;
+}
+
+message PaxosValue {
+  int32 machine_id = 1;
+  bytes user_data = 2;
+}
+
+message PaxosMessage {
+  MessageType type = 1;
+  uint64 node_id = 2;
+  uint64 instance_id = 3;
+  uint64 proposal_id = 4;
+  uint64 proposal_node_id = 5;
+  uint64 pre_accepted_id = 6;
+  uint64 pre_accepted_node_id = 7;
+  uint64 rejected_id = 8;
+  uint64 now_instance_id = 9;
+  PaxosValue value = 10;
+}
+
+message CheckPointMessage {
+  MessageType type = 1;
+}
+
+enum ContentType {
+  PAXOS_MESSAGE = 0;
+  CHECKPOINT_MESSAGE = 1;
+}
+
+message Content {
+  ContentType type = 1;
+  uint32 group_id = 2;
+  uint32 version = 3;
+  PaxosMessage paxos_msg = 4;
+  CheckPointMessage checkpoint_msg = 5;
+}
+
+message Membership {
+  uint64 version = 1;
+  repeated uint64 node_id = 2;
+}
+
+message AcceptorState {
+  uint64 instance_id = 1;
+  uint64 promised_id = 2;
+  uint64 promised_node_id = 3;
+  uint64 accepted_id = 4;
+  uint64 accepted_node_id = 5;
+  PaxosValue accepted_value = 6;
+}
+
+message MasterState {
+  uint64 version = 1;
+  uint64 node_id = 2;
+  uint64 lease_time = 3;
+}

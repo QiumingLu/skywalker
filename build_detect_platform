@@ -25,11 +25,11 @@ PLATFORM_LDFLAGS="-L/usr/local/lib -L/usr/lib -L./third_party/leveldb/out-shared
 PLATFORM_LIBS="-lpthread -lprotobuf -lleveldb -lvoyager_rpc -lvoyager_core -lvoyager_port -lvoyager_util"
 
 
-DIRS="$PREFIX/machine $PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util"
+DIRS="$PREFIX/machine $PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util $PREFIX/proto"
 
 PROTOC=protoc 
-PROTOS_PATH=$PREFIX
-PROTOS=`find $DIRS -name '*.proto'`
+PROTOS_PATH=$PREFIX/proto
+PROTOS=`find $PROTOS_PATH -name '*.proto'`
 $PROTOC -I $PROTOS_PATH --cpp_out=$PROTOS_PATH $PROTOS
 
 set -f 

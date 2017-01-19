@@ -14,7 +14,7 @@
 
 #include "skywalker/slice.h"
 #include "skywalker/options.h"
-#include "paxos/paxos.pb.h"
+#include "proto/paxos.pb.h"
 
 namespace skywalker {
 

@@ -1,15 +1,9 @@
-FILE(GLOB proto_files ${CMAKE_CURRENT_SOURCE_DIR}/paxos/*.proto)  
-FOREACH(proto_file ${proto_files})
-    STRING(REGEX REPLACE "[^/]proto" "" proto_file_name ${proto_file})
-    LIST(APPEND proto_SRCS "${proto_file_name}.pb.cc")
-	ADD_CUSTOM_COMMAND(
-		OUTPUT "${proto_file_name}.pb.h" "${proto_file_name}.pb.cc"
-		COMMAND protoc --proto_path=${CMAKE_CURRENT_SOURCE_DIR}/paxos
-                       --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/paxos/ ${proto_file} 
-		DEPENDS ${proto_file}
-	)
-ENDFOREACH(proto_file)
-include_directories(./paxos)
+macro(skywalker_set_skywalker_link)
+  set(SkyWalker_LINK skywalker)
+endmacro()
+
+file(GLOB proto_files proto/*.proto)
+skywalker_protobuf_generate_cpp(${proto_gen_folder} proto_SRCS proto_HDRS ${proto_files})
 
 file(GLOB util_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/util/*.cc)
 file(GLOB storage_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/storage/*.cc)

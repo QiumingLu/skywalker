@@ -46,7 +46,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(CMAKE_CXX_FLAGS_RELEASE "-O2 -finline-limit=1000 -DNDEBUG")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 endif()
 
@@ -67,6 +67,7 @@ include(cmake/Targets.cmake)
 
 message(STATUS ${SkyWalker_LINKER_LIBS})
 
+skywalker_set_skywalker_link()
 #add_library(skywalker SHARED ${skywalker_SRCS})
 #add_library(skywalker_static STATIC ${skywalker_SRCS})
 #set_target_properties(skywalker_static PROPERTIES OUTPUT_NAME "skywalker")
