@@ -1,0 +1,10 @@
+/Users/mirantslu/Development/skywalker/build/release-install/include/skywalker/logging.h
+/Users/mirantslu/Development/skywalker/build/release-install/include/skywalker/node.h
+/Users/mirantslu/Development/skywalker/build/release-install/include/skywalker/options.h
+/Users/mirantslu/Development/skywalker/build/release-install/include/skywalker/slice.h
+/Users/mirantslu/Development/skywalker/build/release-install/include/skywalker/state_machine.h
+/Users/mirantslu/Development/skywalker/build/release-install/include/skywalker/status.h
+/Users/mirantslu/Development/skywalker/build/release-install/lib/libskywalker.1.0.dylib
+/Users/mirantslu/Development/skywalker/build/release-install/lib/libskywalker.1.dylib
+/Users/mirantslu/Development/skywalker/build/release-install/lib/libskywalker.dylib
+/Users/mirantslu/Development/skywalker/build/release-install/lib/libskywalker.a
