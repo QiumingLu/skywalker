@@ -1,3 +1,0 @@
-# Hashes of file build rules.
-a7daec3cfb72dab50836ac225a811d89 examples/journey/journey.pb.cc
-bd4aa2ea44403c1b7a1cf6b9d821ac07 proto/paxos.pb.cc

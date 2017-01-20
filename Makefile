@@ -54,6 +54,7 @@ check: $(STATIC_PROGRAMS)
 clean:
 	-rm -rf out-static
 	-rm -f build_config.mk
+	-rm -f ./proto/*.pb.*
 
 $(STATIC_OUTDIR):
 	mkdir $@
