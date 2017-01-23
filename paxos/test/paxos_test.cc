@@ -6,11 +6,7 @@
 #include <string>
 #include <vector>
 #include <voyager/util/string_util.h>
-#include <voyager/util/logging.h>
-#include "skywalker/status.h"
 #include "skywalker/node.h"
-#include "skywalker/options.h"
-#include "skywalker/status.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {
