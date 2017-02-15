@@ -1,4 +1,4 @@
-# SkyWalker
+# Skywalker
 A paxos library which can run on Linux, Mac OS X and FreeBSD, etc.
 
 编译环境：

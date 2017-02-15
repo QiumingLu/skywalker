@@ -34,7 +34,7 @@ class StateMachine {
                        const std::string& value,
                        MachineContext* context = nullptr) = 0;
  private:
-  int id_;
+  const int id_;
 
   // No copying allowed
   StateMachine(const StateMachine&);

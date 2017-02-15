@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project (SkyWalker C CXX)
+project (Skywalker C CXX)
 
 enable_testing()
 

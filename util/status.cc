@@ -51,18 +51,6 @@ std::string Status::ToString() const {
       case kTimeout:
         type = "Timeout: ";
         break;
-      case kUnavailable:
-        type = "Unavailable: ";
-        break;
-      case kAlreadyExists:
-        type = "AlreadyExists: ";
-        break;
-      case kNotFound:
-        type = "NotFound: ";
-        break;
-      case kNotSupported:
-        type = "NotSupported: ";
-        break;
       default:
         snprintf(tmp, sizeof(tmp), "Unknown code(%d): ",
                  static_cast<int>(code()));
