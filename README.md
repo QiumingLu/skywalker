@@ -22,6 +22,6 @@ A paxos library which can run on Linux, Mac OS X and FreeBSD, etc.
 进入third_party/voyager目录  
 执行 sh build.sh。
 
-(4) SkyWalker编译
-进入SkyWalker 目录
+(4) Skywalker编译
+进入Skywalker 目录
 执行 make

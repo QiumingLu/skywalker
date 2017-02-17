@@ -14,26 +14,26 @@ find_path(Voyager_INCLUDE NAMES voyager/core/tcp_server.h
 # Look for the library.
 find_library(Voyager_UTIL_LIBRARY NAMES voyager_util
                              PATHS $ENV{VOYAGER_ROOT}/lib /usr/local/lib /usr/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/release-install/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/debug-install/lib
+                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/release-install/out-shared
+                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/debug-install/out-shared
                              DOC "Path to voyager_util library.")
 
 find_library(Voyager_PORT_LIBRARY NAMES voyager_port
                              PATHS $ENV{VOYAGER_ROOT}/lib /usr/local/lib /usr/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/release-install/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/debug-install/lib
+                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/release-install/out-shared
+                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/debug-install/out-shared
                              DOC "Path to voyager_port library.")
                            
 find_library(Voyager_CORE_LIBRARY NAMES voyager_core
                              PATHS $ENV{VOYAGER_ROOT}/lib /usr/local/lib /usr/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/release-install/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/debug-install/lib
+                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/release-install/out-shared
+                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/debug-install/out-shared
                              DOC "Path to voyager_core library.")
               
 find_library(Voyager_RPC_LIBRARY NAMES voyager_rpc
                              PATHS $ENV{VOYAGER_ROOT}/lib /usr/local/lib /usr/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/release-install/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/debug-install/lib
+                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/release-install/out-shared
+                                   ${PROJECT_SOURCE_DIR}/third_party/voyager/build/debug-install/out-shared
                              DOC "Path to voyager_rpc library.")
 
 include(FindPackageHandleStandardArgs)

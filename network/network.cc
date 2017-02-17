@@ -82,8 +82,14 @@ void Network::SendMessageInLoop(uint64_t node_id,
 
     client->SetConnectionCallback(
         [node_id, s, this](const voyager::TcpConnectionPtr& p) {
-      connection_map_.insert(std::make_pair(node_id, p));
-      p->SendMessage(s);
+      auto iter = connection_map_.find(node_id);
+      if (iter == connection_map_.end()) {
+        connection_map_.insert(std::make_pair(node_id, p));
+        p->SendMessage(s);
+      } else {
+        p->ShutDown();
+        iter->second->SendMessage(s);
+      }
     });
 
     client->SetConnectFailureCallback([client]() {
