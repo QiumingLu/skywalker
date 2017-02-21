@@ -53,11 +53,11 @@ void Instance::RemoveMachine(StateMachine* machine) {
   machines_.erase(machine->GetMachineId());
 }
 
-void Instance::OnPropose(const Slice& value,
+void Instance::OnPropose(const string& value,
                          MachineContext* context) {
   if (!config_->IsValidNodeId(config_->GetNodeId())) {
     Slice msg("this node is not in the membership, please add it firstly.");
-    propose_cb_(Status::InvalidNode(msg), instance_id_);
+    propose_cb_(context, Status::InvalidNode(msg), instance_id_);
     return;
   }
 
@@ -75,7 +75,7 @@ void Instance::OnPropose(const Slice& value,
     proposer_.QuitPropose();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
-    propose_cb_(Status::Timeout(msg), instance_id_);
+    propose_cb_(context_, Status::Timeout(msg), instance_id_);
   });
   is_proposing_ = true;
 }
@@ -143,23 +143,21 @@ void Instance::CheckLearn() {
         propose_value_.machine_id() == learned_value.machine_id() &&
         propose_value_.user_data() == learned_value.user_data()) {
       my = true;
-    } else {
-      context_ = nullptr;
     }
 
-    bool success = MachineExecute(learned_value);
+    bool success = MachineExecute(learned_value, my);
 
     if (is_proposing_) {
       if (success) {
        if (my) {
-          propose_cb_(Status::OK(), instance_id_);
+          propose_cb_(context_, Status::OK(), instance_id_);
         } else {
           Slice msg("another value has been chosen.");
-          propose_cb_(Status::Conflict(msg), instance_id_);
+          propose_cb_(context_, Status::Conflict(msg), instance_id_);
         }
       } else {
         Slice msg("machine execute failed.");
-        propose_cb_(Status::MachineError(msg), instance_id_);
+        propose_cb_(context_, Status::MachineError(msg), instance_id_);
       }
       loop_->Remove(propose_timer_);
       is_proposing_ = false;
@@ -173,15 +171,19 @@ void Instance::CheckLearn() {
   }
 }
 
-bool Instance::MachineExecute(const PaxosValue& value) {
+bool Instance::MachineExecute(const PaxosValue& value, bool my) {
   int id = value.machine_id();
   if (id != -1) {
     MutexLock lock(&mutex_);
     auto i = machines_.find(value.machine_id());
     if (i != machines_.end()) {
       assert(i->second != nullptr);
+      MachineContext* context = nullptr;
+      if (my) { 
+        context = context_;
+      }
       return i->second->Execute(
-          config_->GetGroupId(), instance_id_, value.user_data(), context_);
+          config_->GetGroupId(), instance_id_, value.user_data(), context);
     }
   }
   return true;
