@@ -6,12 +6,10 @@ CXXFLAGS = -std=c++11 -g -Wall -Wextra \
 		   -I/usr/local/include -I/usr/include \
 		   -I../../include \
 		   -I../../third_party/leveldb/include \
-		   -I../../third_party/voyager/build/release-install/include 
 
 LDFLAGS = -L/usr/local/lib -I/usr/lib \
 		  -L../../out-static \
 		  -L../../third_party/leveldb/out-static \
-		  -L../../third_party/voyager/build/release-install/out-static  \
 		  -lskywalker -lleveldb -lprotobuf \
 		  -lvoyager_rpc -lvoyager_core -lvoyager_port -lvoyager_util \
 		  -lpthread

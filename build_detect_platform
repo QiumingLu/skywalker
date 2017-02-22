@@ -26,8 +26,8 @@ fi
 
 
 PLATFORM_CCFLAGS=
-PLATFORM_CXXFLAGS="-std=c++11 -Wall -Wextra -Wno-unused-parameter -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -march=native -pthread -I/usr/local/include -I/usr/include -I./third_party/leveldb/include -I./third_party/voyager/build/release-install/include"
-PLATFORM_LDFLAGS="-L/usr/local/lib -L/usr/lib -L./third_party/leveldb/out-shared -L./third_party/voyager/build/release-install/out-shared"
+PLATFORM_CXXFLAGS="-std=c++11 -Wall -Wextra -Wno-unused-parameter -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -march=native -pthread -I/usr/local/include -I/usr/include -I./third_party/leveldb/include"
+PLATFORM_LDFLAGS="-L/usr/local/lib -L/usr/lib -L./third_party/leveldb/out-shared"
 PLATFORM_LIBS="-lpthread -lprotobuf -lleveldb -lvoyager_rpc -lvoyager_core -lvoyager_port -lvoyager_util"
 
 PLATFORM_SHARED_EXT="so"

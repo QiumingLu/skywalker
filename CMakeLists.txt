@@ -8,6 +8,10 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "release")
 endif()
 
+if(NOT CMAKE_BUILD_SHARED_LIBS)
+  set(CMAKE_BUILD_SHARED_LIBS on)
+endif()
+
 set(CXX_FLAGS
   -g
   -DCHECK_PTHREAD_RETURN_VALUE
@@ -68,7 +72,7 @@ include(cmake/Targets.cmake)
 message(STATUS ${SkyWalker_LINKER_LIBS})
 
 skywalker_set_skywalker_link()
-if(CMAKE_BUILD_SHARED_LIB)
+if(CMAKE_BUILD_SHARED_LIBS)
   add_library(skywalker SHARED ${skywalker_SRCS})
   add_library(skywalker_static STATIC ${skywalker_SRCS})
   set_target_properties(skywalker_static PROPERTIES OUTPUT_NAME "skywalker")
@@ -77,12 +81,12 @@ if(CMAKE_BUILD_SHARED_LIB)
   set_target_properties(skywalker PROPERTIES VERSION 1.2 SOVERSION 1)
   target_link_libraries(skywalker ${SkyWalker_LINKER_LIBS})
   install(DIRECTORY ${SkyWalker_INCLUDE_DIR}/skywalker DESTINATION include)
-  install(TARGETS skywalker DESTINATION out-shared)
-  install(TARGETS skywalker_static LIBRARY DESTINATION out-static ARCHIVE DESTINATION out-static)
+  install(TARGETS skywalker DESTINATION lib)
+  install(TARGETS skywalker_static LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 else()
   add_library(skywalker ${skywalker_SRCS})
   target_link_libraries(skywalker ${SkyWalker_LINKER_LIBS})
-  install(TARGETS skywalker DESTINATION out-static)
+  install(TARGETS skywalker DESTINATION lib)
 endif()
 
 if (NOT CMAKE_BUILD_NO_EXAMPLES)
