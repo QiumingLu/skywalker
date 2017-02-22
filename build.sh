@@ -8,7 +8,7 @@ BUILD_DIR=${BUILD_DIR:-./build}
 BUILD_TYPE=${BUILD_TYPE:-release}
 INSTALL_DIR=${INSTALL_DIR:-/usr/local}
 BUILD_NO_EXAMPLES=${BUILD_NO_EXAMPLES:-0}
-BUILD_SHARED_LIBS=${BUILD_SHARED_LIB:-1}
+BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS:-1}
 
 mkdir -p $BUILD_DIR/$BUILD_TYPE \
   && cd $BUILD_DIR/$BUILD_TYPE \
@@ -19,5 +19,5 @@ mkdir -p $BUILD_DIR/$BUILD_TYPE \
            -DCMAKE_BUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
            $SOURCE_DIR \
   && make \
-#  && make install
+#  && sudo make install
 
