@@ -35,33 +35,33 @@ class Node {
   // Returns Status::Conflict() if there is another value has been chosen.
   // Returns Status::MachineError() if the state machine executed failed.
   // Returns Status::Timeout() if the proposal time is more than a second.
-  virtual Status Propose(uint32_t group_id,
-                         const Slice& value,
-                         int machine_id = -1) = 0;
-  virtual Status Propose(uint32_t group_id,
-                         const Slice& value,
-                         MachineContext* context,
-                         uint64_t* instance_id) = 0;
+  virtual void Propose(uint32_t group_id,
+                       const std::string& value,
+                       MachineContext* context,
+                       const ProposeCompleteCallback& cb) = 0;
 
   // Add a new node to the paxos membership.
   // Returns status like calling Node::Propose().
   // It is also returns Status::OK() if the node has already existed
   // in the membership.
-  virtual Status AddMember(uint32_t group_id, const IpPort& i) = 0;
+  virtual void AddMember(uint32_t group_id, const IpPort& i, 
+                         const ProposeCompleteCallback& cb) = 0;
 
   // Remove a node from the paxos membership.
   // Returns status like calling Node::Propose().
   // It is also returns Status::OK() if the node
   // did not exist in the membership.
-  virtual Status RemoveMember(uint32_t group_id, const IpPort& i) = 0;
+  virtual void RemoveMember(uint32_t group_id, const IpPort& i, 
+                            const ProposeCompleteCallback& cb) = 0;
 
   // Replace an old_node with new_node for the paxos membership.
   // Returns status like calling Node::Propose().
   // It is also returns Status::OK() if the new node has already existed
   // in the membership and the old node did not exist in the membership.
-  virtual Status ReplaceMember(uint32_t group_id,
-                               const IpPort& new_i,
-                               const IpPort& old_i) = 0;
+  virtual void ReplaceMember(uint32_t group_id,
+                             const IpPort& new_i,
+                             const IpPort& old_i,
+                             const ProposeCompleteCallback& cb) = 0;
 
   // Returns the membership.
   virtual void GetMembership(uint32_t group_id,

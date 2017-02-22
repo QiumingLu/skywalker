@@ -47,19 +47,12 @@ bool NodeImpl::StartWorking() {
   return ret;
 }
 
-Status NodeImpl::Propose(uint32_t group_id,
-                         const Slice& value,
-                         int machine_id) {
+void NodeImpl::Propose(uint32_t group_id,
+                       const std::string& value,
+                       MachineContext* context,
+                       const ProposeCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnPropose(value, machine_id);
-}
-
-Status NodeImpl::Propose(uint32_t group_id,
-                         const Slice& value,
-                         MachineContext* context,
-                         uint64_t *instance_id) {
-  assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnPropose(value, context, instance_id);
+  groups_[group_id]->OnPropose(value, context, cb);
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {
@@ -75,20 +68,23 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   }
 }
 
-Status NodeImpl::AddMember(uint32_t group_id, const IpPort& i) {
+void NodeImpl::AddMember(uint32_t group_id, const IpPort& i,
+                         const ProposeCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->AddMember(i);
+  groups_[group_id]->AddMember(i, cb);
 }
 
-Status NodeImpl::RemoveMember(uint32_t group_id, const IpPort& i) {
+void NodeImpl::RemoveMember(uint32_t group_id, const IpPort& i,
+                            const ProposeCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->RemoveMember(i);
+  groups_[group_id]->RemoveMember(i, cb);
 }
 
-Status NodeImpl::ReplaceMember(uint32_t group_id,
-                               const IpPort& new_i, const IpPort& old_i) {
+void NodeImpl::ReplaceMember(uint32_t group_id,
+                             const IpPort& new_i, const IpPort& old_i,
+                             const ProposeCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->ReplaceMember(new_i, old_i);
+  groups_[group_id]->ReplaceMember(new_i, old_i, cb);
 }
 
 void NodeImpl::GetMembership(uint32_t group_id,

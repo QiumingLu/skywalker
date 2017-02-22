@@ -2,7 +2,7 @@
 #define SKYWALKER_INCLUDE_OPTIONS_H_
 
 #include <stdint.h>
-
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -33,6 +33,11 @@ struct Options {
 
   Options();
 };
+
+class MachineContext;
+class  Status;
+
+typedef std::function<void (MachineContext*, const Status&)> ProposeCompleteCallback;
 
 }  // namespace skywalker
 

@@ -9,6 +9,7 @@
 #include "paxos/learner.h"
 #include "paxos/proposer.h"
 #include "proto/paxos.pb.h"
+#include "skywalker/options.h"
 #include "skywalker/slice.h"
 #include "skywalker/status.h"
 #include "skywalker/state_machine.h"
@@ -22,9 +23,6 @@ class RunLoop;
 
 class Instance {
  public:
-  typedef std::function<
-      void (MachineContext* context, const Status&, uint64_t)> ProposeCompleteCallback;
-
   explicit Instance(Config* config);
   ~Instance();
 
@@ -39,9 +37,7 @@ class Instance {
     propose_cb_ = cb;
   }
 
-  uint64_t GetInstanceId() const { return instance_id_; }
-
-  void OnPropose(const string& value, MachineContext* context);
+  void OnPropose(const std::string& value, MachineContext* context);
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
   void OnPaxosMessage(const PaxosMessage& msg);

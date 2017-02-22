@@ -48,8 +48,9 @@ int main(int argc, char** argv) {
     printf("please enter value:\n");
     std::string value;
     std::getline(std::cin, value);
-    skywalker::Status s = node->Propose(0, value);
-    printf("%s\n", s.ToString().c_str());
+    node->Propose(0, value, nullptr, [](skywalker::MachineContext*, const skywalker::Status& s) {
+      printf("%s\n", s.ToString().c_str());
+    });
   }
 
   delete node;

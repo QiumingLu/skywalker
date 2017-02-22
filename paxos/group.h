@@ -5,6 +5,7 @@
 
 #include "paxos/config.h"
 #include "paxos/instance.h"
+#include "paxos/propose_queue.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
@@ -27,15 +28,15 @@ class Group {
   void SyncMembership();
   void SyncMaster();
 
-  Status OnPropose(const Slice& value, int machine_id);
-  Status OnPropose(const Slice& value, MachineContext* context,
-                   uint64_t* instance_id);
+  void OnPropose(const std::string& value, MachineContext* context,
+                 const ProposeCompleteCallback& cb);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
-  Status AddMember(const IpPort& ip);
-  Status RemoveMember(const IpPort& ip);
-  Status ReplaceMember(const IpPort& new_i, const IpPort& old_i);
+  void AddMember(const IpPort& ip, const ProposeCompleteCallback& cb);
+  void RemoveMember(const IpPort& ip, const ProposeCompleteCallback& cb);
+  void ReplaceMember(const IpPort& new_i, const IpPort& old_i,
+                     const ProposeCompleteCallback& cb);
   void GetMembership(std::vector<IpPort>* result) const;
 
   void AddMachine(StateMachine* machine);
@@ -47,8 +48,6 @@ class Group {
   void RetireMaster();
 
  private:
-  typedef std::function<void ()> Func;
-
   void SyncMembershipInLoop(MachineContext* context);
   void TryBeMaster();
   void TryBeMasterInLoop(MachineContext* context);
@@ -56,8 +55,8 @@ class Group {
   void RemoveMemberInLoop(uint64_t node_id, MachineContext* context);
   void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
                            MachineContext* context);
-  Status NewPropose(const Func& f, uint64_t* instance_id = nullptr);
-  void ProposeComplete(Status&& result, uint64_t instance_id);
+  Status NewPropose(const ProposeHandler& f);
+  void ProposeComplete(MachineContext* context, const Status& result);
 
   const uint64_t node_id_;
   Config config_;
@@ -69,12 +68,12 @@ class Group {
   bool retrie_master_;
   MembershipMachine membership_machine_;
   MasterMachine master_machine_;
+  ProposeQueue queue_;
+  ProposeCompleteCallback propose_cb_;
 
   Mutex mutex_;
   Condition cond_;
-  bool last_finish_;
   bool propose_end_;
-  uint64_t instance_id_;
   Status result_;
 
   // No copying allowed
