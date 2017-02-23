@@ -7,13 +7,11 @@
 # Look for the header of file.
 find_path(LevelDB_INCLUDE NAMES leveldb/db.h
                           PATHS $ENV{LEVELDB_ROOT}/include /opt/local/include /usr/local/include /usr/include
-                                ${PROJECT_SOURCE_DIR}/third_party/leveldb/include
                           DOC "Path in which the file leveldb/db.h is located.")
 
 # Look for the library.
 find_library(LevelDB_LIBRARY NAMES leveldb
                              PATHS $ENV{LEVELDB_ROOT}/lib /usr/local/lib /usr/lib
-                                   ${PROJECT_SOURCE_DIR}/third_party/leveldb/out-shared
                              DOC "Path to leveldb library.")
 
 include(FindPackageHandleStandardArgs)
