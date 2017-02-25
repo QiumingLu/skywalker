@@ -17,7 +17,7 @@ find_library(TCMalloc_LIBRARY NAMES tcmalloc
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(TCMalloc DEFAULT_MSG TCMalloc_INCLUDE TCMalloc_LIBRARY)
 
-if(TCMALLOC_FOUND)
+if(TCMalloc_FOUND)
   set(TCMalloc_INCLUDE_DIRS ${TCMalloc_INCLUDE})
   set(TCMalloc_LIBRARIES ${TCMalloc_LIBRARY})
   mark_as_advanced(TCMalloc_INCLUDE TCMalloc_LIBRARY)

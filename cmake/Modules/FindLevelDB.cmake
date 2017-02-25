@@ -17,7 +17,7 @@ find_library(LevelDB_LIBRARY NAMES leveldb
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LevelDB DEFAULT_MSG LevelDB_INCLUDE LevelDB_LIBRARY)
 
-if(LEVELDB_FOUND)
+if(LevelDB_FOUND)
   set(LevelDB_INCLUDE_DIRS ${LevelDB_INCLUDE})
   set(LevelDB_LIBRARIES ${LevelDB_LIBRARY})
   mark_as_advanced(LevelDB_INCLUDE LevelDB_LIBRARY)

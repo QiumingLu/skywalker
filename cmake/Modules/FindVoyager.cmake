@@ -29,7 +29,7 @@ find_library(Voyager_RPC_LIBRARY NAMES voyager_rpc
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Voyager DEFAULT_MSG Voyager_INCLUDE Voyager_UTIL_LIBRARY Voyager_PORT_LIBRARY Voyager_CORE_LIBRARY Voyager_RPC_LIBRARY)
 
-if(VOYAGER_FOUND)
+if(Voyager_FOUND)
   set(Voyager_INCLUDE_DIRS ${Voyager_INCLUDE})
   set(Voyager_LIBRARIES 
     ${Voyager_RPC_LIBRARY}

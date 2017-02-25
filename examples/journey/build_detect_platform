@@ -34,6 +34,16 @@ PLATFORM_LIBS="-lpthread -lskywalker -lprotobuf -lleveldb -lvoyager_rpc -lvoyage
 
 CXXOUTPUT="${TMPDIR}/journey_build_detect_platform-cxx.$$"
 
+# Test whether Snappy library is installed
+# http://code.google.com/p/snappy/
+$CXX $CXXFLAGS -x c++ - -o $CXXOUTPUT 2>/dev/null  <<EOF
+    #include <snappy.h>
+    int main() {}
+EOF
+  if [ "$?" = 0 ]; then
+    PLATFORM_LIBS="$PLATFORM_LIBS -lsnappy"
+  fi
+  
 # Test whether tcmalloc is available
 $CXX -x c++ - -o $CXXOUTPUT -ltcmalloc 2>/dev/null  <<EOF
   int main() {}
