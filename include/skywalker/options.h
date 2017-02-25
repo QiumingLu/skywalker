@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_INCLUDE_OPTIONS_H_
 #define SKYWALKER_INCLUDE_OPTIONS_H_
 
@@ -37,7 +41,8 @@ struct Options {
 class MachineContext;
 class  Status;
 
-typedef std::function<void (MachineContext*, const Status&)> ProposeCompleteCallback;
+typedef std::function<
+    void (MachineContext*, const Status&)> ProposeCompleteCallback;
 
 }  // namespace skywalker
 

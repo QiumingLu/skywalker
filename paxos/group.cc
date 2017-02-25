@@ -1,7 +1,13 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "paxos/group.h"
+
+#include <unistd.h>
+
 #include "util/mutexlock.h"
 #include "paxos/node_util.h"
-#include <unistd.h>
 
 namespace skywalker {
 
@@ -20,7 +26,7 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       mutex_(),
       cond_(&mutex_),
       propose_end_(false) {
-  propose_cb_ =  std::bind(&ProposeQueue::ProposeComplete, &queue_, 
+  propose_cb_ =  std::bind(&ProposeQueue::ProposeComplete, &queue_,
                            std::placeholders::_1, std::placeholders::_2);
   instance_.SetProposeCompleteCallback(propose_cb_);
   instance_.AddMachine(&membership_machine_);
@@ -28,7 +34,7 @@ Group::Group(uint32_t group_id, uint64_t node_id,
 }
 
 bool Group::Start() {
-  if(config_.Init() && instance_.Init()) {
+  if (config_.Init() && instance_.Init()) {
     membership_machine_.Recover();
     master_machine_.Recover();
     return true;
@@ -88,7 +94,7 @@ void Group::TryBeMaster() {
                            reinterpret_cast<void*>(&lease_time)));
     ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, context));
     Status status = NewPropose(f);
-    if(status.ok() || status.IsConflict()) {
+    if (status.ok() || status.IsConflict()) {
       state = master_machine_.GetMasterState();
     } else {
       state.set_lease_time(NowMicros() + lease_timeout_);
@@ -223,7 +229,7 @@ void Group::ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
 Status Group::NewPropose(const ProposeHandler& f) {
   MutexLock lock(&mutex_);
   propose_end_ = false;
-  queue_.Put(f, std::bind(&Group::ProposeComplete, this, 
+  queue_.Put(f, std::bind(&Group::ProposeComplete, this,
                           std::placeholders::_1, std::placeholders::_2));
   while (!propose_end_) {
     cond_.Wait();
@@ -231,7 +237,7 @@ Status Group::NewPropose(const ProposeHandler& f) {
   return result_;
 }
 
-void Group::ProposeComplete(MachineContext* context, 
+void Group::ProposeComplete(MachineContext* context,
                             const Status& result) {
   MutexLock lock(&mutex_);
   delete context;

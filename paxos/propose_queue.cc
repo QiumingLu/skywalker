@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "paxos/propose_queue.h"
 
 namespace skywalker {
@@ -19,7 +23,8 @@ ProposeQueue::~ProposeQueue() {
   }
 }
 
-void ProposeQueue::Put(const ProposeHandler& f, const ProposeCompleteCallback& cb) {
+void ProposeQueue::Put(const ProposeHandler& f,
+                       const ProposeCompleteCallback& cb) {
   MutexLock lock(&mutex_);
   propose_queue_.push(f);
   cb_queue_.push(cb);

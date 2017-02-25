@@ -1,6 +1,11 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "paxos/runloop.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "paxos/instance.h"
 #include "util/mutexlock.h"
@@ -51,7 +56,7 @@ void RunLoop::QueueInLoop(Func&& func) {
 
 void RunLoop::ThreadFunc() {
   exit_ = false;
-  while(!exit_) {
+  while (!exit_) {
     uint64_t t = timers_.TimeoutMicros();
     uint64_t timeout = std::min(t, static_cast<uint64_t>(5000 * 1000));
     std::vector<Func> funcs;

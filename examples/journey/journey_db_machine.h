@@ -1,8 +1,13 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef JOURNEY_JOURNEY_DB_MACHINE_H_
 #define JOURNEY_JOURNEY_DB_MACHINE_H_
 
-#include "journey_db.h"
+#include <string>
 #include <skywalker/state_machine.h>
+#include "journey_db.h"
 
 namespace journey {
 

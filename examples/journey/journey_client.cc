@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include <stdio.h>
 #include <iostream>
 #include <vector>
@@ -13,7 +17,7 @@ namespace journey {
 
 class JourneyClient {
  public:
-  JourneyClient(voyager::EventLoop* loop, const::std::string& server);
+  JourneyClient(voyager::EventLoop* loop, const std::string& server);
   ~JourneyClient();
 
   void Propose();
@@ -233,7 +237,7 @@ void JourneyClient::Done(ResponseMessage* response) {
 
 void JourneyClient::HandleError(voyager::ErrorCode code) {
   const char* buf;
-  switch(code) {
+  switch (code) {
     case voyager::ERROR_CODE_OK:
       buf = "ok";
       break;

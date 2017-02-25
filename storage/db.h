@@ -1,5 +1,9 @@
-#ifndef SKYWALKER_PAXOS_STORAGE_DB_H_
-#define SKYWALKER_PAXOS_STORAGE_DB_H_
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+#ifndef SKYWALKER_STORAGE_DB_H_
+#define SKYWALKER_STORAGE_DB_H_
 
 #include <stdint.h>
 #include <string>
@@ -69,4 +73,4 @@ class DB {
 
 }  // namespace skywalker
 
-#endif  // SKYWALKER_PAXOS_STORAGE_DB_H_
+#endif  // SKYWALKER_STORAGE_DB_H_

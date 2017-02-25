@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_STATE_MACHINE_H_
 #define SKYWALKER_STATE_MACHINE_H_
 
@@ -16,7 +20,7 @@ class MachineContext {
         user_data(nullptr) {
   }
 
-  MachineContext(int id, void* data = nullptr)
+  explicit MachineContext(int id, void* data = nullptr)
       : machine_id(id),
         user_data(data) {
   }

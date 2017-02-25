@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_PAXOS_COUNTER_H_
 #define SKYWALKER_PAXOS_COUNTER_H_
 
@@ -10,7 +14,7 @@ class Config;
 
 class Counter {
  public:
-  Counter(const Config* config);
+  explicit Counter(const Config* config);
 
   void AddReceivedNode(uint64_t node_id);
   void AddRejector(uint64_t node_id);

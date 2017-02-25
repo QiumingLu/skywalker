@@ -1,5 +1,12 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_MACHINE_MEMBERSHIP_MACHINE_H_
 #define SKYWALKER_MACHINE_MEMBERSHIP_MACHINE_H_
+
+#include <string>
+#include <vector>
 
 #include "skywalker/state_machine.h"
 #include "skywalker/options.h"

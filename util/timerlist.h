@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_UTIL_TIMERLIST_H_
 #define SKYWALKER_UTIL_TIMERLIST_H_
 
@@ -48,7 +52,7 @@ typedef std::pair<uint64_t, Timer*> TimerId;
 
 class TimerList {
  public:
-  explicit TimerList();
+  TimerList();
   ~TimerList();
 
   TimerId RunAt(uint64_t micros_value, const TimerProcCallback& cb);

@@ -1,9 +1,14 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_NETWORK_NETWORK_H_
 #define SKYWALKER_NETWORK_NETWORK_H_
 
 #include <functional>
 #include <map>
 #include <memory>
+#include <string>
 
 #include <voyager/core/bg_eventloop.h>
 #include <voyager/core/eventloop.h>
@@ -20,7 +25,7 @@ namespace skywalker {
 
 class Network {
  public:
-  Network(uint64_t node_id);
+  explicit Network(uint64_t node_id);
   ~Network();
 
   void StartServer(const std::function<void (const Slice& s)>& cb);

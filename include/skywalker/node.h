@@ -1,7 +1,14 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_INCLUDE_NODE_H_
 #define SKYWALKER_INCLUDE_NODE_H_
 
 #include <stdint.h>
+
+#include <string>
+#include <vector>
 
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
@@ -44,14 +51,14 @@ class Node {
   // Returns status like calling Node::Propose().
   // It is also returns Status::OK() if the node has already existed
   // in the membership.
-  virtual void AddMember(uint32_t group_id, const IpPort& i, 
+  virtual void AddMember(uint32_t group_id, const IpPort& i,
                          const ProposeCompleteCallback& cb) = 0;
 
   // Remove a node from the paxos membership.
   // Returns status like calling Node::Propose().
   // It is also returns Status::OK() if the node
   // did not exist in the membership.
-  virtual void RemoveMember(uint32_t group_id, const IpPort& i, 
+  virtual void RemoveMember(uint32_t group_id, const IpPort& i,
                             const ProposeCompleteCallback& cb) = 0;
 
   // Replace an old_node with new_node for the paxos membership.
@@ -99,7 +106,7 @@ class Node {
   // Retire master.
   virtual void RetireMaster(uint32_t group_id) = 0;
 
-private:
+ private:
   // No copying allowed
   Node(const Node&);
   void operator=(const Node&);

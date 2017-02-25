@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_PAXOS_PROPOSE_QUEUE_H_
 #define SKYWALKER_PAXOS_PROPOSE_QUEUE_H_
 
@@ -17,7 +21,7 @@ typedef std::function<void ()> ProposeHandler;
 
 class ProposeQueue {
  public:
-  ProposeQueue(Config* config);
+  explicit ProposeQueue(Config* config);
   ~ProposeQueue();
 
   void Put(const ProposeHandler& f, const ProposeCompleteCallback& cb);

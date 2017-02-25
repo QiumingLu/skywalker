@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "journey_service_impl.h"
 #include <functional>
 #include <iostream>
@@ -56,8 +60,9 @@ void JourneyServiceImpl::Propose(
       skywalker::MachineContext* context = new skywalker::MachineContext();
       context->machine_id = machine_.GetMachineId();
       context->user_data = response;
-      node_->Propose(group_id, value, context, 
-                     [done](skywalker::MachineContext* ctx, const skywalker::Status& s) {
+      node_->Propose(
+          group_id, value, context,
+          [done](skywalker::MachineContext* ctx, const skywalker::Status& s) {
         if (done) {
           done->Run();
         }

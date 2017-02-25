@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,7 +52,8 @@ int main(int argc, char** argv) {
     printf("please enter value:\n");
     std::string value;
     std::getline(std::cin, value);
-    node->Propose(0, value, nullptr, [](skywalker::MachineContext*, const skywalker::Status& s) {
+    node->Propose(0, value, nullptr,
+                  [](skywalker::MachineContext*, const skywalker::Status& s) {
       printf("%s\n", s.ToString().c_str());
     });
   }

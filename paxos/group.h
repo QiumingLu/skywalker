@@ -1,7 +1,13 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_PAXOS_GROUP_H_
 #define SKYWALKER_PAXOS_GROUP_H_
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "paxos/config.h"
 #include "paxos/instance.h"

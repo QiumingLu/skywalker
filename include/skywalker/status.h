@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_INCLUDE_STATUS_H_
 #define SKYWALKER_INCLUDE_STATUS_H_
 
@@ -32,7 +36,7 @@ class Status {
   static Status Timeout(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kTimeout, msg, msg2);
   }
- 
+
   bool ok() const { return state_ == nullptr; }
   bool IsInvalidNode() const { return code() == kInvalidNode; }
   bool IsConflict() const {  return code() == kConflict; }

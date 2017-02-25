@@ -1,7 +1,14 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "network/network.h"
+
+#include <string.h>
+#include <utility>
+
 #include "skywalker/logging.h"
 #include "paxos/node_util.h"
-#include <string.h>
 
 namespace skywalker {
 
@@ -18,7 +25,7 @@ Network::~Network() {
   delete server_;
 }
 
-void Network::StartServer(const std::function<void (const Slice&) >& cb) {
+void Network::StartServer(const std::function<void (const Slice&)>& cb) {
   IpPort i;
   ParseNodeId(my_node_id_, &i);
   voyager::SockAddr addr(i.ip, i.port);

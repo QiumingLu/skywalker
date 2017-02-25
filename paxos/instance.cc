@@ -1,4 +1,11 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "paxos/instance.h"
+
+#include <utility>
+
 #include "paxos/config.h"
 #include "paxos/runloop.h"
 #include "util/mutexlock.h"
@@ -81,7 +88,7 @@ void Instance::OnPropose(const std::string& value,
 }
 
 void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
-  switch(c->type()) {
+  switch (c->type()) {
     case PAXOS_MESSAGE:
       OnPaxosMessage(c->paxos_msg());
       break;
@@ -95,7 +102,7 @@ void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
 }
 
 void Instance::OnPaxosMessage(const PaxosMessage& msg) {
-  switch(msg.type()) {
+  switch (msg.type()) {
     case PREPARE:
       acceptor_.OnPrepare(msg);
       break;
@@ -132,7 +139,7 @@ void Instance::OnPaxosMessage(const PaxosMessage& msg) {
 }
 
 void Instance::OnCheckPointMessage(const CheckPointMessage& msg) {
-  // TODO
+  // TODO(handle checkpoint message)
 }
 
 void Instance::CheckLearn() {
@@ -179,7 +186,7 @@ bool Instance::MachineExecute(const PaxosValue& value, bool my) {
     if (i != machines_.end()) {
       assert(i->second != nullptr);
       MachineContext* context = nullptr;
-      if (my) { 
+      if (my) {
         context = context_;
       }
       return i->second->Execute(

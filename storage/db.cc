@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "storage/db.h"
 
 #include <leveldb/options.h>
@@ -51,12 +55,12 @@ int DB::Open(uint32_t group_id, const std::string& name) {
 int DB::Put(const WriteOptions& options,
             uint64_t instance_id,
             const std::string& value) {
-  size_t size = sizeof(instance_id);
-  char key[size];
-  memcpy(key, &instance_id, size);
+  char key[sizeof(instance_id)];
+  memcpy(key, &instance_id, sizeof(key));
   leveldb::WriteOptions op;
   op.sync = options.sync;
-  leveldb::Status status = db_->Put(op, leveldb::Slice(key, size), value);
+  leveldb::Status status =
+      db_->Put(op, leveldb::Slice(key, sizeof(key)), value);
   if (!status.ok()) {
     SWLog(ERROR, "DB::Put - %s\n", status.ToString().c_str());
     return -1;
@@ -65,12 +69,11 @@ int DB::Put(const WriteOptions& options,
 }
 
 int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
-  size_t size = sizeof(instance_id);
-  char key[size];
-  memcpy(key, &instance_id, size);
+  char key[sizeof(instance_id)];
+  memcpy(key, &instance_id, sizeof(key));
   leveldb::WriteOptions op;
   op.sync = options.sync;
-  leveldb::Status status = db_->Delete(op, leveldb::Slice(key, size));
+  leveldb::Status status = db_->Delete(op, leveldb::Slice(key, sizeof(key)));
   if (!status.ok()) {
     SWLog(ERROR, "DB::Delete - %s\n", status.ToString().c_str());
     return -1;
@@ -79,11 +82,10 @@ int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
 }
 
 int DB::Get(uint64_t instance_id, std::string* value) {
-  size_t size = sizeof(instance_id);
-  char key[size];
-  memcpy(key, &instance_id, size);
+  char key[sizeof(instance_id)];
+  memcpy(key, &instance_id, sizeof(key));
   leveldb::Status status =
-      db_->Get(leveldb::ReadOptions(), leveldb::Slice(key, size), value);
+      db_->Get(leveldb::ReadOptions(), leveldb::Slice(key, sizeof(key)), value);
   int ret = 0;
   if (!status.ok()) {
     if (status.IsNotFound()) {
@@ -104,7 +106,7 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
   while (it->Valid()) {
     uint64_t id = 0;
     memcpy(&id, it->key().data(), sizeof(id));
-    if(id == kMinChosenKey || id == kMembership || id == kMasterState) {
+    if (id == kMinChosenKey || id == kMembership || id == kMasterState) {
       it->Prev();
     } else {
       *instance_id = id;
@@ -117,10 +119,9 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
 }
 
 int DB::SetMinChosenInstanceId(uint64_t id) {
-  size_t size = sizeof(id);
-  char value[size];
-  memcpy(value, &id, size);
-  return Put(WriteOptions(), kMinChosenKey, std::string(value, size));
+  char value[sizeof(id)];
+  memcpy(value, &id, sizeof(value));
+  return Put(WriteOptions(), kMinChosenKey, std::string(value, sizeof(value)));
 }
 
 int DB::GetMinChosenInstanceId(uint64_t* id) {

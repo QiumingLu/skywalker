@@ -1,3 +1,7 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "util/timerlist.h"
 #include <sys/time.h>
 #include <time.h>
@@ -21,49 +25,49 @@ TimerList::~TimerList() {
 
 TimerId TimerList::RunAt(uint64_t micros_value,
                          const TimerProcCallback& cb) {
-   TimerId id(micros_value, new Timer(micros_value, 0, cb));
-   timers_.insert(id);
-   return id;
+  TimerId id(micros_value, new Timer(micros_value, 0, cb));
+  timers_.insert(id);
+  return id;
 }
 
 TimerId TimerList::RunAt(uint64_t micros_value,
                          TimerProcCallback&& cb) {
-   TimerId id(micros_value, new Timer(micros_value, 0, std::move(cb)));
-   timers_.insert(id);
-   return id;
+  TimerId id(micros_value, new Timer(micros_value, 0, std::move(cb)));
+  timers_.insert(id);
+  return id;
 }
 
 TimerId TimerList::RunAfter(uint64_t micros_delay,
                             const TimerProcCallback& cb) {
-   uint64_t micros_value = NowMicros() + micros_delay;
-   TimerId id(micros_value, new Timer(micros_value, 0, cb));
-   timers_.insert(id);
-   return id;
+  uint64_t micros_value = NowMicros() + micros_delay;
+  TimerId id(micros_value, new Timer(micros_value, 0, cb));
+  timers_.insert(id);
+  return id;
 }
 
 TimerId TimerList::RunAfter(uint64_t micros_delay,
                             TimerProcCallback&& cb) {
-   uint64_t micros_value = NowMicros() + micros_delay;
-   TimerId id(micros_value, new Timer(micros_value, 0, std::move(cb)));
-   timers_.insert(id);
-   return id;
+  uint64_t micros_value = NowMicros() + micros_delay;
+  TimerId id(micros_value, new Timer(micros_value, 0, std::move(cb)));
+  timers_.insert(id);
+  return id;
 }
 
 TimerId TimerList::RunEvery(uint64_t micros_interval,
                             const TimerProcCallback& cb) {
-   uint64_t micros_value = NowMicros() + micros_interval;
-   TimerId id(micros_value, new Timer(micros_value, micros_interval, cb));
-   timers_.insert(id);
-   return id;
+  uint64_t micros_value = NowMicros() + micros_interval;
+  TimerId id(micros_value, new Timer(micros_value, micros_interval, cb));
+  timers_.insert(id);
+  return id;
 }
 
 TimerId TimerList::RunEvery(uint64_t micros_interval,
                             TimerProcCallback&& cb) {
-   uint64_t micros_value = NowMicros() + micros_interval;
-   TimerId id(micros_value,
-              new Timer(micros_value, micros_interval, std::move(cb)));
-   timers_.insert(id);
-   return id;
+  uint64_t micros_value = NowMicros() + micros_interval;
+  TimerId id(micros_value,
+             new Timer(micros_value, micros_interval, std::move(cb)));
+  timers_.insert(id);
+  return id;
 }
 
 void TimerList::Remove(const TimerId& id) {

@@ -1,7 +1,13 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef JOURNEY_JOURNEY_SERVICE_IMPL_H_
 #define JOURNEY_JOURNEY_SERVICE_IMPL_H_
 
+#include <string>
 #include <skywalker/node.h>
+
 #include "journey.pb.h"
 #include "journey_db_machine.h"
 

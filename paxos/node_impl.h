@@ -1,8 +1,14 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_PAXOS_NODE_IMPL_H_
 #define SKYWALKER_PAXOS_NODE_IMPL_H_
 
 #include <stdint.h>
 #include <map>
+#include <string>
+#include <vector>
 
 #include "paxos/group.h"
 #include "network/network.h"
@@ -27,7 +33,7 @@ class NodeImpl : public Node {
 
   virtual void AddMember(uint32_t group_id, const IpPort& i,
                          const ProposeCompleteCallback& cb);
-  virtual void RemoveMember(uint32_t group_id, const IpPort& i, 
+  virtual void RemoveMember(uint32_t group_id, const IpPort& i,
                             const ProposeCompleteCallback& cb);
   virtual void ReplaceMember(uint32_t group_id,
                              const IpPort& new_i, const IpPort& old_i,
