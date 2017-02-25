@@ -19,6 +19,10 @@ if test -z "$CXX"; then
   CXX=g++
 fi
 
+if test -z "$TMPDIR"; then
+    TMPDIR=/tmp
+fi
+
 # Detect OS
 if test -z "$TARGET_OS"; then
     TARGET_OS=`uname -s`
@@ -54,6 +58,18 @@ PORTABLE_FILES=`find $DIRS $PRUNE_TEST -o $PRUNE_BENCH -o -name '*.cc' -print | 
 
 set +f
 echo "SOURCES=$PORTABLE_FILES" >> $OUTPUT
+
+CXXOUTPUT="${TMPDIR}/skywalker_build_detect_platform-cxx.$$"
+
+# Test whether tcmalloc is available
+$CXX -x c++ - -o $CXXOUTPUT -ltcmalloc 2>/dev/null  <<EOF
+  int main() {}
+EOF
+  if [ "$?" = 0 ]; then
+      PLATFORM_LIBS="$PLATFORM_LIBS -ltcmalloc"
+  fi
+
+  rm -f $CXXOUTPUT 2>/dev/null
 
 echo "CC=$CC" >> $OUTPUT
 echo "CXX=$CXX" >> $OUTPUT

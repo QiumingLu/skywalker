@@ -1,0 +1,52 @@
+#!/bin/sh
+
+OUTPUT=$1
+if test -z "$OUTPUT"; then
+  echo "usage: $0 <output-filename>" >&2
+  exit 1
+fi
+
+# Deleting existing output, if it exists
+rm -f $OUTPUT
+touch $OUTPUT
+
+if test -z "$CXX"; then
+  CXX=g++
+fi
+
+if test -z "$TMPDIR"; then
+    TMPDIR=/tmp
+fi
+
+PLATFORM_CXXFLAGS="-std=c++11 -Wall -Wextra -Wno-unused-parameter -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -march=native -pthread -I/usr/local/include -I/usr/include"
+PLATFORM_LDFLAGS="-L/usr/local/lib -L/usr/lib"
+PLATFORM_LIBS="-lpthread -lskywalker -lprotobuf -lleveldb -lvoyager_rpc -lvoyager_core -lvoyager_port -lvoyager_util"
+
+CXXOUTPUT="${TMPDIR}/journey_build_detect_platform-cxx.$$"
+
+# Test whether tcmalloc is available
+$CXX -x c++ - -o $CXXOUTPUT -ltcmalloc 2>/dev/null  <<EOF
+  int main() {}
+EOF
+  if [ "$?" = 0 ]; then
+      PLATFORM_LIBS="$PLATFORM_LIBS -ltcmalloc"
+  fi
+
+  rm -f $CXXOUTPUT 2>/dev/null
+
+# Test whether skywalker is available
+$CXX $PLATFORM_CXXFLAGS $PLATFORM_LDFLAGS $PLATFORM_LIBS -x c++ - -o $CXXOUTPUT 2>/dev/null <<EOF
+  #include <skywalker/node.h>
+  int main() { }
+EOF
+  if [ "$?" != 0 ]; then
+    PLATFORM_CXXFLAGS="$PLATFORM_CXXFLAGS -I../../include"
+    PLATFORM_LDFLAGS="$PLATFORM_LDFLAGS -L../../out-static"
+  fi
+
+  rm -f $CXXOUTPUT 2>/dev/null
+
+echo "CXX=$CXX" >> $OUTPUT
+echo "PLATFORM_LDFLAGS=$PLATFORM_LDFLAGS" >> $OUTPUT
+echo "PLATFORM_LIBS=$PLATFORM_LIBS" >> $OUTPUT
+echo "PLATFORM_CXXFLAGS=$PLATFORM_CXXFLAGS" >> $OUTPUT
