@@ -45,4 +45,4 @@ journey_server: journey_db.o journey_db_machine.o \
 
 .PHONY: clean
 clean:
-	-rm -f *.o *.pb.cc *.pb.h journey_client journey_server
+	-rm -f *.o *.pb.cc *.pb.h journey_client journey_server build_config.mk
