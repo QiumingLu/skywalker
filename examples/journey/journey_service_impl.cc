@@ -5,6 +5,7 @@
 #include "journey_service_impl.h"
 #include <functional>
 #include <iostream>
+#include "murmurhash3.h"
 
 namespace journey {
 
@@ -86,8 +87,9 @@ void JourneyServiceImpl::Propose(
 
 uint32_t JourneyServiceImpl::Shard(const std::string& key) {
   assert(group_size_ > 0);
-  std::hash<std::string> h;
-  return (h(key) & (group_size_ - 1));
+  uint32_t out;
+  MurmurHash3_x86_32(key.c_str(), static_cast<int>(key.size()), 0, &out);
+  return (out & (group_size_ - 1));
 }
 
 }  // namespace journey

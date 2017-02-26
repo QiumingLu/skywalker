@@ -68,7 +68,7 @@ void RunLoop::ThreadFunc() {
       }
       funcs.swap(funcs_);
     }
-    for (auto f : funcs) {
+    for (auto& f : funcs) {
       f();
     }
     timers_.RunTimerProcs();

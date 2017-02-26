@@ -36,8 +36,8 @@ all: journey_client journey_server
 journey_client: journey.pb.o journey_client.o
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@
 
-journey_server: journey_db.o journey_db_machine.o \
-                journey.pb.o journey_service_impl.o journey_server.o
+journey_server: murmurhash3.o journey_db.o journey_db_machine.o \
+                journey.pb.o journey_service_impl.o journey_server.o 
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@
 
 %.pb.cc: %.proto

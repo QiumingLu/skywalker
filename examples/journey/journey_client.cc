@@ -48,7 +48,7 @@ JourneyClient::JourneyClient(voyager::EventLoop* loop,
 }
 
 JourneyClient::~JourneyClient() {
-  for (auto it : channels_) {
+  for (auto& it : channels_) {
     delete it.second;
   }
 }
@@ -69,7 +69,7 @@ bool JourneyClient::GetLine(bool server) {
       s.erase(0, found);
       std::vector<std::string> temp;
       voyager::SplitStringUsing(s, ":", &temp);
-      for (auto it : temp) {
+      for (auto& it : temp) {
         v_.push_back(it);
       }
     } else {

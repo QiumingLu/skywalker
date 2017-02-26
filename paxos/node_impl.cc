@@ -19,7 +19,7 @@ NodeImpl::NodeImpl(const Options& options)
 }
 
 NodeImpl::~NodeImpl() {
-  for (auto g : groups_) {
+  for (auto& g : groups_) {
     delete g.second;
   }
 }
@@ -41,7 +41,7 @@ bool NodeImpl::StartWorking() {
       std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
   SWLog(DEBUG, "Node::Start - Network StartServer Successfully!\n");
 
-  for (auto g : groups_) {
+  for (auto& g : groups_) {
     g.second->SyncMembership();
     if (options_.use_master_) {
       g.second->SyncMaster();
@@ -99,13 +99,13 @@ void NodeImpl::GetMembership(uint32_t group_id,
 }
 
 void NodeImpl::AddMachine(StateMachine* machine) {
-  for (auto g : groups_) {
+  for (auto& g : groups_) {
     g.second->AddMachine(machine);
   }
 }
 
 void NodeImpl::RemoveMachine(StateMachine* machine) {
-  for (auto g : groups_) {
+  for (auto& g : groups_) {
     g.second->RemoveMachine(machine);
   }
 }
@@ -121,7 +121,7 @@ void NodeImpl::RemoveMachine(uint32_t group_id, StateMachine* machine) {
 }
 
 void NodeImpl::SetMasterLeaseTime(uint64_t micros) {
-  for (auto g : groups_) {
+  for (auto& g : groups_) {
     g.second->SetMasterLeaseTime(micros);
   }
 }

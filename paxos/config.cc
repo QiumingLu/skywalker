@@ -31,7 +31,7 @@ Config::Config(uint32_t group_id, uint64_t node_id,
 
   log_storage_path_ += name;
 
-  for (auto i : options.followers) {
+  for (auto& i : options.followers) {
     followers_.add_node_id(MakeNodeId(i));
   }
 }
