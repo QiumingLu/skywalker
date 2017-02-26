@@ -123,7 +123,7 @@ void JourneyClient::CreateNewChannel(const RequestMessage& request) {
 
   client->SetConnectionCallback(
       [request, this](const voyager::TcpConnectionPtr& p) {
-    voyager::RpcChannel *channel = new voyager::RpcChannel(loop_);
+    voyager::RpcChannel* channel = new voyager::RpcChannel(loop_);
     channels_[server_] = channel;
     ResponseMessage* response = new ResponseMessage();
     channel->SetTcpConnectionPtr(p);
@@ -140,16 +140,9 @@ void JourneyClient::CreateNewChannel(const RequestMessage& request) {
 
   client->SetConnectFailureCallback([client, this]() {
     delete client;
-    bool res = false;
-    if (channels_.empty()) {
-      printf("connect failed, please enter new server_ip:server_port\n");
-      res = GetLine(true);
-    } else {
-      server_ = channels_.begin()->first;
-      printf("connect failed, redirect to %s\n", server_.c_str());
-    }
-    if (res) {
-      Propose(v_);
+    printf("connect failed, please enter new server_ip:server_port\n");
+    if (GetLine(true)) {
+      Propose();
     }
   });
 
@@ -159,13 +152,10 @@ void JourneyClient::CreateNewChannel(const RequestMessage& request) {
     channels_.erase(it);
     delete it->second;
     delete client;
-    if (!channels_.empty()) {
-      server_ = channels_.begin()->first;
-    } else {
-      printf("please enter new server_ip:server_port\n");
-      if (GetLine(true)) {
-        Propose();
-      }
+    printf("%s close, please enter new server_ip:server_port\n",
+           server_.c_str());
+    if (GetLine(true)) {
+      Propose();
     }
   });
 
