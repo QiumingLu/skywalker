@@ -2,12 +2,12 @@ sudo: required
 dist: trusty
 
 language: cpp
-compiler: g++
+compiler: 
+- g++
+- clang
+
 git:
     submodules: false
-
-install:
-- sudo apt-get install libprotobuf-dev protobuf-compiler libprotoc-dev
 
 script:
 - ./build_travis.sh && ./build.sh
