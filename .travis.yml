@@ -10,4 +10,4 @@ git:
     submodules: false
 
 script:
-- ./build_travis.sh && ./build.sh
+- ./build_travis.sh && make
