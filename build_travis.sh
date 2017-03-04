@@ -8,7 +8,7 @@ $CXX $CXXFLAGS -x c++ - -o $CXXOUTPUT 2>/dev/null  <<EOF
     int main() {}
 EOF
   if [ "$?" != 0 ]; then
-    wget https://github.com/google/leveldb/archive/v.1.20.tar.gz
+    wget https://github.com/google/leveldb/archive/v1.20.tar.gz
     tar zxvf v1.20.tar.gz
     cd leveldb-1.20
     make
@@ -23,7 +23,7 @@ $CXX $CXXFLAGS -x c++ -o $CXXOUTPUT 2>/dev/null  <<EOF
     int main() { }
 EOF
   if [ "$?" != 0 ]; then
-    wget https://github.com/QiumingLu/archive/v.1.5.tar.gz
+    wget https://github.com/QiumingLu/voyager/archive/v1.5.tar.gz
     tar zxvf v1.5.tar.gz
     cd voyager-1.5
     ./build.sh
