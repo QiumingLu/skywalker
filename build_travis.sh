@@ -14,6 +14,7 @@ EOF
     make
     sudo cp -rf out-shared/libleveldb.* /usr/lib
     sudo cp -rf include/leveldb /usr/include
+    cd ..
     rm -rf leveldb-1.20
     rm -rf v1.20.tar.gz
   fi
@@ -28,11 +29,12 @@ EOF
     cd voyager-1.5
     cmake -DCMAKE_BUILD_TYPE=release \
           -DCMAKE_INSTALL_PREFIX=/usr \
-          -DCMAKE_BUILD_NO_EXAMPLES=1 \
+          -DCMAKE_BUILD_NO_EXAMPLES=0 \
           -DCMAKE_BUILD_SHARED_LIBS=1 \
           .
     make
     sudo make install
+    cd ..
     rm -rf voyager-1.5
-    rm -rf v1.5
+    rm -rf v1.5.tar.gz
   fi
