@@ -20,13 +20,13 @@ EOF
   fi
 
 $CXX $CXXFLAGS -x c++ -o $CXXOUTPUT 2>/dev/null  <<EOF
-    #include <voyager/core/tcp_server.h>
+    #include <voyager/rpc/rpc_server.h>
     int main() { }
 EOF
   if [ "$?" != 0 ]; then
-    wget https://github.com/QiumingLu/voyager/archive/v1.5.tar.gz
-    tar zxvf v1.5.tar.gz
-    cd voyager-1.5
+    wget https://github.com/QiumingLu/voyager/archive/v1.6.tar.gz
+    tar zxvf v1.6.tar.gz
+    cd voyager-1.6
     cmake -DCMAKE_BUILD_TYPE=release \
           -DCMAKE_INSTALL_PREFIX=/usr \
           -DCMAKE_BUILD_NO_EXAMPLES=0 \
@@ -35,6 +35,6 @@ EOF
     make
     sudo make install
     cd ..
-    rm -rf voyager-1.5
-    rm -rf v1.5.tar.gz
+    rm -rf voyager-1.6
+    rm -rf v1.6.tar.gz
   fi
