@@ -32,11 +32,11 @@ find_package_handle_standard_args(Voyager DEFAULT_MSG Voyager_INCLUDE Voyager_UT
 if(Voyager_FOUND)
   set(Voyager_INCLUDE_DIRS ${Voyager_INCLUDE})
   set(Voyager_LIBRARIES 
-    ${Voyager_RPC_LIBRARY}
-    ${Voyager_CORE_LIBRARY} 
-    ${Voyager_PORT_LIBRARY}
-    ${Voyager_UTIL_LIBRARY}
-    )
+      ${Voyager_UTIL_LIBRARY}
+      ${Voyager_PORT_LIBRARY}
+      ${Voyager_CORE_LIBRARY} 
+      ${Voyager_RPC_LIBRARY}
+     )
   mark_as_advanced(Voyager_INCLUDE Voyager_LIBRARY)
   message(STATUS "Found Voyager (include: ${Voyager_INCLUDE_DIRS}, library: ${Voyager_LIBRARIES})")
 endif()  
