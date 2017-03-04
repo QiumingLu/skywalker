@@ -5,5 +5,9 @@ language: cpp
 compiler: g++
 git:
     submodules: false
+
+install:
+    - sudo apt-get install libprotobuf-dev protobuf-compiler libprotoc-dev
+
 script:
-    - ./build.sh
+    - ./build_travis.sh && ./build.sh
