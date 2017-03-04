@@ -4,7 +4,6 @@ dist: trusty
 language: cpp
 compiler: g++
 git:
-  submodules:false
-
+    submodules: false
 script:
-- ./build.sh
+    - ./build.sh
