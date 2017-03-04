@@ -3,7 +3,11 @@
 ## 简介
 Skywalker是一个使用C++编写，基于[Leslie Lamport](https://en.wikipedia.org/wiki/Leslie_Lamport)t的[Paxos Made Simple](http://lamport.azurewebsites.net/pubs/paxos-simple.pdf)实现的Paxos有限状态机，它的目标是使得单机服务可以很容易地扩展到多机服务，从而实现一个具有强一致性和高度容错能力的分布式系统。
 <br/>
-<br/>Skywalker主要包括以下几个部分：
+<br/>[![Build Status](https://travis-ci.org/QiumingLu/skywalker.svg?branch=master)](https://travis-ci.org/QiumingLu/skywalker)
+<br/>
+<br/>Authors: Mirants Lu (mirantslu@gmail.com)
+<br/>
+<br/>**Skywalker主要包括以下几个部分：**
 <br/>
 <br/>1. **include/skywalker**：对外开放的接口文件；
 <br/>2. **util**：基础库模块，包括互斥量、条件变量、线程、字符串处理、时间处理等基础工具；
@@ -69,8 +73,6 @@ Skywalker支持Linux，macOS 等类Unix平台，不支持Windows平台，以下�
 ## 使用示例
 
 <br />1、简单地使用Skywalker的基本功能，可以参考https://github.com/QiumingLu/skywalker/blob/master/paxos/test/paxos_test.cc。
-
 <br />2、在Skywalker的基础上搭建分布式服务，可以参考https://github.com/QiumingLu/skywalker/tree/master/examples/journey。
 <br />**Journey是一个在LevelDB，Protobuf，Voyager和Skywalker的基础上构建的分布式KV数据库。**
 <br /><br />**注意上面的例子并没有完整地处理各种异常情况**
-
