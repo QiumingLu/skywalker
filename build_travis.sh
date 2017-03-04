@@ -26,8 +26,12 @@ EOF
     wget https://github.com/QiumingLu/voyager/archive/v1.5.tar.gz
     tar zxvf v1.5.tar.gz
     cd voyager-1.5
-    ./build.sh
-    cd build/release
+    cmake -DCMAKE_BUILD_TYPE=release \
+          -DCMAKE_INSTALL_PREFIX=/usr \
+          -DCMAKE_BUILD_NO_EXAMPLES=1 \
+          -DCMAKE_BUILD_SHARED_LIBS=1 \
+          .
+    make
     sudo make install
     rm -rf voyager-1.5
     rm -rf v1.5
