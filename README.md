@@ -72,7 +72,7 @@ Skywalker支持Linux，macOS 等类Unix平台，不支持Windows平台，以下�
 
 ## 使用示例
 
-<br />1、简单地使用Skywalker的基本功能，可以参考https://github.com/QiumingLu/skywalker/blob/master/paxos/test/paxos_test.cc。
-<br />2、在Skywalker的基础上搭建分布式服务，可以参考https://github.com/QiumingLu/skywalker/tree/master/examples/journey。
+<br />1、简单地使用Skywalker的基本功能，可以参考https://github.com/QiumingLu/skywalker/blob/master/paxos/test/paxos_test.cc 。
+<br />2、在Skywalker的基础上搭建分布式服务，可以参考https://github.com/QiumingLu/skywalker/tree/master/examples/journey 。
 <br />**Journey是一个在LevelDB，Protobuf，Voyager和Skywalker的基础上构建的分布式KV数据库。**
 <br /><br />**注意上面的例子并没有完整地处理各种异常情况**
