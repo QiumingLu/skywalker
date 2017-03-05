@@ -1,6 +1,9 @@
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS journey.proto)
 
+message(STATUS "SkyWalker_LINKER_LIBS = " ${SkyWalker_LINKER_LIBS})
+message(STATUS "SkyWalker_LINK = " ${SkyWalker_LINK})
+
 add_executable(journey_client journey_client.cc ${PROTO_SRCS})
 target_link_libraries(journey_client ${SkyWalker_LINKER_LIBS} ${SkyWalker_LINK})
 

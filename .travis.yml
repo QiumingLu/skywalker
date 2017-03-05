@@ -6,8 +6,12 @@ compiler:
 - g++
 - clang
 
+os:
+- linux
+- osx
+
 git:
     submodules: false
 
 script:
-- ./build_travis.sh && make
+- ./build_travis.sh && ./build.sh
