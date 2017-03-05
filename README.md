@@ -1,7 +1,7 @@
 
-# Skywalker -- 用于构建分布式系统的Paxos库
+# Skywalker -- 分布式一致性协议Paxos的实现
 ## 简介
-Skywalker是一个使用C++编写，基于[Leslie Lamport](https://en.wikipedia.org/wiki/Leslie_Lamport)t的[Paxos Made Simple](http://lamport.azurewebsites.net/pubs/paxos-simple.pdf)实现的Paxos有限状态机，它的目标是使得单机服务可以很容易地扩展到多机服务，从而实现一个具有强一致性和高度容错能力的分布式系统。
+Skywalker是一个基于[Leslie Lamport](https://en.wikipedia.org/wiki/Leslie_Lamport)的[Paxos Made Simple](http://lamport.azurewebsites.net/pubs/paxos-simple.pdf)实现的C++ Paxos库，它的目标是使得单机服务能够很容易地扩展为分布式服务，并且具有强一致性和高度的容错能力。
 <br/>
 <br/>[![Build Status](https://travis-ci.org/QiumingLu/skywalker.svg?branch=master)](https://travis-ci.org/QiumingLu/skywalker)
 <br/>
