@@ -5,7 +5,7 @@ Skywalker是一个基于[Leslie Lamport](https://en.wikipedia.org/wiki/Leslie_La
 <br/>
 <br/>[![Build Status](https://travis-ci.org/QiumingLu/skywalker.svg?branch=master)](https://travis-ci.org/QiumingLu/skywalker)
 <br/>
-<br/>Authors: Mirants Lu (mirantslu@gmail.com)
+<br/>Author: Mirants Lu (mirantslu@gmail.com)
 <br/>
 <br/>**Skywalker主要包括以下几个部分：**
 <br/>
