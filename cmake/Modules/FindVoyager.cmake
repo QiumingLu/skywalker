@@ -1,42 +1,42 @@
 # - Find Voyager
 #
-# Voyager_INCLUDE_DIRS  - List of Voyager includes.
-# Voyager_LIBRARIES     - List of libraries when using Voyager.
-# Voyager_FOUND         - True if Voyager found
+# VOYAGER_INCLUDE_DIRS  - List of Voyager includes.
+# VOYAGER_LIBRARIES     - List of libraries when using Voyager.
+# VOYAGER_FOUND         - True if Voyager found
 
 # Look for the header of file.
-find_path(Voyager_INCLUDE NAMES voyager/core/tcp_server.h
+find_path(VOYAGER_INCLUDE NAMES voyager/core/tcp_server.h
                           PATHS $ENV{VOYAGER_ROOT}/include /opt/local/include /usr/local/include /usr/include
                           DOC "Path in which the file voyager/core/tcp_server.h is located.")
                                 
 # Look for the library.
-find_library(Voyager_UTIL_LIBRARY NAMES voyager_util
+find_library(VOYAGER_UTIL_LIBRARY NAMES voyager_util
                                   PATHS $ENV{VOYAGER_ROOT}/lib /usr/local/lib /usr/lib
                                   DOC "Path to voyager_util library.")
 
-find_library(Voyager_PORT_LIBRARY NAMES voyager_port
+find_library(VOYAGER_PORT_LIBRARY NAMES voyager_port
                                   PATHS $ENV{VOYAGER_ROOT}/lib /usr/local/lib /usr/lib
                                   DOC "Path to voyager_port library.")
                            
-find_library(Voyager_CORE_LIBRARY NAMES voyager_core
+find_library(VOYAGER_CORE_LIBRARY NAMES voyager_core
                                   PATHS $ENV{VOYAGER_ROOT}/lib /usr/local/lib /usr/lib
                                   DOC "Path to voyager_core library.")
               
-find_library(Voyager_RPC_LIBRARY NAMES voyager_rpc
+find_library(VOYAGER_RPC_LIBRARY NAMES voyager_rpc
                                  PATHS $ENV{VOYAGER_ROOT}/lib /usr/local/lib /usr/lib
                                  DOC "Path to voyager_rpc library.")
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Voyager DEFAULT_MSG Voyager_INCLUDE Voyager_UTIL_LIBRARY Voyager_PORT_LIBRARY Voyager_CORE_LIBRARY Voyager_RPC_LIBRARY)
+find_package_handle_standard_args(Voyager DEFAULT_MSG VOYAGER_INCLUDE VOYAGER_UTIL_LIBRARY VOYAGER_PORT_LIBRARY VOYAGER_CORE_LIBRARY VOYAGER_RPC_LIBRARY)
 
-if(Voyager_FOUND)
-  set(Voyager_INCLUDE_DIRS ${Voyager_INCLUDE})
-  set(Voyager_LIBRARIES 
-      ${Voyager_UTIL_LIBRARY}
-      ${Voyager_PORT_LIBRARY}
-      ${Voyager_CORE_LIBRARY} 
-      ${Voyager_RPC_LIBRARY}
+if(VOYAGER_FOUND)
+  set(VOYAGER_INCLUDE_DIRS ${VOYAGER_INCLUDE})
+  set(VOYAGER_LIBRARIES 
+      ${VOYAGER_UTIL_LIBRARY}
+      ${VOYAGER_PORT_LIBRARY}
+      ${VOYAGER_CORE_LIBRARY} 
+      ${VOYAGER_RPC_LIBRARY}
      )
-  mark_as_advanced(Voyager_INCLUDE Voyager_LIBRARY)
-  message(STATUS "Found Voyager (include: ${Voyager_INCLUDE_DIRS}, library: ${Voyager_LIBRARIES})")
+  mark_as_advanced(VOYAGER_INCLUDE VOYAGER_LIBRARY)
+  message(STATUS "Found Voyager (include: ${VOYAGER_INCLUDE_DIRS}, library: ${VOYAGER_LIBRARIES})")
 endif()  
