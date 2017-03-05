@@ -1,3 +1,14 @@
+# Detect OS
+if test -z "$TARGET_OS"; then
+    TARGET_OS=`uname -s`
+fi
+
+if [ "$TARGET_OS" = "Darwin" ]; then
+    INSTALL_PATH=/usr/local
+else
+    INSTALL_PATH=/usr
+fi
+
 CXX=g++
 CXXFLAGS="-std=c++11 -pthread -I/usr/local/include -I/usr/include"
 CXXOUTPUT="/tmp/skywalker_build_detect_platform-cxx.$$"
@@ -12,7 +23,7 @@ EOF
     tar zxvf v3.2.0.tar.gz
     cd protobuf-3.2.0
     ./autogen.sh
-    ./configure --prefix=/usr
+    ./configure --prefix=$INSTALL_PATH
     make
     sudo make install
     cd ..
@@ -29,8 +40,8 @@ EOF
     tar zxvf v1.20.tar.gz
     cd leveldb-1.20
     make
-    sudo cp -rf out-shared/libleveldb.* /usr/lib
-    sudo cp -rf include/leveldb /usr/include
+    sudo cp -rf out-shared/libleveldb.* $INSTALL_PATH/lib
+    sudo cp -rf include/leveldb $INSTALL_PATH/include
     cd ..
     rm -rf leveldb-1.20
     rm -rf v1.20.tar.gz
@@ -45,7 +56,7 @@ EOF
     tar zxvf v1.6.tar.gz
     cd voyager-1.6
     cmake -DCMAKE_BUILD_TYPE=release \
-          -DCMAKE_INSTALL_PREFIX=/usr \
+          -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH \
           -DCMAKE_BUILD_NO_EXAMPLES=0 \
           -DCMAKE_BUILD_SHARED_LIBS=1 \
           .
