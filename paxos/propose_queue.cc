@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #include "paxos/propose_queue.h"
+#include "skywalker/logging.h"
 
 namespace skywalker {
 
@@ -12,7 +13,8 @@ ProposeQueue::ProposeQueue(Config* config)
       thread_(),
       mutex_(),
       cond_(&mutex_),
-      has_cb_(true) {
+      has_cb_(true),
+      capacity_(0) {
   thread_.Start(&ProposeQueue::StartWorking, this);
 }
 
@@ -23,12 +25,17 @@ ProposeQueue::~ProposeQueue() {
   }
 }
 
-void ProposeQueue::Put(const ProposeHandler& f,
+bool ProposeQueue::Put(const ProposeHandler& f,
                        const ProposeCompleteCallback& cb) {
   MutexLock lock(&mutex_);
+  if (capacity_ != 0 && propose_queue_.size() > capacity_) {
+    SWLog(WARN, "Too many proposals are waiting to be proposed!");
+    return false; 
+  }
   propose_queue_.push(f);
   cb_queue_.push(cb);
   cond_.Signal();
+  return true;
 }
 
 void* ProposeQueue::StartWorking(void* data) {

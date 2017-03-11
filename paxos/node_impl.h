@@ -26,18 +26,18 @@ class NodeImpl : public Node {
 
   bool StartWorking();
 
-  virtual void Propose(uint32_t group_id,
+  virtual bool Propose(uint32_t group_id,
                        const std::string& value,
                        MachineContext* context,
                        const ProposeCompleteCallback& cb);
 
-  virtual void AddMember(uint32_t group_id, const IpPort& i,
-                         const ProposeCompleteCallback& cb);
-  virtual void RemoveMember(uint32_t group_id, const IpPort& i,
-                            const ProposeCompleteCallback& cb);
-  virtual void ReplaceMember(uint32_t group_id,
+  virtual bool AddMember(uint32_t group_id, const IpPort& i,
+                         const MembershipCompleteCallback& cb);
+  virtual bool RemoveMember(uint32_t group_id, const IpPort& i,
+                            const MembershipCompleteCallback& cb);
+  virtual bool ReplaceMember(uint32_t group_id,
                              const IpPort& new_i, const IpPort& old_i,
-                             const ProposeCompleteCallback& cb);
+                             const MembershipCompleteCallback& cb);
   virtual void GetMembership(uint32_t group_id,
                              std::vector<IpPort>* result) const;
 

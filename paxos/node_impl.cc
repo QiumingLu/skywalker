@@ -51,12 +51,12 @@ bool NodeImpl::StartWorking() {
   return ret;
 }
 
-void NodeImpl::Propose(uint32_t group_id,
+bool NodeImpl::Propose(uint32_t group_id,
                        const std::string& value,
                        MachineContext* context,
                        const ProposeCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->OnPropose(value, context, cb);
+  return groups_[group_id]->OnPropose(value, context, cb);
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {
@@ -72,23 +72,23 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   }
 }
 
-void NodeImpl::AddMember(uint32_t group_id, const IpPort& i,
-                         const ProposeCompleteCallback& cb) {
+bool NodeImpl::AddMember(uint32_t group_id, const IpPort& i,
+                         const MembershipCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->AddMember(i, cb);
+  return groups_[group_id]->AddMember(i, cb);
 }
 
-void NodeImpl::RemoveMember(uint32_t group_id, const IpPort& i,
-                            const ProposeCompleteCallback& cb) {
+bool NodeImpl::RemoveMember(uint32_t group_id, const IpPort& i,
+                            const MembershipCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->RemoveMember(i, cb);
+  return groups_[group_id]->RemoveMember(i, cb);
 }
 
-void NodeImpl::ReplaceMember(uint32_t group_id,
+bool NodeImpl::ReplaceMember(uint32_t group_id,
                              const IpPort& new_i, const IpPort& old_i,
-                             const ProposeCompleteCallback& cb) {
+                             const MembershipCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->ReplaceMember(new_i, old_i, cb);
+  return groups_[group_id]->ReplaceMember(new_i, old_i, cb);
 }
 
 void NodeImpl::GetMembership(uint32_t group_id,

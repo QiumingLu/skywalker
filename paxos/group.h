@@ -34,15 +34,15 @@ class Group {
   void SyncMembership();
   void SyncMaster();
 
-  void OnPropose(const std::string& value, MachineContext* context,
+  bool OnPropose(const std::string& value, MachineContext* context,
                  const ProposeCompleteCallback& cb);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
-  void AddMember(const IpPort& ip, const ProposeCompleteCallback& cb);
-  void RemoveMember(const IpPort& ip, const ProposeCompleteCallback& cb);
-  void ReplaceMember(const IpPort& new_i, const IpPort& old_i,
-                     const ProposeCompleteCallback& cb);
+  bool AddMember(const IpPort& ip, const MembershipCompleteCallback& cb);
+  bool RemoveMember(const IpPort& ip, const MembershipCompleteCallback& cb);
+  bool ReplaceMember(const IpPort& new_i, const IpPort& old_i,
+                     const MembershipCompleteCallback& cb);
   void GetMembership(std::vector<IpPort>* result) const;
 
   void AddMachine(StateMachine* machine);
@@ -61,7 +61,7 @@ class Group {
   void RemoveMemberInLoop(uint64_t node_id, MachineContext* context);
   void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
                            MachineContext* context);
-  Status NewPropose(const ProposeHandler& f);
+  bool NewPropose(const ProposeHandler& f);
   void ProposeComplete(MachineContext* context, const Status& result);
 
   const uint64_t node_id_;

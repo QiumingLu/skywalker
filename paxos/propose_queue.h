@@ -24,7 +24,9 @@ class ProposeQueue {
   explicit ProposeQueue(Config* config);
   ~ProposeQueue();
 
-  void Put(const ProposeHandler& f, const ProposeCompleteCallback& cb);
+  void SetCapacity(size_t capacity) { capacity_ = capacity; }
+
+  bool Put(const ProposeHandler& f, const ProposeCompleteCallback& cb);
 
  private:
   friend class Group;
@@ -39,6 +41,7 @@ class ProposeQueue {
   Mutex mutex_;
   Condition cond_;
   bool has_cb_;
+  size_t capacity_;
   std::queue<ProposeHandler> propose_queue_;
   std::queue<ProposeCompleteCallback> cb_queue_;
 

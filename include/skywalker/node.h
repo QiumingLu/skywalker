@@ -37,38 +37,42 @@ class Node {
   virtual ~Node() { }
 
   // Propose a new value to the paxos library.
-  // Returns Status::OK() on success.
-  // Returns Status::InvalidNode() if the node is not in the membership.
-  // Returns Status::Conflict() if there is another value has been chosen.
-  // Returns Status::MachineError() if the state machine executed failed.
-  // Returns Status::Timeout() if the proposal time is more than a second.
-  virtual void Propose(uint32_t group_id,
+  // If propose success returns true, else returns false.
+  // Callback Status::OK() on success.
+  // Callback Status::InvalidNode() if the node is not in the membership.
+  // Callback Status::Conflict() if there is another value has been chosen.
+  // Callback Status::MachineError() if the state machine executed failed.
+  // Callback Status::Timeout() if the proposal time is more than a second.
+  virtual bool Propose(uint32_t group_id,
                        const std::string& value,
                        MachineContext* context,
                        const ProposeCompleteCallback& cb) = 0;
 
   // Add a new node to the paxos membership.
-  // Returns status like calling Node::Propose().
-  // It is also returns Status::OK() if the node has already existed
+  // If Propose success returns true, else returns false.
+  // The callback status like calling Node::Propose().
+  // It is also callback Status::OK() if the node has already existed
   // in the membership.
-  virtual void AddMember(uint32_t group_id, const IpPort& i,
-                         const ProposeCompleteCallback& cb) = 0;
+  virtual bool AddMember(uint32_t group_id, const IpPort& i,
+                         const MembershipCompleteCallback& cb) = 0;
 
   // Remove a node from the paxos membership.
-  // Returns status like calling Node::Propose().
-  // It is also returns Status::OK() if the node
+  // If Propose success returns true, else returns false.
+  // The Callback status like calling Node::Propose().
+  // It is also callback Status::OK() if the node
   // did not exist in the membership.
-  virtual void RemoveMember(uint32_t group_id, const IpPort& i,
-                            const ProposeCompleteCallback& cb) = 0;
+  virtual bool RemoveMember(uint32_t group_id, const IpPort& i,
+                            const MembershipCompleteCallback& cb) = 0;
 
   // Replace an old_node with new_node for the paxos membership.
-  // Returns status like calling Node::Propose().
-  // It is also returns Status::OK() if the new node has already existed
+  // If Propose success returns true, else returns false.
+  // The Callback status like calling Node::Propose().
+  // It is also callback Status::OK() if the new node has already existed
   // in the membership and the old node did not exist in the membership.
-  virtual void ReplaceMember(uint32_t group_id,
+  virtual bool ReplaceMember(uint32_t group_id,
                              const IpPort& new_i,
                              const IpPort& old_i,
-                             const ProposeCompleteCallback& cb) = 0;
+                             const MembershipCompleteCallback& cb) = 0;
 
   // Returns the membership.
   virtual void GetMembership(uint32_t group_id,

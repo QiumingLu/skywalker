@@ -44,6 +44,9 @@ class  Status;
 typedef std::function<
     void (MachineContext*, const Status&)> ProposeCompleteCallback;
 
+typedef std::function<
+    void (const Status&)> MembershipCompleteCallback;
+
 }  // namespace skywalker
 
 #endif   // SKYWALKER_INCLUDE_OPTIONS_H_
