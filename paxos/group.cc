@@ -85,6 +85,7 @@ void Group::SyncMaster() {
 
 void Group::TryBeMaster() {
   MasterState state(master_machine_.GetMasterState());
+  uint64_t next_time = state.lease_time();
   uint64_t now = NowMicros();
   if (state.lease_time() <= now ||
       (state.node_id() == node_id_ && !retrie_master_)) {
@@ -93,24 +94,25 @@ void Group::TryBeMaster() {
         new MachineContext(master_machine_.GetMachineId(),
                            reinterpret_cast<void*>(&lease_time)));
     ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, context));
-    Status status = NewPropose(f);
-    if (status.ok() || status.IsConflict()) {
-      state = master_machine_.GetMasterState();
+    NewPropose(f);
+    state = master_machine_.GetMasterState();
+    if (state.node_id() == node_id_) {
+      next_time = state.lease_time() - 100 * 1000;
     } else {
-      state.set_lease_time(NowMicros() + lease_timeout_);
+      next_time = state.lease_time();
     }
   }
   if (retrie_master_) {
     retrie_master_ = false;
   }
-  bg_loop_.RunAt(state.lease_time(), [this]() {
+  bg_loop_.RunAt(next_time, [this]() {
     TryBeMaster();
   });
 }
 
 void Group::TryBeMasterInLoop(MachineContext* context) {
   MasterState state(master_machine_.GetMasterState());
-  if (state.lease_time() <= NowMicros()) {
+  if (state.lease_time() <= NowMicros() || state.node_id() == node_id_) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
     std::string s;
