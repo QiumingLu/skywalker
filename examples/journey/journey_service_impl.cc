@@ -5,13 +5,17 @@
 #include "journey_service_impl.h"
 #include <functional>
 #include <iostream>
+#include <voyager/port/mutexlock.h>
 #include "murmurhash3.h"
 
 namespace journey {
 
 JourneyServiceImpl::JourneyServiceImpl()
     : group_size_(0),
-      node_(nullptr) {
+      node_(nullptr),
+      mutex_(),
+      cond_(&mutex_),
+      finished_(false) {
 }
 
 JourneyServiceImpl::~JourneyServiceImpl() {
@@ -52,23 +56,29 @@ void JourneyServiceImpl::Propose(
       } else if (res == 1) {
         response->set_result(PROPOSE_RESULT_NOT_FOUND);
       }
-      if (done) {
-        done->Run();
-      }
     } else {
       std::string value;
       request->SerializeToString(&value);
       skywalker::MachineContext* context = new skywalker::MachineContext();
       context->machine_id = machine_.GetMachineId();
       context->user_data = response;
-      node_->Propose(
+      bool res = node_->Propose(
           group_id, value, context,
-          [done](skywalker::MachineContext* ctx, const skywalker::Status& s) {
-        if (done) {
-          done->Run();
-        }
+          [this](skywalker::MachineContext* ctx, const skywalker::Status&) {
+        voyager::port::MutexLock lock(&mutex_);
+        finished_ = true;
+        cond_.Signal();
         delete ctx;
       });
+      if (res) {
+        voyager::port::MutexLock lock(&mutex_);
+        while (!finished_) {
+          cond_.Wait();
+        }
+        finished_ = false;
+      } else {
+        delete context;
+      }
     }
   } else {
     skywalker::IpPort master;
@@ -79,9 +89,9 @@ void JourneyServiceImpl::Propose(
     response->set_master_ip(master.ip);
     response->set_master_port(master.port);
     response->set_master_version(version);
-    if (done) {
-      done->Run();
-    }
+  }
+  if (done) {
+    done->Run();
   }
 }
 

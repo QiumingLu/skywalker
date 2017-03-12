@@ -6,6 +6,7 @@
 #define JOURNEY_JOURNEY_SERVICE_IMPL_H_
 
 #include <string>
+#include <voyager/port/mutex.h>
 #include <skywalker/node.h>
 
 #include "journey.pb.h"
@@ -31,6 +32,10 @@ class JourneyServiceImpl : public JourneyService {
   JourneyDBMachine machine_;
   uint32_t group_size_;
   skywalker::Node* node_;
+
+  voyager::port::Mutex mutex_;
+  voyager::port::Condition cond_;
+  bool finished_;
 
   // No copying allowed
   JourneyServiceImpl(const JourneyServiceImpl&);

@@ -26,7 +26,7 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       mutex_(),
       cond_(&mutex_),
       propose_end_(false) {
-  queue_.SetCapacity(100);
+  queue_.SetCapacity(20);
   propose_cb_ =  std::bind(&ProposeQueue::ProposeComplete, &queue_,
                            std::placeholders::_1, std::placeholders::_2);
   instance_.SetProposeCompleteCallback(propose_cb_);

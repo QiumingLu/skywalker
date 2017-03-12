@@ -49,7 +49,7 @@ class Node {
                        const ProposeCompleteCallback& cb) = 0;
 
   // Add a new node to the paxos membership.
-  // If Propose success returns true, else returns false.
+  // If propose success returns true, else returns false.
   // The callback status like calling Node::Propose().
   // It is also callback Status::OK() if the node has already existed
   // in the membership.
@@ -57,7 +57,7 @@ class Node {
                          const MembershipCompleteCallback& cb) = 0;
 
   // Remove a node from the paxos membership.
-  // If Propose success returns true, else returns false.
+  // If propose success returns true, else returns false.
   // The Callback status like calling Node::Propose().
   // It is also callback Status::OK() if the node
   // did not exist in the membership.
@@ -65,7 +65,7 @@ class Node {
                             const MembershipCompleteCallback& cb) = 0;
 
   // Replace an old_node with new_node for the paxos membership.
-  // If Propose success returns true, else returns false.
+  // If propose success returns true, else returns false.
   // The Callback status like calling Node::Propose().
   // It is also callback Status::OK() if the new node has already existed
   // in the membership and the old node did not exist in the membership.
