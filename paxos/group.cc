@@ -26,9 +26,11 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       mutex_(),
       cond_(&mutex_),
       propose_end_(false) {
-  queue_.SetCapacity(20);
+  queue_.SetCapacity(10);
   propose_cb_ =  std::bind(&ProposeQueue::ProposeComplete, &queue_,
-                           std::placeholders::_1, std::placeholders::_2);
+                           std::placeholders::_1, 
+                           std::placeholders::_2, 
+                           std::placeholders::_3);
   instance_.SetProposeCompleteCallback(propose_cb_);
   instance_.AddMachine(&membership_machine_);
   instance_.AddMachine(&master_machine_);
@@ -77,7 +79,7 @@ void Group::SyncMembershipInLoop(MachineContext* context) {
     m.SerializeToString(&s);
     instance_.OnPropose(s, context);
   } else {
-    propose_cb_(context, Status::OK());
+    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
   }
 }
 
@@ -129,7 +131,7 @@ void Group::TryBeMasterInLoop(MachineContext* context) {
     state.SerializeToString(&s);
     instance_.OnPropose(s, context);
   } else {
-    propose_cb_(context, Status::Conflict(Slice()));
+    propose_cb_(context, Status::Conflict(Slice()), instance_.GetInstanceId());
   }
 }
 
@@ -152,7 +154,10 @@ bool Group::AddMember(const IpPort& ip, const MembershipCompleteCallback& cb) {
       new MachineContext(membership_machine_.GetMachineId()));
   bool res = 
       queue_.Put(std::bind(&Group::AddMemberInLoop, this, node_id, context),
-                 [cb](MachineContext* c, const Status& s) { cb(s); delete c; });
+                 [cb](MachineContext* c, const Status& s, uint64_t instance_id) { 
+                   cb(s, instance_id); 
+                   delete c; 
+                 });
   if (!res) {
     delete context;
   }
@@ -169,7 +174,7 @@ void Group::AddMemberInLoop(uint64_t node_id, MachineContext* context) {
     }
   }
   if (res) {
-    propose_cb_(context, Status::OK());
+    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
   } else {
     Membership m(temp);
     m.add_node_id(node_id);
@@ -185,7 +190,10 @@ bool Group::RemoveMember(const IpPort& ip, const MembershipCompleteCallback& cb)
       new MachineContext(membership_machine_.GetMachineId()));
   bool res = 
       queue_.Put(std::bind(&Group::RemoveMemberInLoop, this, node_id, context),
-                 [cb](MachineContext* c, const Status& s) { cb(s); delete c; });
+                 [cb](MachineContext* c, const Status& s, uint64_t instance_id) { 
+                   cb(s, instance_id); 
+                   delete c; 
+                 });
   if (res) {
     delete context;
   }
@@ -205,7 +213,7 @@ void Group::RemoveMemberInLoop(uint64_t node_id, MachineContext* context) {
   }
 
   if (!res) {
-    propose_cb_(context, Status::OK());
+    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
   } else {
     std::string s;
     m.SerializeToString(&s);
@@ -219,9 +227,12 @@ bool Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i,
   uint64_t j(MakeNodeId(old_i));
   MachineContext* context(
       new MachineContext(membership_machine_.GetMachineId()));
-  bool res = 
+  bool res =
       queue_.Put(std::bind(&Group::ReplaceMemberInLoop, this, i, j, context),
-                 [cb](MachineContext* c, const Status& s) { cb(s); delete c; });
+                 [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
+                   cb(s, instance_id); 
+                   delete c;
+                 });
   if (!res) {
     delete context;
   }
@@ -246,7 +257,7 @@ void Group::ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
   }
 
   if (new_res &&  (!old_res)) {
-    propose_cb_(context, Status::OK());
+    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
   } else {
     if (!new_res) {
       m.add_node_id(new_node_id);
@@ -260,9 +271,10 @@ void Group::ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
 bool Group::NewPropose(const ProposeHandler& f) {
   MutexLock lock(&mutex_);
   propose_end_ = false;
-  bool res = 
-     queue_.Put(f, std::bind(&Group::ProposeComplete, this,
-                             std::placeholders::_1, std::placeholders::_2));
+  bool res = queue_.Put(f, std::bind(&Group::ProposeComplete, this,
+                                     std::placeholders::_1, 
+                                     std::placeholders::_2,
+                                     std::placeholders::_3));
   
   if (res) {
     while (!propose_end_) {
@@ -273,7 +285,8 @@ bool Group::NewPropose(const ProposeHandler& f) {
 }
 
 void Group::ProposeComplete(MachineContext* context,
-                            const Status& result) {
+                            const Status& result,
+                            uint64_t instance_id) {
   MutexLock lock(&mutex_);
   delete context;
   result_ = result;

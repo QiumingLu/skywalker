@@ -62,7 +62,8 @@ class Group {
   void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
                            MachineContext* context);
   bool NewPropose(const ProposeHandler& f);
-  void ProposeComplete(MachineContext* context, const Status& result);
+  void ProposeComplete(MachineContext* context, 
+                       const Status& result, uint64_t instance_id);
 
   const uint64_t node_id_;
   Config config_;

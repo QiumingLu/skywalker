@@ -64,7 +64,7 @@ void Instance::OnPropose(const std::string& value,
                          MachineContext* context) {
   if (!config_->IsValidNodeId(config_->GetNodeId())) {
     Slice msg("this node is not in the membership, please add it firstly.");
-    propose_cb_(context, Status::InvalidNode(msg));
+    propose_cb_(context, Status::InvalidNode(msg), instance_id_);
     return;
   }
 
@@ -82,7 +82,7 @@ void Instance::OnPropose(const std::string& value,
     proposer_.QuitPropose();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
-    propose_cb_(context_, Status::Timeout(msg));
+    propose_cb_(context_, Status::Timeout(msg), instance_id_);
   });
   is_proposing_ = true;
 }
@@ -157,14 +157,14 @@ void Instance::CheckLearn() {
     if (is_proposing_) {
       if (success) {
        if (my) {
-          propose_cb_(context_, Status::OK());
+          propose_cb_(context_, Status::OK(), instance_id_);
         } else {
           Slice msg("another value has been chosen.");
-          propose_cb_(context_, Status::Conflict(msg));
+          propose_cb_(context_, Status::Conflict(msg), instance_id_);
         }
       } else {
         Slice msg("machine execute failed.");
-        propose_cb_(context_, Status::MachineError(msg));
+        propose_cb_(context_, Status::MachineError(msg), instance_id_);
       }
       loop_->Remove(propose_timer_);
       is_proposing_ = false;

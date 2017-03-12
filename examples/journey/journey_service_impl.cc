@@ -64,7 +64,7 @@ void JourneyServiceImpl::Propose(
       context->user_data = response;
       bool res = node_->Propose(
           group_id, value, context,
-          [this](skywalker::MachineContext* ctx, const skywalker::Status&) {
+          [this](skywalker::MachineContext* ctx, const skywalker::Status&, uint64_t) {
         voyager::port::MutexLock lock(&mutex_);
         finished_ = true;
         cond_.Signal();

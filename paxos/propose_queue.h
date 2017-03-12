@@ -32,7 +32,8 @@ class ProposeQueue {
   friend class Group;
   static void* StartWorking(void* data);
   void Propose();
-  void ProposeComplete(MachineContext* context, const Status& s);
+  void ProposeComplete(MachineContext* context, 
+                       const Status& s, uint64_t instance_id);
 
   Config* config_;
   bool exit_;

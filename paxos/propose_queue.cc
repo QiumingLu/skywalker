@@ -56,7 +56,8 @@ void ProposeQueue::Propose() {
   }
 }
 
-void ProposeQueue::ProposeComplete(MachineContext* context, const Status& s) {
+void ProposeQueue::ProposeComplete(
+    MachineContext* context, const Status& s, uint64_t instance_id) {
   ProposeCompleteCallback cb;
   {
     MutexLock lock(&mutex_);
@@ -67,7 +68,7 @@ void ProposeQueue::ProposeComplete(MachineContext* context, const Status& s) {
     has_cb_ = true;
     cond_.Signal();
   }
-  cb(context, s);
+  cb(context, s, instance_id);
 }
 
 }  // namespace skywalker

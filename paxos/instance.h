@@ -35,6 +35,8 @@ class Instance {
 
   void SyncData();
 
+  uint64_t GetInstanceId() const { return instance_id_; }
+
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
 
