@@ -18,74 +18,71 @@ TimerList::TimerList() {
 }
 
 TimerList::~TimerList() {
-  for (auto t : timers_) {
-    delete t.second;
+  for (auto& t : timers_) {
+    delete t;
   }
 }
 
-TimerId TimerList::RunAt(uint64_t micros_value,
-                         const TimerProcCallback& cb) {
-  TimerId id(micros_value, new Timer(micros_value, 0, cb));
-  timers_.insert(id);
-  return id;
+Timer* TimerList::RunAt(uint64_t micros_value,
+                        const TimerProcCallback& cb) {
+  Timer* timer(new Timer(micros_value, 0, cb));
+  timers_.insert(timer);
+  return timer;
 }
 
-TimerId TimerList::RunAt(uint64_t micros_value,
-                         TimerProcCallback&& cb) {
-  TimerId id(micros_value, new Timer(micros_value, 0, std::move(cb)));
-  timers_.insert(id);
-  return id;
+Timer* TimerList::RunAt(uint64_t micros_value,
+                        TimerProcCallback&& cb) {
+  Timer* timer(new Timer(micros_value, 0, std::move(cb)));
+  timers_.insert(timer);
+  return timer;
 }
 
-TimerId TimerList::RunAfter(uint64_t micros_delay,
-                            const TimerProcCallback& cb) {
-  uint64_t micros_value = NowMicros() + micros_delay;
-  TimerId id(micros_value, new Timer(micros_value, 0, cb));
-  timers_.insert(id);
-  return id;
+Timer* TimerList::RunAfter(uint64_t micros_delay,
+                           const TimerProcCallback& cb) {
+  Timer* timer(new Timer(NowMicros() + micros_delay, 0, cb));
+  timers_.insert(timer);
+  return timer;
 }
 
-TimerId TimerList::RunAfter(uint64_t micros_delay,
-                            TimerProcCallback&& cb) {
-  uint64_t micros_value = NowMicros() + micros_delay;
-  TimerId id(micros_value, new Timer(micros_value, 0, std::move(cb)));
-  timers_.insert(id);
-  return id;
+Timer* TimerList::RunAfter(uint64_t micros_delay,
+                           TimerProcCallback&& cb) {
+  Timer* timer(new Timer(NowMicros() + micros_delay, 0, std::move(cb)));
+  timers_.insert(timer);
+  return timer;
 }
 
-TimerId TimerList::RunEvery(uint64_t micros_interval,
-                            const TimerProcCallback& cb) {
-  uint64_t micros_value = NowMicros() + micros_interval;
-  TimerId id(micros_value, new Timer(micros_value, micros_interval, cb));
-  timers_.insert(id);
-  return id;
+Timer* TimerList::RunEvery(uint64_t micros_interval,
+                           const TimerProcCallback& cb) {
+  Timer* timer(new Timer(NowMicros() + micros_interval, micros_interval, cb));
+  timers_.insert(timer);
+  return timer;
 }
 
-TimerId TimerList::RunEvery(uint64_t micros_interval,
-                            TimerProcCallback&& cb) {
-  uint64_t micros_value = NowMicros() + micros_interval;
-  TimerId id(micros_value,
-             new Timer(micros_value, micros_interval, std::move(cb)));
-  timers_.insert(id);
-  return id;
+Timer* TimerList::RunEvery(uint64_t micros_interval,
+                           TimerProcCallback&& cb) {
+  Timer* timer(
+      new Timer(NowMicros() + micros_interval, micros_interval, std::move(cb)));
+  timers_.insert(timer);
+  return timer;
 }
 
-void TimerList::Remove(const TimerId& id) {
-  std::set<TimerId>::iterator it = timers_.find(id);
+void TimerList::Remove(Timer* timer) {
+  std::set<Timer*>::iterator it = timers_.find(timer);
   if (it != timers_.end()) {
-    delete it->second;
+    delete *it;
     timers_.erase(it);
   }
 }
 
 uint64_t TimerList::TimeoutMicros() const {
   if (timers_.empty()) {
-    return 5000000;
+    return -1;
   }
-  if (timers_.begin()->first < NowMicros()) {
+  std::set<Timer*>::iterator it = timers_.begin();
+  if ((*it)->micros_value < NowMicros()) {
     return 0;
   } else {
-    return timers_.begin()->first - NowMicros();
+    return ((*it)->micros_value - NowMicros());
   }
 }
 
@@ -95,17 +92,16 @@ void TimerList::RunTimerProcs() {
   }
 
   uint64_t micros_now = NowMicros();
-  std::set<TimerId>::iterator it;
+  std::set<Timer*>::iterator it;
   while (true) {
     it = timers_.begin();
-    if (it != timers_.end() && it->first <= micros_now) {
-      uint64_t micros_value = it->first;
-      Timer* timer = it->second;
+    if (it != timers_.end() && (*it)->micros_value <= micros_now) {
+      Timer* timer = *it;
       timers_.erase(it);
       timer->timerproc_cb();
       if (timer->repeat) {
-        micros_value += timer->micros_interval;
-        timers_.insert(TimerId(micros_value, timer));
+        timer->micros_value += timer->micros_interval;
+        timers_.insert(timer);
       } else {
         delete timer;
       }

@@ -53,8 +53,8 @@ int main(int argc, char** argv) {
     std::string value;
     std::getline(std::cin, value);
     node->Propose(0, value, nullptr,
-                  [](skywalker::MachineContext*, 
-                     const skywalker::Status& s, 
+                  [](skywalker::MachineContext*,
+                     const skywalker::Status& s,
                      uint64_t instance_id) {
                     printf("%s\n", s.ToString().c_str());
                   });

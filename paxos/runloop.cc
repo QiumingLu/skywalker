@@ -75,37 +75,37 @@ void RunLoop::ThreadFunc() {
   }
 }
 
-TimerId RunLoop::RunAt(uint64_t micros_value,
-                       const TimerProcCallback& cb) {
+Timer* RunLoop::RunAt(uint64_t micros_value,
+                      const TimerProcCallback& cb) {
   return timers_.RunAt(micros_value, cb);
 }
 
-TimerId RunLoop::RunAfter(uint64_t micros_delay,
-                          const TimerProcCallback& cb) {
+Timer* RunLoop::RunAfter(uint64_t micros_delay,
+                         const TimerProcCallback& cb) {
   return timers_.RunAfter(micros_delay, cb);
 }
 
-TimerId RunLoop::RunEvery(uint64_t micros_interval,
-                          const TimerProcCallback& cb) {
+Timer* RunLoop::RunEvery(uint64_t micros_interval,
+                         const TimerProcCallback& cb) {
   return timers_.RunEvery(micros_interval, cb);
 }
 
-TimerId RunLoop::RunAt(uint64_t micros_value,
-                       TimerProcCallback&& cb) {
+Timer* RunLoop::RunAt(uint64_t micros_value,
+                      TimerProcCallback&& cb) {
   return timers_.RunAt(micros_value, std::move(cb));
 }
 
-TimerId RunLoop::RunAfter(uint64_t micros_delay,
-                          TimerProcCallback&& cb) {
+Timer* RunLoop::RunAfter(uint64_t micros_delay,
+                         TimerProcCallback&& cb) {
   return timers_.RunAfter(micros_delay, std::move(cb));
 }
 
-TimerId RunLoop::RunEvery(uint64_t micros_interval,
-                          TimerProcCallback&& cb) {
+Timer* RunLoop::RunEvery(uint64_t micros_interval,
+                         TimerProcCallback&& cb) {
   return timers_.RunEvery(micros_interval, std::move(cb));
 }
 
-void RunLoop::Remove(const TimerId& t) {
+void RunLoop::Remove(Timer* t) {
   timers_.Remove(t);
 }
 

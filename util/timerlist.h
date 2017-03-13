@@ -7,7 +7,6 @@
 
 #include <stdint.h>
 #include <set>
-#include <vector>
 #include <utility>
 
 #include "util/callback.h"
@@ -16,9 +15,15 @@ namespace skywalker {
 
 extern uint64_t NowMicros();
 
+struct TimerCompare;
+
 class TimerList;
 
 class Timer {
+ private:
+  friend struct TimerCompare;
+  friend class TimerList;
+
   Timer(uint64_t value, uint64_t interval, const TimerProcCallback& cb)
       : micros_value(value),
         micros_interval(interval),
@@ -39,8 +44,9 @@ class Timer {
     }
   }
 
- private:
-  friend class TimerList;
+  ~Timer() {
+  }
+
 
   uint64_t micros_value;
   uint64_t micros_interval;
@@ -48,29 +54,36 @@ class Timer {
   bool repeat;
 };
 
-typedef std::pair<uint64_t, Timer*> TimerId;
+struct TimerCompare {
+  bool operator() (const Timer* lhs, const Timer* rhs) {
+    if (lhs->micros_value == rhs->micros_value) {
+      return lhs < rhs;
+    }
+    return lhs->micros_value < rhs->micros_value;
+  }
+};
 
 class TimerList {
  public:
   TimerList();
   ~TimerList();
 
-  TimerId RunAt(uint64_t micros_value, const TimerProcCallback& cb);
-  TimerId RunAt(uint64_t micros_value, TimerProcCallback&& cb);
+  Timer* RunAt(uint64_t micros_value, const TimerProcCallback& cb);
+  Timer* RunAt(uint64_t micros_value, TimerProcCallback&& cb);
 
-  TimerId RunAfter(uint64_t micros_delay, const TimerProcCallback& cb);
-  TimerId RunAfter(uint64_t micros_delay, TimerProcCallback&& cb);
+  Timer* RunAfter(uint64_t micros_delay, const TimerProcCallback& cb);
+  Timer* RunAfter(uint64_t micros_delay, TimerProcCallback&& cb);
 
-  TimerId RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
-  TimerId RunEvery(uint64_t micros_interval, TimerProcCallback&& cb);
+  Timer* RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
+  Timer* RunEvery(uint64_t micros_interval, TimerProcCallback&& cb);
 
-  void Remove(const TimerId& id);
+  void Remove(Timer* timer);
 
   uint64_t TimeoutMicros() const;
   void RunTimerProcs();
 
  private:
-  std::set<TimerId> timers_;
+  std::set<Timer*, TimerCompare> timers_;
 
   // No copying allowed
   TimerList(const TimerList&);
