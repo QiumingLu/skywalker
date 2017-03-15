@@ -3,8 +3,11 @@
 // found in the LICENSE file.
 
 #include "util/timerlist.h"
+
 #include <sys/time.h>
 #include <time.h>
+
+#include "util/runloop.h"
 
 namespace skywalker {
 
@@ -14,7 +17,8 @@ uint64_t NowMicros() {
   return static_cast<uint64_t>(tv.tv_sec)*1000000 + tv.tv_usec;
 }
 
-TimerList::TimerList() {
+TimerList::TimerList(RunLoop* loop) 
+    : loop_(loop) {
 }
 
 TimerList::~TimerList() {
@@ -26,35 +30,35 @@ TimerList::~TimerList() {
 Timer* TimerList::RunAt(uint64_t micros_value,
                         const TimerProcCallback& cb) {
   Timer* timer(new Timer(micros_value, 0, cb));
-  timers_.insert(timer);
+  InsertInLoop(timer);
   return timer;
 }
 
 Timer* TimerList::RunAt(uint64_t micros_value,
                         TimerProcCallback&& cb) {
   Timer* timer(new Timer(micros_value, 0, std::move(cb)));
-  timers_.insert(timer);
+  InsertInLoop(timer);
   return timer;
 }
 
 Timer* TimerList::RunAfter(uint64_t micros_delay,
                            const TimerProcCallback& cb) {
   Timer* timer(new Timer(NowMicros() + micros_delay, 0, cb));
-  timers_.insert(timer);
+  InsertInLoop(timer);
   return timer;
 }
 
 Timer* TimerList::RunAfter(uint64_t micros_delay,
                            TimerProcCallback&& cb) {
   Timer* timer(new Timer(NowMicros() + micros_delay, 0, std::move(cb)));
-  timers_.insert(timer);
+  InsertInLoop(timer);
   return timer;
 }
 
 Timer* TimerList::RunEvery(uint64_t micros_interval,
                            const TimerProcCallback& cb) {
   Timer* timer(new Timer(NowMicros() + micros_interval, micros_interval, cb));
-  timers_.insert(timer);
+  InsertInLoop(timer);
   return timer;
 }
 
@@ -62,18 +66,25 @@ Timer* TimerList::RunEvery(uint64_t micros_interval,
                            TimerProcCallback&& cb) {
   Timer* timer(
       new Timer(NowMicros() + micros_interval, micros_interval, std::move(cb)));
-  timers_.insert(timer);
+  InsertInLoop(timer);
   return timer;
 }
 
 void TimerList::Remove(Timer* timer) {
-  std::set<Timer*>::iterator it = timers_.find(timer);
-  if (it != timers_.end()) {
-    delete *it;
-    timers_.erase(it);
-  }
+  loop_->QueueInLoop([timer, this]() {
+    std::set<Timer*>::iterator it = timers_.find(timer);
+    if (it != timers_.end()) {
+      delete *it;
+      timers_.erase(it);
+    }
+  });
 }
 
+void TimerList::InsertInLoop(Timer* timer) {
+  loop_->QueueInLoop([timer, this]() {
+    timers_.insert(timer);
+  });
+}
 uint64_t TimerList::TimeoutMicros() const {
   if (timers_.empty()) {
     return -1;

@@ -2,21 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKYWALKER_PAXOS_RUNLOOP_H_
-#define SKYWALKER_PAXOS_RUNLOOP_H_
+#ifndef SKYWALKER_UTIL_RUNLOOP_H_
+#define SKYWALKER_UTIL_RUNLOOP_H_
 
 #include <vector>
 #include <functional>
 
-#include "proto/paxos.pb.h"
-#include "skywalker/slice.h"
 #include "util/thread.h"
 #include "util/mutex.h"
 #include "util/timerlist.h"
 
 namespace skywalker {
-
-class Instance;
 
 class RunLoop {
  public:
@@ -31,7 +27,6 @@ class RunLoop {
   void QueueInLoop(const Func& func);
   void QueueInLoop(Func&& func);
 
-  // No thread safe
   Timer* RunAt(uint64_t micros_value, const TimerProcCallback& cb);
   Timer* RunAfter(uint64_t micros_delay, const TimerProcCallback& cb);
   Timer* RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
@@ -47,7 +42,6 @@ class RunLoop {
   void ThreadFunc();
 
   bool exit_;
-  Instance* instance_;
   Thread thread_;
 
   Mutex mutex_;
@@ -62,4 +56,4 @@ class RunLoop {
 
 }  // namespace skywalker
 
-#endif  // SKYWALKER_PAXOS_RUNLOOP_H_
+#endif  // SKYWALKER_UTIL_RUNLOOP_H_

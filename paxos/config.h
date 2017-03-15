@@ -11,7 +11,7 @@
 #include "network/messager.h"
 #include "storage/db.h"
 #include "skywalker/options.h"
-#include "paxos/runloop.h"
+#include "util/runloop.h"
 #include "util/mutex.h"
 
 namespace skywalker {

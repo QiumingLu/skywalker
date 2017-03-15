@@ -7,7 +7,7 @@
 #include <utility>
 
 #include "paxos/config.h"
-#include "paxos/runloop.h"
+#include "util/runloop.h"
 #include "util/mutexlock.h"
 #include "skywalker/logging.h"
 

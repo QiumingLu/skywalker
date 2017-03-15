@@ -15,6 +15,8 @@ namespace skywalker {
 
 extern uint64_t NowMicros();
 
+class RunLoop;
+
 struct TimerCompare;
 
 class TimerList;
@@ -65,7 +67,7 @@ struct TimerCompare {
 
 class TimerList {
  public:
-  TimerList();
+  explicit TimerList(RunLoop* loop);
   ~TimerList();
 
   Timer* RunAt(uint64_t micros_value, const TimerProcCallback& cb);
@@ -83,6 +85,9 @@ class TimerList {
   void RunTimerProcs();
 
  private:
+  void InsertInLoop(Timer* timer);
+
+  RunLoop* loop_;
   std::set<Timer*, TimerCompare> timers_;
 
   // No copying allowed

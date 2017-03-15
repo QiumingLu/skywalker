@@ -2,12 +2,13 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "paxos/runloop.h"
+#include "util/runloop.h"
+
+#include <assert.h>
 
 #include <algorithm>
 #include <utility>
 
-#include "paxos/instance.h"
 #include "util/mutexlock.h"
 
 namespace skywalker {
@@ -20,10 +21,10 @@ void* RunLoop::StartRunLoop(void* data) {
 
 RunLoop::RunLoop()
     : exit_(false),
-      instance_(nullptr),
       thread_(),
       mutex_(),
-      cond_(&mutex_) {
+      cond_(&mutex_),
+      timers_(this) {
 }
 
 RunLoop::~RunLoop() {
@@ -62,9 +63,8 @@ void RunLoop::ThreadFunc() {
     std::vector<Func> funcs;
     {
       MutexLock lock(&mutex_);
-      while (funcs_.empty()) {
+      if (funcs_.empty()) {
         cond_.Wait(timeout);
-        break;
       }
       funcs.swap(funcs_);
     }
