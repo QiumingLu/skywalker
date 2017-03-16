@@ -6,7 +6,7 @@ compiler:
 - clang
 env:
   global:
-  - secure: eI4vJ4/uNHbWQSMyS3PMN5UX2Bpa4OmP6n976NrKADCq+Zit+Ixwv0wYoerPSZqmxBeeVK1Ftn90Iprc7wPrFQxkne52vIDf1FAvbgMV/r9AbEjTVGh89o0Vb+L03HyDmi60JZuOCfwVU5ze1Atultm+f1fpO8OWttsl2Fpqtqnu/25fiOmDTWkGknGuxHYlD4Ib777qi8tCUZd6pjGmc9gRK6lG1bkwK6qOQJsOmSD5UUgrfzkjlNh7LoMcgMiBBQbaNQURg4QI2OOVZ+1SKUSXM/iwsn9eQ8pQi4CV4w3z+ks77sCSyFBlNal09iD/boU/vnMprebG4I8U/Lc/HTJHl12xI3IeZlLwyA8nOATdOaNhtGQ4ksCTlZKli4g+FtlbxNSp++g4qhvv6jwiJVSdLQ5Qd1aOMIjVZVw1OwES+jjWLOcchKIS2BukFY8pFdRhndQ3S+Xu0ux8EYb6EnfMv4BSTxKbhM8/ZN1I/AiqshkEHhajlOXRPitjMHbxodoREYIrMWY5N70ZFM7ixy9jS8+JDh7DvUMmNuOwni+sWw/YlGTzxehFrT6f5YEXF8OVy/6W4pCTdU5FzBddaXejPz4RRgbxJX/s71sdBNVwMNIdNvx7bfg8gdEuZcxFxcZazP2Axp8joIvdcgsYx82GyNrhcBnl5wr5+rBL3Ew=
+  - secure: "ieI4vJ4/uNHbWQSMyS3PMN5UX2Bpa4OmP6n976NrKADCq+Zit+Ixwv0wYoerPSZqmxBeeVK1Ftn90Iprc7wPrFQxkne52vIDf1FAvbgMV/r9AbEjTVGh89o0Vb+L03HyDmi60JZuOCfwVU5ze1Atultm+f1fpO8OWttsl2Fpqtqnu/25fiOmDTWkGknGuxHYlD4Ib777qi8tCUZd6pjGmc9gRK6lG1bkwK6qOQJsOmSD5UUgrfzkjlNh7LoMcgMiBBQbaNQURg4QI2OOVZ+1SKUSXM/iwsn9eQ8pQi4CV4w3z+ks77sCSyFBlNal09iD/boU/vnMprebG4I8U/Lc/HTJHl12xI3IeZlLwyA8nOATdOaNhtGQ4ksCTlZKli4g+FtlbxNSp++g4qhvv6jwiJVSdLQ5Qd1aOMIjVZVw1OwES+jjWLOcchKIS2BukFY8pFdRhndQ3S+Xu0ux8EYb6EnfMv4BSTxKbhM8/ZN1I/AiqshkEHhajlOXRPitjMHbxodoREYIrMWY5N70ZFM7ixy9jS8+JDh7DvUMmNuOwni+sWw/YlGTzxehFrT6f5YEXF8OVy/6W4pCTdU5FzBddaXejPz4RRgbxJX/s71sdBNVwMNIdNvx7bfg8gdEuZcxFxcZazP2Axp8joIvdcgsYx82GyNrhcBnl5wr5+rBL3Ew="
 os:
 - linux
 - osx
@@ -19,7 +19,8 @@ script:
 addons:
   coverity_scan:
     project:
-      name: QiumingLu/skywalker
+      name: "QiumingLu/skywalker"
+      description: "Build submitted via Travis CI"
     notification_email: mirantslu@gmail.com
     build_command_prepend: "rm -rf build"
     build_command: "./build.sh"
