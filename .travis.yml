@@ -13,22 +13,8 @@ os:
 git:
   submodules: false
 
-env:
-  global:
-    - secure: "lR5U0Fcd+5oxVi1uhLAdhqDcnb/h5624fHgIqxTOAXCxTtzon4v2MZYsD5DPJOq/xuWvcB9XUb4u1tCWGl1fATAlyVDd3Y4IS3ke6qchIpttLGFb1ajQyKxzEIBgI5netjWVSvLddV6nEp0g3HeSw6kSzG61HPaAxT63pUSdkGo8kSsV7utnrIJ7fQ7ge8Ajcl1jiluVvKaDzk8BSSZ3iqbgiOOG3nq5Bf8iOvoNGUtoZrR2gAH9lXiilbhBlkP2WUENjaovW40WmFdGSwlT8dFJ5u+q9wqKgxd9q5q6nQDdYygdm8VWfFhZ3WwMgGk9mkK0EhLHl/+b11OfMgCQEkjvhYqBZlH9pEuvg/sLMDIZeiLRfYNA87aXtd/5FvlH9l4eZ92JAt4JHczIQH+z+0Ie554afgIvuFEpYFMfeaytLgIlI2xrV8iHiLa269n8BlULeSVXQToA4DKdefdTkJMDSE4nXSKTg5kUhlDmsvUvFpgp6TS6kgaEgOdLm3be7nXR8CZ3tn8Ej322cflDaHYBgOxxrAxQGwp+o/Tv0L5y4B4lv5kGlcfT6uacpM+ZO+S7D1ry2gSZTUeBK1EFv4B/Fg8mHbYx+VtgVLs5AcM7/rGThBIvAWtd0zUmcE044/9/ZYJKvpo1o8O0QZO9bBBtdrPrehuqX3zqlf7pmGw="
-
 before_script:
 - ./build_travis.sh
 
 script:
 - ./build.sh
-
-addons:
-  coverity_scan:
-    project:
-      name: "QiumingLu/skywalker"
-      description: "Build submitted via Travis CI"
-    notification_email: mirantslu@gmail.com
-    build_command_prepend: "rm -rf build"
-    build_command: "./build.sh"
-    branch_pattern: master
