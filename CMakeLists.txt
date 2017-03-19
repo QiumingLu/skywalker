@@ -63,13 +63,13 @@ message(STATUS "CXX_FLAGS = " ${CMAKE_CXX_FLAGS} " " ${CMAKE_CXX_FLAGS_${BUILD_T
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
-set(SkyWalker_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
-include_directories(${SkyWalker_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
+set(Skywalker_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+include_directories(${Skywalker_INCLUDE_DIR} ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
 
 include(cmake/Dependencies.cmake)
 include(cmake/Targets.cmake)
 
-message(STATUS ${SkyWalker_LINKER_LIBS})
+message(STATUS ${Skywalker_LINKER_LIBS})
 
 skywalker_set_skywalker_link()
 if(CMAKE_BUILD_SHARED_LIBS)
@@ -79,13 +79,14 @@ if(CMAKE_BUILD_SHARED_LIBS)
   set_target_properties(skywalker PROPERTIES CLEAN_DIRECT_OUTPUT 1)
   set_target_properties(skywalker_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
   set_target_properties(skywalker PROPERTIES VERSION 1.2 SOVERSION 1)
-  target_link_libraries(skywalker ${SkyWalker_LINKER_LIBS})
-  install(DIRECTORY ${SkyWalker_INCLUDE_DIR}/skywalker DESTINATION include)
+  target_link_libraries(skywalker ${Skywalker_LINKER_LIBS})
+  install(DIRECTORY ${Skywalker_INCLUDE_DIR}/skywalker DESTINATION include)
   install(TARGETS skywalker DESTINATION lib)
   install(TARGETS skywalker_static LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
 else()
   add_library(skywalker ${skywalker_SRCS})
-  target_link_libraries(skywalker ${SkyWalker_LINKER_LIBS})
+  target_link_libraries(skywalker ${Skywalker_LINKER_LIBS})
+  install(DIRECTORY ${Skywalker_INCLUDE_DIR}/skywalker DESTINATION include)
   install(TARGETS skywalker DESTINATION lib)
 endif()
 

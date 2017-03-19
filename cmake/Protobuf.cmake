@@ -1,14 +1,15 @@
 find_package(Protobuf REQUIRED)
 include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIR})
-list(APPEND SkyWalker_LINKER_LIBS ${PROTOBUF_LIBRARIES})
+list(APPEND Skywalker_LINKER_LIBS ${PROTOBUF_LIBRARIES})
 
 if (EXISTS ${PROTOBUF_PROTOC_EXECUTABLE})
-  message(STATUS "Found PROTOBUF Compiler: ${PROTOBUF_PROTOC_EXECUTABLE}")
+  message(STATUS "Found Protobuf Compiler: ${PROTOBUF_PROTOC_EXECUTABLE}")
 else()
-  message(FATAL_ERROR "Could not find PROTOBUF Compiler")
+  message(FATAL_ERROR "Could not find Protobuf Compiler")
 endif()
 
 if(PROTOBUF_FOUND)
+  message(STATUS "Found Protobuf (include: ${PROTOBUF_INCLUDE_DIR}, libraries: ${PROTOBUF_LIBRARIES})")
 endif()
 
 set(proto_gen_folder "${PROJECT_BINARY_DIR}/proto")

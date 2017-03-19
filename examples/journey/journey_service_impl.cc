@@ -3,19 +3,17 @@
 // found in the LICENSE file.
 
 #include "journey_service_impl.h"
+
 #include <functional>
 #include <iostream>
-#include <voyager/port/mutexlock.h>
+
 #include "murmurhash3.h"
 
 namespace journey {
 
 JourneyServiceImpl::JourneyServiceImpl()
     : group_size_(0),
-      node_(nullptr),
-      mutex_(),
-      cond_(&mutex_),
-      finished_(false) {
+      node_(nullptr) {
 }
 
 JourneyServiceImpl::~JourneyServiceImpl() {
@@ -46,6 +44,8 @@ void JourneyServiceImpl::Propose(
     google::protobuf::Closure* done) {
   uint32_t group_id = Shard(request->key());
   response->set_result(PROPOSE_RESULT_FAIL);
+  bool propose = false;
+
   if (node_->IsMaster(group_id)) {
     if (request->type() == PROPOSE_TYPE_GET) {
       std::string s;
@@ -62,21 +62,15 @@ void JourneyServiceImpl::Propose(
       skywalker::MachineContext* context = new skywalker::MachineContext();
       context->machine_id = machine_.GetMachineId();
       context->user_data = response;
-      bool res = node_->Propose(
+      propose = node_->Propose(
           group_id, value, context,
-          [this](skywalker::MachineContext* ctx, const skywalker::Status&, uint64_t) {
-        voyager::port::MutexLock lock(&mutex_);
-        finished_ = true;
-        cond_.Signal();
+          [done, this](skywalker::MachineContext* ctx, const skywalker::Status&, uint64_t) {
+        if (done) {
+          done->Run();
+        }
         delete ctx;
       });
-      if (res) {
-        voyager::port::MutexLock lock(&mutex_);
-        while (!finished_) {
-          cond_.Wait();
-        }
-        finished_ = false;
-      } else {
+      if (!propose) {
         delete context;
       }
     }
@@ -90,7 +84,7 @@ void JourneyServiceImpl::Propose(
     response->set_master_port(master.port);
     response->set_master_version(version);
   }
-  if (done) {
+  if (!propose && done) {
     done->Run();
   }
 }

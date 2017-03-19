@@ -1,5 +1,5 @@
 macro(skywalker_set_skywalker_link)
-  set(SkyWalker_LINK skywalker)
+  set(Skywalker_LINK skywalker)
 endmacro()
 
 file(GLOB proto_files proto/*.proto)
