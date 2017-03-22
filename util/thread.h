@@ -6,8 +6,17 @@
 #define SKYWALKER_UTIL_THREAD_H_
 
 #include <pthread.h>
+#include <stdint.h>
 
 namespace skywalker {
+
+namespace CurrentThread {
+
+extern __thread uint64_t  cached_tid;
+
+extern uint64_t Tid();
+
+}  // namespace CurrentThread
 
 class Thread {
  public:

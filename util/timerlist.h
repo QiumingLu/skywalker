@@ -17,78 +17,35 @@ extern uint64_t NowMicros();
 
 class RunLoop;
 
-struct TimerCompare;
+class Timer;
 
-class TimerList;
-
-class Timer {
- private:
-  friend struct TimerCompare;
-  friend class TimerList;
-
-  Timer(uint64_t value, uint64_t interval, const TimerProcCallback& cb)
-      : micros_value(value),
-        micros_interval(interval),
-        timerproc_cb(cb),
-        repeat(false) {
-    if (micros_interval > 0) {
-      repeat = true;
-    }
-  }
-
-  Timer(uint64_t value, uint64_t interval, TimerProcCallback&& cb)
-      : micros_value(value),
-        micros_interval(interval),
-        timerproc_cb(std::move(cb)),
-        repeat(false) {
-    if (micros_interval > 0) {
-      repeat = true;
-    }
-  }
-
-  ~Timer() {
-  }
-
-
-  uint64_t micros_value;
-  uint64_t micros_interval;
-  TimerProcCallback timerproc_cb;
-  bool repeat;
-};
-
-struct TimerCompare {
-  bool operator() (const Timer* lhs, const Timer* rhs) {
-    if (lhs->micros_value == rhs->micros_value) {
-      return lhs < rhs;
-    }
-    return lhs->micros_value < rhs->micros_value;
-  }
-};
+typedef std::pair<uint64_t, Timer*> TimerId;
 
 class TimerList {
  public:
   explicit TimerList(RunLoop* loop);
   ~TimerList();
 
-  Timer* RunAt(uint64_t micros_value, const TimerProcCallback& cb);
-  Timer* RunAt(uint64_t micros_value, TimerProcCallback&& cb);
+  TimerId RunAt(uint64_t micros_value, const TimerProcCallback& cb);
+  TimerId RunAt(uint64_t micros_value, TimerProcCallback&& cb);
 
-  Timer* RunAfter(uint64_t micros_delay, const TimerProcCallback& cb);
-  Timer* RunAfter(uint64_t micros_delay, TimerProcCallback&& cb);
+  TimerId RunAfter(uint64_t micros_delay, const TimerProcCallback& cb);
+  TimerId RunAfter(uint64_t micros_delay, TimerProcCallback&& cb);
 
-  Timer* RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
-  Timer* RunEvery(uint64_t micros_interval, TimerProcCallback&& cb);
+  TimerId RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
+  TimerId RunEvery(uint64_t micros_interval, TimerProcCallback&& cb);
 
-  void Remove(Timer* timer);
+  void Remove(TimerId timer);
 
   uint64_t TimeoutMicros() const;
   void RunTimerProcs();
 
  private:
-  void InsertInLoop(Timer* timer);
+  void InsertInLoop(TimerId timer);
 
   RunLoop* loop_;
-  std::set<Timer*, TimerCompare> timers_;
+  std::set<Timer*> timer_ptrs_;
+  std::set<TimerId> timers_;
 
   // No copying allowed
   TimerList(const TimerList&);

@@ -10,52 +10,21 @@
 #include <utility>
 
 #include "util/mutexlock.h"
+#include "util/thread.h"
+#include "skywalker/logging.h"
 
 namespace skywalker {
 
-void* RunLoop::StartRunLoop(void* data) {
-  RunLoop* loop = reinterpret_cast<RunLoop*>(data);
-  loop->ThreadFunc();
-  return nullptr;
-}
-
 RunLoop::RunLoop()
     : exit_(false),
-      thread_(),
+      tid_(CurrentThread::Tid()),
       mutex_(),
       cond_(&mutex_),
       timers_(this) {
 }
 
-RunLoop::~RunLoop() {
-  if (exit_ != true) {
-    exit_ = true;
-    thread_.Join();
-  }
-}
-
 void RunLoop::Loop() {
-  assert(!thread_.Started());
-  thread_.Start(&RunLoop::StartRunLoop, this);
-}
-
-void RunLoop::Exit() {
-  exit_ = true;
-}
-
-void RunLoop::QueueInLoop(const Func& func) {
-  MutexLock lock(&mutex_);
-  funcs_.push_back(func);
-  cond_.Signal();
-}
-
-void RunLoop::QueueInLoop(Func&& func) {
-  MutexLock lock(&mutex_);
-  funcs_.push_back(std::move(func));
-  cond_.Signal();
-}
-
-void RunLoop::ThreadFunc() {
+  AssertInMyLoop();
   exit_ = false;
   while (!exit_) {
     uint64_t t = timers_.TimeoutMicros();
@@ -75,37 +44,83 @@ void RunLoop::ThreadFunc() {
   }
 }
 
-Timer* RunLoop::RunAt(uint64_t micros_value,
-                      const TimerProcCallback& cb) {
+void RunLoop::Exit() {
+  this->QueueInLoop([this]() {
+    exit_ = true;
+  });
+}
+
+bool RunLoop::IsInMyLoop() const {
+  return tid_ == CurrentThread::Tid();
+}
+
+void RunLoop::AssertInMyLoop() {
+  if (!IsInMyLoop()) {
+    SWLog(FATAL, "runloop tid=%llu, but current thread tid=%llu",
+          static_cast<unsigned long long>(tid_),
+          static_cast<unsigned long long>(CurrentThread::Tid()));
+  }
+}
+
+void RunLoop::RunInLoop(const Func& func) {
+  if (IsInMyLoop()) {
+   func();
+  } else {
+    QueueInLoop(func);
+  }
+}
+
+void RunLoop::RunInLoop(Func&& func) {
+  if (IsInMyLoop()) {
+   func();
+  } else {
+    QueueInLoop(std::move(func));
+  }
+}
+
+void RunLoop::QueueInLoop(const Func& func) {
+  MutexLock lock(&mutex_);
+  funcs_.push_back(func);
+  cond_.Signal();
+}
+
+void RunLoop::QueueInLoop(Func&& func) {
+  MutexLock lock(&mutex_);
+  funcs_.push_back(std::move(func));
+  cond_.Signal();
+}
+
+TimerId RunLoop::RunAt(uint64_t micros_value,
+                       const TimerProcCallback& cb) {
   return timers_.RunAt(micros_value, cb);
 }
 
-Timer* RunLoop::RunAfter(uint64_t micros_delay,
+TimerId RunLoop::RunAfter(uint64_t micros_delay,
                          const TimerProcCallback& cb) {
   return timers_.RunAfter(micros_delay, cb);
 }
 
-Timer* RunLoop::RunEvery(uint64_t micros_interval,
+TimerId RunLoop::RunEvery(uint64_t micros_interval,
                          const TimerProcCallback& cb) {
   return timers_.RunEvery(micros_interval, cb);
 }
 
-Timer* RunLoop::RunAt(uint64_t micros_value,
+TimerId RunLoop::RunAt(uint64_t micros_value,
                       TimerProcCallback&& cb) {
   return timers_.RunAt(micros_value, std::move(cb));
 }
 
-Timer* RunLoop::RunAfter(uint64_t micros_delay,
+TimerId RunLoop::RunAfter(uint64_t micros_delay,
                          TimerProcCallback&& cb) {
   return timers_.RunAfter(micros_delay, std::move(cb));
 }
 
-Timer* RunLoop::RunEvery(uint64_t micros_interval,
+TimerId RunLoop::RunEvery(uint64_t micros_interval,
                          TimerProcCallback&& cb) {
   return timers_.RunEvery(micros_interval, std::move(cb));
 }
 
-void RunLoop::Remove(Timer* t) {
+void RunLoop::Remove(TimerId t) {
   timers_.Remove(t);
 }
 

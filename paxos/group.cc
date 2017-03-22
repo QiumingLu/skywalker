@@ -18,6 +18,7 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       config_(group_id, node_id, options, network),
       instance_(&config_),
       loop_(config_.GetLoop()),
+      bg_loop_(nullptr),
       lease_timeout_(10 * 1000 * 1000),
       retrie_master_(false),
       membership_machine_(options, &config_),
@@ -84,8 +85,7 @@ void Group::SyncMembershipInLoop(MachineContext* context) {
 }
 
 void Group::SyncMaster() {
-  bg_loop_.reset(new RunLoop());
-  bg_loop_->Loop();
+  bg_loop_ = thread_.Loop();
   bg_loop_->QueueInLoop([this]() {
     TryBeMaster();
   });

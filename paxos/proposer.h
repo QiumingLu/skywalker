@@ -60,7 +60,7 @@ class Proposer {
   bool skip_prepare_;
   bool was_rejected_by_someone_;
 
-  Timer* retry_timer_;
+  TimerId retry_timer_;
   Random rand_;
 
   // No copying allowed

@@ -168,7 +168,6 @@ void Instance::CheckLearn() {
         propose_cb_(context_, Status::MachineError(msg), instance_id_);
       }
       loop_->Remove(propose_timer_);
-      propose_timer_ = nullptr;
       is_proposing_ = false;
     }
 

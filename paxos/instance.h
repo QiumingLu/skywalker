@@ -67,7 +67,7 @@ class Instance {
   MachineContext* context_;
   PaxosValue propose_value_;
   ProposeCompleteCallback propose_cb_;
-  Timer* propose_timer_;
+  TimerId propose_timer_;
 
   Mutex mutex_;
   std::map<int, StateMachine*> machines_;

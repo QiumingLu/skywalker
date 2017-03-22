@@ -5,10 +5,10 @@
 #ifndef SKYWALKER_UTIL_RUNLOOP_H_
 #define SKYWALKER_UTIL_RUNLOOP_H_
 
+#include <stdint.h>
 #include <vector>
 #include <functional>
 
-#include "util/thread.h"
 #include "util/mutex.h"
 #include "util/timerlist.h"
 
@@ -19,30 +19,31 @@ class RunLoop {
   typedef std::function<void ()> Func;
 
   RunLoop();
-  ~RunLoop();
 
   void Loop();
   void Exit();
 
+  bool IsInMyLoop() const;
+  void AssertInMyLoop();
+
+  void RunInLoop(const Func& func);
+  void RunInLoop(Func&& func);
   void QueueInLoop(const Func& func);
   void QueueInLoop(Func&& func);
 
-  Timer* RunAt(uint64_t micros_value, const TimerProcCallback& cb);
-  Timer* RunAfter(uint64_t micros_delay, const TimerProcCallback& cb);
-  Timer* RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
+  TimerId RunAt(uint64_t micros_value, const TimerProcCallback& cb);
+  TimerId RunAfter(uint64_t micros_delay, const TimerProcCallback& cb);
+  TimerId RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
 
-  Timer* RunAt(uint64_t micros_value, TimerProcCallback&& cb);
-  Timer* RunAfter(uint64_t micros_delay, TimerProcCallback&& cb);
-  Timer* RunEvery(uint64_t micros_interval, TimerProcCallback&& cb);
+  TimerId RunAt(uint64_t micros_value, TimerProcCallback&& cb);
+  TimerId RunAfter(uint64_t micros_delay, TimerProcCallback&& cb);
+  TimerId RunEvery(uint64_t micros_interval, TimerProcCallback&& cb);
 
-  void Remove(Timer* t);
+  void Remove(TimerId t);
 
  private:
-  static void* StartRunLoop(void* data);
-  void ThreadFunc();
-
   bool exit_;
-  Thread thread_;
+  const uint64_t tid_;
 
   Mutex mutex_;
   Condition cond_;

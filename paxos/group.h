@@ -70,7 +70,9 @@ class Group {
   Instance instance_;
   RunLoop* loop_;
 
-  std::unique_ptr<RunLoop> bg_loop_;
+  RunLoop* bg_loop_;
+  RunLoopThread thread_;
+
   uint64_t lease_timeout_;
   bool retrie_master_;
   MembershipMachine membership_machine_;

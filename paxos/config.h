@@ -12,6 +12,7 @@
 #include "storage/db.h"
 #include "skywalker/options.h"
 #include "util/runloop.h"
+#include "util/runloop_thread.h"
 #include "util/mutex.h"
 
 namespace skywalker {
@@ -58,6 +59,8 @@ class Config {
   Messager* messager_;
   RunLoop* loop_;
   RunLoop* bg_loop_;
+  RunLoopThread thread_;
+  RunLoopThread bg_thread_;
 
   Membership membership_;
   Membership followers_;

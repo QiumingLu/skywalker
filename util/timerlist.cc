@@ -11,6 +11,39 @@
 
 namespace skywalker {
 
+class Timer {
+ private:
+  friend class TimerList;
+
+  Timer(uint64_t value, uint64_t interval, const TimerProcCallback& cb)
+      : micros_value(value),
+        micros_interval(interval),
+        timerproc_cb(cb),
+        repeat(false) {
+    if (micros_interval > 0) {
+      repeat = true;
+    }
+  }
+
+  Timer(uint64_t value, uint64_t interval, TimerProcCallback&& cb)
+      : micros_value(value),
+        micros_interval(interval),
+        timerproc_cb(std::move(cb)),
+        repeat(false) {
+    if (micros_interval > 0) {
+      repeat = true;
+    }
+  }
+
+  ~Timer() {
+  }
+
+  uint64_t micros_value;
+  uint64_t micros_interval;
+  TimerProcCallback timerproc_cb;
+  bool repeat;
+};
+
 uint64_t NowMicros() {
   struct timeval tv;
   gettimeofday(&tv, nullptr);
@@ -22,99 +55,112 @@ TimerList::TimerList(RunLoop* loop)
 }
 
 TimerList::~TimerList() {
-  for (auto& t : timers_) {
+  for (auto& t : timer_ptrs_) {
     delete t;
   }
 }
 
-Timer* TimerList::RunAt(uint64_t micros_value,
-                        const TimerProcCallback& cb) {
-  Timer* timer(new Timer(micros_value, 0, cb));
+TimerId TimerList::RunAt(uint64_t micros_value,
+                         const TimerProcCallback& cb) {
+  TimerId timer(micros_value, new Timer(micros_value, 0, cb));
   InsertInLoop(timer);
   return timer;
 }
 
-Timer* TimerList::RunAt(uint64_t micros_value,
-                        TimerProcCallback&& cb) {
-  Timer* timer(new Timer(micros_value, 0, std::move(cb)));
+TimerId TimerList::RunAt(uint64_t micros_value,
+                         TimerProcCallback&& cb) {
+  TimerId timer(micros_value, new Timer(micros_value, 0, std::move(cb)));
   InsertInLoop(timer);
   return timer;
 }
 
-Timer* TimerList::RunAfter(uint64_t micros_delay,
-                           const TimerProcCallback& cb) {
-  Timer* timer(new Timer(NowMicros() + micros_delay, 0, cb));
+TimerId TimerList::RunAfter(uint64_t micros_delay,
+                            const TimerProcCallback& cb) {
+  uint64_t micros_value = NowMicros() + micros_delay;
+  TimerId timer(micros_value, new Timer(micros_value, 0, cb));
   InsertInLoop(timer);
   return timer;
 }
 
-Timer* TimerList::RunAfter(uint64_t micros_delay,
-                           TimerProcCallback&& cb) {
-  Timer* timer(new Timer(NowMicros() + micros_delay, 0, std::move(cb)));
+TimerId TimerList::RunAfter(uint64_t micros_delay,
+                            TimerProcCallback&& cb) {
+  uint64_t micros_value = NowMicros() + micros_delay;
+  TimerId timer(micros_value, new Timer(micros_value, 0, std::move(cb)));
   InsertInLoop(timer);
   return timer;
 }
 
-Timer* TimerList::RunEvery(uint64_t micros_interval,
-                           const TimerProcCallback& cb) {
-  Timer* timer(new Timer(NowMicros() + micros_interval, micros_interval, cb));
+TimerId TimerList::RunEvery(uint64_t micros_interval,
+                            const TimerProcCallback& cb) {
+  uint64_t micros_value = NowMicros() + micros_interval;
+  TimerId timer(micros_value, new Timer(micros_value, micros_interval, cb));
   InsertInLoop(timer);
   return timer;
 }
 
-Timer* TimerList::RunEvery(uint64_t micros_interval,
-                           TimerProcCallback&& cb) {
-  Timer* timer(
-      new Timer(NowMicros() + micros_interval, micros_interval, std::move(cb)));
+TimerId TimerList::RunEvery(uint64_t micros_interval,
+                            TimerProcCallback&& cb) {
+  uint64_t micros_value = NowMicros() + micros_interval;
+  TimerId timer(micros_value, 
+                new Timer(micros_value, micros_interval, std::move(cb)));
   InsertInLoop(timer);
   return timer;
 }
 
-void TimerList::Remove(Timer* timer) {
-  loop_->QueueInLoop([timer, this]() {
-    std::set<Timer*>::iterator it = timers_.find(timer);
-    if (it != timers_.end()) {
-      timers_.erase(it);
-      delete timer;
+void TimerList::Remove(TimerId timer) {
+  loop_->RunInLoop([timer, this]() {
+    if (timer_ptrs_.find(timer.second) != timer_ptrs_.end()) {
+      TimerId t(timer.second->micros_value, timer.second);
+      std::set<TimerId>::iterator it = timers_.find(t);
+      if (it != timers_.end()) {
+        delete it->second;
+        timers_.erase(it);
+        timer_ptrs_.erase(it->second);
+      }
     }
   });
 }
 
-void TimerList::InsertInLoop(Timer* timer) {
-  loop_->QueueInLoop([timer, this]() {
+void TimerList::InsertInLoop(TimerId timer) {
+  loop_->RunInLoop([timer, this]() {
     timers_.insert(timer);
+    timer_ptrs_.insert(timer.second);
   });
 }
+
 uint64_t TimerList::TimeoutMicros() const {
+  loop_->AssertInMyLoop();
   if (timers_.empty()) {
     return -1;
   }
-  std::set<Timer*>::iterator it = timers_.begin();
-  if ((*it)->micros_value < NowMicros()) {
+  std::set<TimerId>::iterator it = timers_.begin();
+  if (it->first < NowMicros()) {
     return 0;
   } else {
-    return ((*it)->micros_value - NowMicros());
+    return (it->first - NowMicros());
   }
 }
 
 void TimerList::RunTimerProcs() {
+  loop_->AssertInMyLoop();
   if (timers_.empty()) {
     return;
   }
 
   uint64_t micros_now = NowMicros();
-  std::set<Timer*>::iterator it;
+  std::set<TimerId>::iterator it;
   while (true) {
     it = timers_.begin();
-    if (it != timers_.end() && (*it)->micros_value <= micros_now) {
-      Timer* timer = *it;
+    if (it != timers_.end() && it->first <= micros_now) {
+      Timer* timer = it->second;
       timers_.erase(it);
       timer->timerproc_cb();
       if (timer->repeat) {
         timer->micros_value += timer->micros_interval;
-        timers_.insert(timer);
+        timers_.insert(std::make_pair(timer->micros_value, timer));
       } else {
         delete timer;
+        timer_ptrs_.erase(timer);
       }
     } else {
       break;
