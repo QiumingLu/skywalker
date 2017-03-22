@@ -42,8 +42,8 @@ bool NodeImpl::StartWorking() {
   SWLog(DEBUG, "Node::Start - Network StartServer Successfully!\n");
 
   for (auto& g : groups_) {
-    g.second->SyncMembership();
-    if (options_.use_master_) {
+    g.second->SyncMembership();    
+    if (options_.use_master) {
       g.second->SyncMaster();
     }
   }

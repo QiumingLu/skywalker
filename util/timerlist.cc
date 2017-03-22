@@ -74,8 +74,8 @@ void TimerList::Remove(Timer* timer) {
   loop_->QueueInLoop([timer, this]() {
     std::set<Timer*>::iterator it = timers_.find(timer);
     if (it != timers_.end()) {
-      delete *it;
       timers_.erase(it);
+      delete timer;
     }
   });
 }

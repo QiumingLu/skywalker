@@ -69,6 +69,8 @@ void Instance::OnPropose(const std::string& value,
   }
 
   assert(!is_proposing_);
+  is_proposing_ = true;
+
   context_ = context;
   if (context != nullptr) {
     propose_value_.set_machine_id(context->machine_id);
@@ -84,7 +86,6 @@ void Instance::OnPropose(const std::string& value,
     Slice msg("proposal time more than a second.");
     propose_cb_(context_, Status::Timeout(msg), instance_id_);
   });
-  is_proposing_ = true;
 }
 
 void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
@@ -167,6 +168,7 @@ void Instance::CheckLearn() {
         propose_cb_(context_, Status::MachineError(msg), instance_id_);
       }
       loop_->Remove(propose_timer_);
+      propose_timer_ = nullptr;
       is_proposing_ = false;
     }
 

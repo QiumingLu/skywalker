@@ -30,7 +30,7 @@ struct Options {
   bool log_sync;
   uint32_t sync_interval;
   uint32_t group_size;
-  bool use_master_;
+  bool use_master;
   IpPort ipport;
   std::vector<IpPort> membership;
   std::vector<IpPort> followers;
@@ -41,8 +41,8 @@ struct Options {
 class MachineContext;
 class  Status;
 
-typedef std::function<void (MachineContext*, 
-                            const Status&, 
+typedef std::function<void (MachineContext*,
+                            const Status&,
                             uint64_t instance_id)> ProposeCompleteCallback;
 
 typedef std::function<void (const Status&,

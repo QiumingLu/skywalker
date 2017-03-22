@@ -8,6 +8,7 @@
 
 #include "util/mutexlock.h"
 #include "paxos/node_util.h"
+#include "skywalker/logging.h"
 
 namespace skywalker {
 
@@ -17,7 +18,6 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       config_(group_id, node_id, options, network),
       instance_(&config_),
       loop_(config_.GetLoop()),
-      bg_loop_(),
       lease_timeout_(10 * 1000 * 1000),
       retrie_master_(false),
       membership_machine_(options, &config_),
@@ -84,8 +84,9 @@ void Group::SyncMembershipInLoop(MachineContext* context) {
 }
 
 void Group::SyncMaster() {
-  bg_loop_.Loop();
-  bg_loop_.QueueInLoop([this]() {
+  bg_loop_.reset(new RunLoop());
+  bg_loop_->Loop();
+  bg_loop_->QueueInLoop([this]() {
     TryBeMaster();
   });
 }
@@ -102,6 +103,7 @@ void Group::TryBeMaster() {
                            reinterpret_cast<void*>(&lease_time)));
     ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, context));
     bool res = NewPropose(f);
+
     if (res) {
       state = master_machine_.GetMasterState();
       if (state.node_id() == node_id_) {
@@ -117,7 +119,7 @@ void Group::TryBeMaster() {
   if (retrie_master_) {
     retrie_master_ = false;
   }
-  bg_loop_.RunAt(next_time, [this]() {
+  bg_loop_->RunAt(next_time, [this]() {
     TryBeMaster();
   });
 }
@@ -128,7 +130,7 @@ void Group::TryBeMasterInLoop(MachineContext* context) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
     std::string s;
-    state.SerializeToString(&s);
+    state.SerializeToString(&s);    
     instance_.OnPropose(s, context);
   } else {
     propose_cb_(context, Status::Conflict(Slice()), instance_.GetInstanceId());
@@ -307,13 +309,17 @@ void Group::RemoveMachine(StateMachine* machine) {
 }
 
 void Group::SetMasterLeaseTime(uint64_t micros) {
-  bg_loop_.QueueInLoop([micros, this]() {
-    if (micros < (5 *1000 * 1000)) {
-      lease_timeout_ = 5 * 1000 * 1000;
-    } else {
-      lease_timeout_ = micros;
-    }
-  });
+  if (bg_loop_) {
+    bg_loop_->QueueInLoop([micros, this]() {
+      if (micros < (5 *1000 * 1000)) {
+        lease_timeout_ = 5 * 1000 * 1000;
+      } else {
+        lease_timeout_ = micros;
+      }
+    });
+  } else {
+    SWLog(WARN, "Group::SetMasterLeaseTime - not use master\n");
+  }
 }
 
 bool Group::GetMaster(IpPort* i, uint64_t* version) const {
@@ -325,9 +331,13 @@ bool Group::IsMaster() const {
 }
 
 void Group::RetireMaster() {
-  bg_loop_.QueueInLoop([this]() {
-    retrie_master_ = true;
-  });
+  if (bg_loop_) {
+    bg_loop_->QueueInLoop([this]() {
+      retrie_master_ = true;
+    });
+  } else {
+    SWLog(WARN, "Group::RetireMaster - not use master\n");
+  }
 }
 
 }  // namespace skywalker
