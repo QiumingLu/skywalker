@@ -108,14 +108,14 @@ TimerId TimerList::RunEvery(uint64_t micros_interval,
 }
 
 void TimerList::Remove(TimerId timer) {
-  loop_->RunInLoop([timer, this]() {
+  loop_->RunInLoop([timer, this]() mutable {
     if (timer_ptrs_.find(timer.second) != timer_ptrs_.end()) {
-      TimerId t(timer.second->micros_value, timer.second);
-      std::set<TimerId>::iterator it = timers_.find(t);
+      timer_ptrs_.erase(timer.second);
+      timer.first = timer.second->micros_value;
+      std::set<TimerId>::iterator it = timers_.find(timer);
       if (it != timers_.end()) {
         delete it->second;
         timers_.erase(it);
-        timer_ptrs_.erase(it->second);
       }
     }
   });
@@ -152,15 +152,16 @@ void TimerList::RunTimerProcs() {
   while (true) {
     it = timers_.begin();
     if (it != timers_.end() && it->first <= micros_now) {
-      Timer* timer = it->second;
+      Timer* t = it->second;
       timers_.erase(it);
-      timer->timerproc_cb();
-      if (timer->repeat) {
-        timer->micros_value += timer->micros_interval;
-        timers_.insert(std::make_pair(timer->micros_value, timer));
+      t->timerproc_cb();
+      if (t->repeat) {
+        t->micros_value += t->micros_interval;
+        TimerId timer(t->micros_value, t);
+        timers_.insert(timer);
       } else {
-        delete timer;
-        timer_ptrs_.erase(timer);
+        delete t;
+        timer_ptrs_.erase(t);
       }
     } else {
       break;

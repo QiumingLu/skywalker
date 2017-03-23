@@ -103,7 +103,6 @@ void Group::TryBeMaster() {
                            reinterpret_cast<void*>(&lease_time)));
     ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, context));
     bool res = NewPropose(f);
-
     if (res) {
       state = master_machine_.GetMasterState();
       if (state.node_id() == node_id_) {
@@ -154,12 +153,12 @@ bool Group::AddMember(const IpPort& ip, const MembershipCompleteCallback& cb) {
   uint64_t node_id(MakeNodeId(ip));
   MachineContext* context(
       new MachineContext(membership_machine_.GetMachineId()));
-  bool res =
-      queue_.Put(std::bind(&Group::AddMemberInLoop, this, node_id, context),
-                 [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
-                   cb(s, instance_id);
-                   delete c;
-                 });
+  bool res = queue_.Put(
+      std::bind(&Group::AddMemberInLoop, this, node_id, context),
+      [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
+    cb(s, instance_id);
+    delete c;
+  });
   if (!res) {
     delete context;
   }
@@ -190,12 +189,12 @@ bool Group::RemoveMember(const IpPort& ip, const MembershipCompleteCallback& cb)
   uint64_t node_id(MakeNodeId(ip));
   MachineContext* context(
       new MachineContext(membership_machine_.GetMachineId()));
-  bool res =
-      queue_.Put(std::bind(&Group::RemoveMemberInLoop, this, node_id, context),
-                 [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
-                   cb(s, instance_id);
-                   delete c;
-                 });
+  bool res = queue_.Put(
+      std::bind(&Group::RemoveMemberInLoop, this, node_id, context),
+      [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
+    cb(s, instance_id);
+    delete c;
+  });
   if (res) {
     delete context;
   }
@@ -229,12 +228,12 @@ bool Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i,
   uint64_t j(MakeNodeId(old_i));
   MachineContext* context(
       new MachineContext(membership_machine_.GetMachineId()));
-  bool res =
-      queue_.Put(std::bind(&Group::ReplaceMemberInLoop, this, i, j, context),
-                 [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
-                   cb(s, instance_id);
-                   delete c;
-                 });
+  bool res = queue_.Put(
+      std::bind(&Group::ReplaceMemberInLoop, this, i, j, context),
+      [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
+    cb(s, instance_id);
+    delete c;
+  });
   if (!res) {
     delete context;
   }
@@ -294,6 +293,7 @@ void Group::ProposeComplete(MachineContext* context,
   result_ = result;
   propose_end_ = true;
   cond_.Signal();
+  SWLog(DEBUG, "Group::ProposeComplete - result:%s\n", result_.ToString().c_str());
 }
 
 void Group::GetMembership(std::vector<IpPort>* result) const {

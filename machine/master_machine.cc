@@ -22,7 +22,7 @@ void MasterMachine::Recover() {
     if (state_.node_id() != config_->GetNodeId()) {
       state_.set_lease_time(NowMicros() + state_.lease_time());
     } else {
-      state_.set_lease_time(0);
+      state_.set_lease_time(NowMicros());
     }
   }
 }
@@ -43,7 +43,7 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
           state.set_lease_time(
               *(reinterpret_cast<uint64_t*>(context->user_data)));
         } else {
-          state.set_lease_time(0);
+          state.set_lease_time(NowMicros() + state_.lease_time());
         }
       } else {
         state.set_lease_time(NowMicros() + state.lease_time());

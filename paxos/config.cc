@@ -33,6 +33,8 @@ Config::Config(uint32_t group_id, uint64_t node_id,
   for (auto& i : options.followers) {
     followers_.add_node_id(MakeNodeId(i));
   }
+  loop_ = thread_.Loop();
+  bg_loop_ = bg_thread_.Loop();
 }
 
 Config::~Config() {
@@ -47,9 +49,6 @@ bool Config::Init() {
           log_storage_path_.c_str());
     return false;
   }
-  loop_ = thread_.Loop();
-  bg_loop_ = bg_thread_.Loop();
-
   return true;
 }
 

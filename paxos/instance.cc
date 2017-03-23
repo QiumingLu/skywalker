@@ -78,7 +78,6 @@ void Instance::OnPropose(const std::string& value,
     propose_value_.set_machine_id(-1);
   }
   propose_value_.set_user_data(value.data(), value.size());
-  proposer_.NewPropose(propose_value_);
 
   propose_timer_ = loop_->RunAfter(1000*1000, [this]() {
     proposer_.QuitPropose();
@@ -86,6 +85,8 @@ void Instance::OnPropose(const std::string& value,
     Slice msg("proposal time more than a second.");
     propose_cb_(context_, Status::Timeout(msg), instance_id_);
   });
+
+  proposer_.NewPropose(propose_value_);
 }
 
 void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
@@ -147,10 +148,12 @@ void Instance::CheckLearn() {
   if (learner_.HasLearned()) {
     const PaxosValue& learned_value(learner_.GetLearnedValue());
     bool my = false;
-    if (is_proposing_ &&
-        propose_value_.machine_id() == learned_value.machine_id() &&
-        propose_value_.user_data() == learned_value.user_data()) {
-      my = true;
+    if (is_proposing_) {
+      loop_->Remove(propose_timer_);
+      if (propose_value_.machine_id() == learned_value.machine_id() &&
+          propose_value_.user_data() == learned_value.user_data()) {
+        my = true;
+      }
     }
 
     bool success = MachineExecute(learned_value, my);
@@ -167,7 +170,6 @@ void Instance::CheckLearn() {
         Slice msg("machine execute failed.");
         propose_cb_(context_, Status::MachineError(msg), instance_id_);
       }
-      loop_->Remove(propose_timer_);
       is_proposing_ = false;
     }
 
