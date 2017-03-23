@@ -59,6 +59,14 @@ bool NodeImpl::Propose(uint32_t group_id,
   return groups_[group_id]->OnPropose(value, context, cb);
 }
 
+bool NodeImpl::Propose(uint32_t group_id,
+                       const std::string& value,
+                       MachineContext* context,
+                       ProposeCompleteCallback&& cb) {
+  assert(groups_.find(group_id) != groups_.end());
+  return groups_[group_id]->OnPropose(value, context, std::move(cb));
+}
+
 void NodeImpl::OnReceiveMessage(const Slice& s) {
   std::shared_ptr<Content> c(new Content());
   c->ParseFromArray(s.data(), static_cast<int>(s.size()));

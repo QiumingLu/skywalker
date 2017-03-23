@@ -31,6 +31,11 @@ class NodeImpl : public Node {
                        MachineContext* context,
                        const ProposeCompleteCallback& cb);
 
+  virtual bool Propose(uint32_t group_id,
+                       const std::string& value,
+                       MachineContext* context,
+                       ProposeCompleteCallback&& cb);
+
   virtual bool AddMember(uint32_t group_id, const IpPort& i,
                          const MembershipCompleteCallback& cb);
   virtual bool RemoveMember(uint32_t group_id, const IpPort& i,

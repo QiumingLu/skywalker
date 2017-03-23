@@ -25,12 +25,25 @@ ProposeQueue::~ProposeQueue() {
   }
 }
 
-bool ProposeQueue::Put(const ProposeHandler& f,
-                       const ProposeCompleteCallback& cb) {
-  MutexLock lock(&mutex_);
+void* ProposeQueue::StartWorking(void* data) {
+  ProposeQueue* temp = reinterpret_cast<ProposeQueue*>(data);
+  temp->Propose();
+  return nullptr;
+}
+
+bool ProposeQueue::CheckCapacity() const {
   if (capacity_ != 0 && propose_queue_.size() > capacity_) {
     SWLog(WARN, "Too many proposals are waiting to be proposed!");
     return false; 
+  }
+  return true;
+}
+
+bool ProposeQueue::Put(const ProposeHandler& f,
+                       const ProposeCompleteCallback& cb) {
+  MutexLock lock(&mutex_);
+  if (!CheckCapacity()) {
+    return false;
   }
   propose_queue_.push(f);
   cb_queue_.push(cb);
@@ -38,10 +51,41 @@ bool ProposeQueue::Put(const ProposeHandler& f,
   return true;
 }
 
-void* ProposeQueue::StartWorking(void* data) {
-  ProposeQueue* temp = reinterpret_cast<ProposeQueue*>(data);
-  temp->Propose();
-  return nullptr;
+bool ProposeQueue::Put(ProposeHandler&& f,
+                       const ProposeCompleteCallback& cb) {
+  MutexLock lock(&mutex_);
+  if (!CheckCapacity()) {
+    return false;
+  }
+  propose_queue_.push(std::move(f));
+  cb_queue_.push(cb);
+  cond_.Signal();
+  return true;
+}
+
+
+bool ProposeQueue::Put(const ProposeHandler& f,
+                       ProposeCompleteCallback&& cb) {
+  MutexLock lock(&mutex_);
+  if (!CheckCapacity()) {
+    return false;
+  }
+  propose_queue_.push(f);
+  cb_queue_.push(std::move(cb));
+  cond_.Signal();
+  return true;
+}
+
+bool ProposeQueue::Put(ProposeHandler&& f,
+                       ProposeCompleteCallback&& cb) {
+  MutexLock lock(&mutex_);
+  if (!CheckCapacity()) {
+    return false;
+  }
+  propose_queue_.push(std::move(f));
+  cb_queue_.push(std::move(cb));
+  cond_.Signal();
+  return true;
 }
 
 void ProposeQueue::Propose() {
@@ -50,6 +94,8 @@ void ProposeQueue::Propose() {
     while (propose_queue_.empty() || !has_cb_) {
       cond_.Wait();
     }
+    assert(has_cb_);
+    assert(!propose_queue_.empty());
     has_cb_ = false;
     config_->GetLoop()->QueueInLoop(propose_queue_.front());
     propose_queue_.pop();

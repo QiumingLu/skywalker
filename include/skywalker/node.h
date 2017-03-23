@@ -48,6 +48,11 @@ class Node {
                        MachineContext* context,
                        const ProposeCompleteCallback& cb) = 0;
 
+  virtual bool Propose(uint32_t group_id,
+                       const std::string& value,
+                       MachineContext* context,
+                       ProposeCompleteCallback&& cb) = 0;
+
   // Add a new node to the paxos membership.
   // If propose success returns true, else returns false.
   // The callback status like calling Node::Propose().

@@ -27,10 +27,14 @@ class ProposeQueue {
   void SetCapacity(size_t capacity) { capacity_ = capacity; }
 
   bool Put(const ProposeHandler& f, const ProposeCompleteCallback& cb);
+  bool Put(ProposeHandler&& f, const ProposeCompleteCallback& cb);
+  bool Put(const ProposeHandler& f, ProposeCompleteCallback&& cb);
+  bool Put(ProposeHandler&& f, ProposeCompleteCallback&& cb);
 
  private:
   friend class Group;
   static void* StartWorking(void* data);
+  bool CheckCapacity() const;
   void Propose();
   void ProposeComplete(MachineContext* context, 
                        const Status& s, uint64_t instance_id);

@@ -58,7 +58,7 @@ void Group::SyncMembership() {
       MachineContext* context(
           new MachineContext(membership_machine_.GetMachineId()));
       ProposeHandler f(std::bind(&Group::SyncMembershipInLoop, this, context));
-      bool res = NewPropose(f);
+      bool res = NewPropose(std::move(f));
       if (res) {
         if (result_.ok() || result_.IsConflict()) {
           break;
@@ -102,22 +102,28 @@ void Group::TryBeMaster() {
         new MachineContext(master_machine_.GetMachineId(),
                            reinterpret_cast<void*>(&lease_time)));
     ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, context));
-    bool res = NewPropose(f);
+    bool res = NewPropose(std::move(f));
+    next_time = 0;
     if (res) {
       state = master_machine_.GetMasterState();
       if (state.node_id() == node_id_) {
-        next_time = state.lease_time() - 100 * 1000;
-      } else {
-        next_time = state.lease_time();
+        if (result_.ok()) {
+          next_time = state.lease_time() - 50 * 1000;
+        } else if (result_.IsConflict()) {
+          next_time = state.lease_time();
+        }
       }
     } else {
-      next_time = lease_time;
       delete context;
+    }
+    if (next_time == 0) {
+      next_time = NowMicros() + lease_timeout_;
     }
   }
   if (retrie_master_) {
     retrie_master_ = false;
   }
+
   bg_loop_->RunAt(next_time, [this]() {
     TryBeMaster();
   });
@@ -129,7 +135,7 @@ void Group::TryBeMasterInLoop(MachineContext* context) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
     std::string s;
-    state.SerializeToString(&s);    
+    state.SerializeToString(&s);
     instance_.OnPropose(s, context);
   } else {
     propose_cb_(context, Status::Conflict(Slice()), instance_.GetInstanceId());
@@ -141,6 +147,14 @@ bool Group::OnPropose(const std::string& value,
                       const ProposeCompleteCallback& cb) {
   return queue_.Put(
       std::bind(&Instance::OnPropose, &instance_, value, context), cb);
+}
+
+bool Group::OnPropose(const std::string& value,
+                      MachineContext* context,
+                      ProposeCompleteCallback&& cb) {
+  return queue_.Put(
+      std::bind(&Instance::OnPropose, &instance_, value, context),
+      std::move(cb));
 }
 
 void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
@@ -269,14 +283,13 @@ void Group::ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
   }
 }
 
-bool Group::NewPropose(const ProposeHandler& f) {
+bool Group::NewPropose(ProposeHandler&& f) {
   MutexLock lock(&mutex_);
   propose_end_ = false;
-  bool res = queue_.Put(f, std::bind(&Group::ProposeComplete, this,
-                                     std::placeholders::_1,
-                                     std::placeholders::_2,
-                                     std::placeholders::_3));
-
+  ProposeCompleteCallback cb = 
+      std::bind(&Group::ProposeComplete, this, std::placeholders::_1,
+                std::placeholders::_2, std::placeholders::_3);
+  bool res = queue_.Put(std::move(f), std::move(cb));
   if (res) {
     while (!propose_end_) {
       cond_.Wait();
@@ -293,7 +306,7 @@ void Group::ProposeComplete(MachineContext* context,
   result_ = result;
   propose_end_ = true;
   cond_.Signal();
-  SWLog(DEBUG, "Group::ProposeComplete - result:%s\n", result_.ToString().c_str());
+  SWLog(DEBUG, "Group::ProposeComplete - %s\n", result_.ToString().c_str());
 }
 
 void Group::GetMembership(std::vector<IpPort>* result) const {
@@ -318,7 +331,7 @@ void Group::SetMasterLeaseTime(uint64_t micros) {
       }
     });
   } else {
-    SWLog(WARN, "Group::SetMasterLeaseTime - not use master\n");
+    SWLog(WARN, "Group::SetMasterLeaseTime - You don't use master.\n");
   }
 }
 
@@ -336,7 +349,7 @@ void Group::RetireMaster() {
       retrie_master_ = true;
     });
   } else {
-    SWLog(WARN, "Group::RetireMaster - not use master\n");
+    SWLog(WARN, "Group::RetireMaster - You don't use master.\n");
   }
 }
 
