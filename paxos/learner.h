@@ -8,6 +8,7 @@
 #include "paxos/ballot_number.h"
 #include "proto/paxos.pb.h"
 #include "util/random.h"
+#include "util/runloop.h"
 
 namespace skywalker {
 
@@ -20,7 +21,11 @@ class Learner {
  public:
   Learner(Config* config, Instance* instance, Acceptor* acceptor);
 
-  void SetInstanceId(uint64_t instance_id);
+  void SetInstanceId(uint64_t instance_id) { instance_id_ = instance_id; }
+  
+  void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
+  void SetLearnLoop(RunLoop* loop) { learn_loop_ = loop; }
+
   void AskForLearn();
 
   void OnNewChosenValue(const PaxosMessage& msg);
@@ -50,6 +55,9 @@ class Learner {
   Messager* messager_;
   Instance* instance_;
   Acceptor* acceptor_;
+
+  RunLoop* io_loop_;
+  RunLoop* learn_loop_;
 
   uint64_t instance_id_;
   uint64_t max_instance_id_;

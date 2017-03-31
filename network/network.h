@@ -44,10 +44,11 @@ class Network {
   void SendMessageInLoop(uint64_t node_id, const std::string& s);
 
   uint64_t my_node_id_;
-  voyager::BGEventLoop bg_loop_;
-  voyager::EventLoop* loop_;
-  voyager::TcpServer* server_;
+  std::unique_ptr<voyager::TcpServer> server_;
   std::map<uint64_t, voyager::TcpConnectionPtr> connection_map_;
+
+  voyager::EventLoop* loop_;
+  voyager::BGEventLoop net_loop_;
 
   // No copying allowed
   Network(const Network&);

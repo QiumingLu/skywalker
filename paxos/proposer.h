@@ -10,6 +10,7 @@
 #include "proto/paxos.pb.h"
 #include "util/timerlist.h"
 #include "util/random.h"
+#include "util/runloop.h"
 
 namespace skywalker {
 
@@ -24,6 +25,8 @@ class Proposer {
   void SetInstanceId(uint64_t id) { instance_id_ = id; }
   void SetStartProposalId(uint64_t id) { proposal_id_ = id; }
   void SetNoSkipPrepare() { skip_prepare_ = false; }
+  
+  void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
 
   void NewPropose(const PaxosValue& value);
 
@@ -48,6 +51,8 @@ class Proposer {
   Instance* instance_;
   Messager* messager_;
   Counter counter_;
+
+  RunLoop* io_loop_;
 
   uint64_t instance_id_;
   uint64_t proposal_id_;

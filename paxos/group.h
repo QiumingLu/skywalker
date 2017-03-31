@@ -11,7 +11,7 @@
 
 #include "paxos/config.h"
 #include "paxos/instance.h"
-#include "paxos/propose_queue.h"
+#include "paxos/schedule.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
@@ -65,28 +65,25 @@ class Group {
   void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
                            MachineContext* context);
   bool NewPropose(ProposeHandler&& f);
-  void ProposeComplete(MachineContext* context, 
+  void ProposeComplete(MachineContext* context,
                        const Status& result, uint64_t instance_id);
 
   const uint64_t node_id_;
   Config config_;
   Instance instance_;
-  RunLoop* loop_;
-
-  RunLoop* bg_loop_;
-  RunLoopThread thread_;
 
   uint64_t lease_timeout_;
   bool retrie_master_;
   MembershipMachine membership_machine_;
   MasterMachine master_machine_;
-  ProposeQueue queue_;
   ProposeCompleteCallback propose_cb_;
 
   Mutex mutex_;
   Condition cond_;
   bool propose_end_;
   Status result_;
+
+  std::unique_ptr<Schedule> schedule_;
 
   // No copying allowed
   Group(const Group&);

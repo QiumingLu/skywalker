@@ -11,9 +11,6 @@
 #include "network/messager.h"
 #include "storage/db.h"
 #include "skywalker/options.h"
-#include "util/runloop.h"
-#include "util/runloop_thread.h"
-#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -27,8 +24,6 @@ class Config {
 
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }
-  RunLoop* GetLoop() const { return loop_; }
-  RunLoop* GetBGLoop() const { return bg_loop_; }
 
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
@@ -54,16 +49,12 @@ class Config {
   std::string log_storage_path_;
   bool log_sync_;
   uint32_t sync_interval_;
+  
+  Membership membership_;
+  Membership followers_;
 
   DB* db_;
   Messager* messager_;
-  RunLoop* loop_;
-  RunLoop* bg_loop_;
-  RunLoopThread thread_;
-  RunLoopThread bg_thread_;
-
-  Membership membership_;
-  Membership followers_;
 
   // No copying allowed
   Config(const Config&);

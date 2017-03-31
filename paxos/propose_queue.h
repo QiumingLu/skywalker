@@ -9,19 +9,20 @@
 #include "util/thread.h"
 #include "util/mutex.h"
 #include "util/mutexlock.h"
-#include "paxos/config.h"
 #include "skywalker/status.h"
 #include "skywalker/state_machine.h"
+#include "skywalker/options.h"
 
 namespace skywalker {
 
 class Group;
+class Schedule;
 
 typedef std::function<void ()> ProposeHandler;
 
 class ProposeQueue {
  public:
-  explicit ProposeQueue(Config* config);
+  explicit ProposeQueue(Schedule* schedule);
   ~ProposeQueue();
 
   void SetCapacity(size_t capacity) { capacity_ = capacity; }
@@ -39,7 +40,7 @@ class ProposeQueue {
   void ProposeComplete(MachineContext* context, 
                        const Status& s, uint64_t instance_id);
 
-  Config* config_;
+  Schedule* schedule_;
   bool exit_;
   Thread thread_;
 

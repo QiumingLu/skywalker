@@ -183,7 +183,7 @@ void Proposer::NewChosenValue() {
 
 void Proposer::AddRetryTimer(uint64_t timeout) {
   uint64_t id = instance_id_;
-  retry_timer_ = config_->GetLoop()->RunAfter(timeout, [id, this]() {
+  retry_timer_ = io_loop_->RunAfter(timeout, [id, this]() {
     if (id == instance_id_) {
       Prepare(was_rejected_by_someone_);
     }
@@ -191,7 +191,7 @@ void Proposer::AddRetryTimer(uint64_t timeout) {
 }
 
 void Proposer::RemoveRetryTimer() {
-  config_->GetLoop()->Remove(retry_timer_);
+  io_loop_->Remove(retry_timer_);
 }
 
 void Proposer::QuitPropose() {

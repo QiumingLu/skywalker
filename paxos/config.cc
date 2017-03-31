@@ -6,7 +6,6 @@
 #include "paxos/node_util.h"
 #include "skywalker/logging.h"
 #include "util/timerlist.h"
-#include "util/mutexlock.h"
 
 namespace skywalker {
 
@@ -18,9 +17,7 @@ Config::Config(uint32_t group_id, uint64_t node_id,
       log_sync_(options.log_sync),
       sync_interval_(options.sync_interval),
       db_(new DB()),
-      messager_(new Messager(this, network)),
-      loop_(nullptr),
-      bg_loop_(nullptr) {
+      messager_(new Messager(this, network)) {
   char name[8];
   if (log_storage_path_[log_storage_path_.size() - 1] != '/') {
     snprintf(name, sizeof(name), "/g%d", group_id);
@@ -33,8 +30,6 @@ Config::Config(uint32_t group_id, uint64_t node_id,
   for (auto& i : options.followers) {
     followers_.add_node_id(MakeNodeId(i));
   }
-  loop_ = thread_.Loop();
-  bg_loop_ = bg_thread_.Loop();
 }
 
 Config::~Config() {

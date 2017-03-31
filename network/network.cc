@@ -14,22 +14,18 @@ namespace skywalker {
 
 Network::Network(uint64_t node_id)
     : my_node_id_(node_id),
-      bg_loop_(),
-      loop_(nullptr),
-      server_(nullptr) {
-  loop_ = bg_loop_.Loop();
+      net_loop_() {
+  loop_ = net_loop_.Loop();
 }
 
 Network::~Network() {
-  loop_->Exit();
-  delete server_;
 }
 
 void Network::StartServer(const std::function<void (const Slice&)>& cb) {
   IpPort i;
   ParseNodeId(my_node_id_, &i);
   voyager::SockAddr addr(i.ip, i.port);
-  server_ = new voyager::TcpServer(loop_, addr);
+  server_.reset(new voyager::TcpServer(loop_, addr));
 
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {

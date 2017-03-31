@@ -13,24 +13,23 @@
 namespace skywalker {
 
 NodeImpl::NodeImpl(const Options& options)
-    : options_(options),
+    : stop_(false),
+      options_(options),
       node_id_(MakeNodeId(options.ipport)),
       network_(node_id_) {
 }
 
 NodeImpl::~NodeImpl() {
-  for (auto& g : groups_) {
-    delete g.second;
-  }
+  stop_ = true;
 }
 
 bool NodeImpl::StartWorking() {
   bool ret = true;
   for (uint32_t i = 0; i < options_.group_size; ++i) {
-    Group* group = new Group(i, node_id_, options_, &network_);
+    std::unique_ptr<Group> group(new Group(i, node_id_, options_, &network_));
     ret = group->Start();
     if (ret) {
-      groups_[i] = group;
+      groups_.insert(std::make_pair(i, std::move(group)));
     } else {
       return ret;
     }
@@ -42,7 +41,7 @@ bool NodeImpl::StartWorking() {
   SWLog(DEBUG, "Node::Start - Network StartServer Successfully!\n");
 
   for (auto& g : groups_) {
-    g.second->SyncMembership();    
+    g.second->SyncMembership();
     if (options_.use_master) {
       g.second->SyncMaster();
     }
@@ -68,15 +67,19 @@ bool NodeImpl::Propose(uint32_t group_id,
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {
-  std::shared_ptr<Content> c(new Content());
-  c->ParseFromArray(s.data(), static_cast<int>(s.size()));
+  // FIXME
+  // Maybe use a mutex?
+  if (!stop_) {
+    std::shared_ptr<Content> c(new Content());
+    c->ParseFromArray(s.data(), static_cast<int>(s.size()));
 
-  std::map<uint32_t, Group*>::iterator it = groups_.find(c->group_id());
-  if (it != groups_.end()) {
-    it->second->OnReceiveContent(c);
-  } else {
-    SWLog(ERROR, "NodeImpl::OnReceiveMessage - "
-          "group_id=%" PRIu32" is wrong!\n", c->group_id());
+    auto it = groups_.find(c->group_id());
+    if (it != groups_.end()) {
+      it->second->OnReceiveContent(c);
+    } else {
+      SWLog(ERROR, "NodeImpl::OnReceiveMessage - "
+            "group_id=%" PRIu32" is wrong!\n", c->group_id());
+    }
   }
 }
 
@@ -101,7 +104,7 @@ bool NodeImpl::ReplaceMember(uint32_t group_id,
 
 void NodeImpl::GetMembership(uint32_t group_id,
                              std::vector<IpPort>* result) const {
-  std::map<uint32_t, Group*>::const_iterator it = groups_.find(group_id);
+  auto it = groups_.find(group_id);
   assert(it != groups_.end());
   it->second->GetMembership(result);
 }
@@ -141,13 +144,13 @@ void NodeImpl::SetMasterLeaseTime(uint32_t group_id, uint64_t micros) {
 
 bool NodeImpl::GetMaster(uint32_t group_id,
                          IpPort* i, uint64_t* version) const {
-  std::map<uint32_t, Group*>::const_iterator it = groups_.find(group_id);
+  auto it = groups_.find(group_id);
   assert(it != groups_.end());
   return it->second->GetMaster(i, version);
 }
 
 bool NodeImpl::IsMaster(uint32_t group_id) const {
-  std::map<uint32_t, Group*>::const_iterator it = groups_.find(group_id);
+  auto it = groups_.find(group_id);
   assert(it != groups_.end());
   return it->second->IsMaster();
 }

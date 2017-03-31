@@ -26,10 +26,6 @@ Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
       has_learned_(false) {
 }
 
-void Learner::SetInstanceId(uint64_t instance_id) {
-  instance_id_ = instance_id;
-}
-
 void Learner::OnNewChosenValue(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_) {
     const BallotNumber& b = acceptor_->GetAcceptedBallot();
@@ -56,7 +52,7 @@ void Learner::AskForLearn() {
   messager_->BroadcastMessage(messager_->PackMessage(msg));
 
   uint64_t delay = 1000 * (30 * 1000 + rand_.Uniform(10 * 1000));
-  config_->GetLoop()->RunAfter(delay, [this]() {
+  io_loop_->RunAfter(delay, [this]() {
     AskForLearn();
   });
 }
@@ -110,7 +106,7 @@ void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
   uint64_t node_id = msg.node_id();
   uint64_t from = msg.instance_id();
   uint64_t to = instance_id_;
-  config_->GetBGLoop()->QueueInLoop([node_id, from, to, this] {
+  learn_loop_->QueueInLoop([node_id, from, to, this] {
     ASyncSend(node_id, from, to);
   });
 }

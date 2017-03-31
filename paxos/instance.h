@@ -43,6 +43,9 @@ class Instance {
   void SetProposeCompleteCallback(const ProposeCompleteCallback& cb) {
     propose_cb_ = cb;
   }
+  
+  void SetIOLoop(RunLoop* loop);
+  void SetLearnLoop(RunLoop* loop);
 
   void OnPropose(const std::string& value, MachineContext* context);
   void OnReceiveContent(const std::shared_ptr<Content>& c);
@@ -56,7 +59,7 @@ class Instance {
   void NextInstance();
 
   Config* config_;
-  RunLoop* loop_;
+  RunLoop* io_loop_;
   Acceptor acceptor_;
   Learner learner_;
   Proposer proposer_;

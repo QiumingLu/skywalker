@@ -15,7 +15,6 @@ namespace skywalker {
 
 Instance::Instance(Config* config)
     : config_(config),
-      loop_(config_->GetLoop()),
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
       proposer_(config, this),
@@ -44,8 +43,18 @@ bool Instance::Init() {
   return ret;
 }
 
+void Instance::SetIOLoop(RunLoop* loop) { 
+  io_loop_ = loop; 
+  proposer_.SetIOLoop(loop);
+  learner_.SetIOLoop(loop); 
+}
+
+void Instance::SetLearnLoop(RunLoop* loop) {
+  learner_.SetLearnLoop(loop);
+}
+
 void Instance::SyncData() {
-  loop_->QueueInLoop([this]() {
+  io_loop_->QueueInLoop([this]() {
     learner_.AskForLearn();
   });
 }
@@ -79,7 +88,7 @@ void Instance::OnPropose(const std::string& value,
   }
   propose_value_.set_user_data(value.data(), value.size());
 
-  propose_timer_ = loop_->RunAfter(1000*1000, [this]() {
+  propose_timer_ = io_loop_->RunAfter(1000*1000, [this]() {
     proposer_.QuitPropose();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
@@ -149,7 +158,7 @@ void Instance::CheckLearn() {
     const PaxosValue& learned_value(learner_.GetLearnedValue());
     bool my = false;
     if (is_proposing_) {
-      loop_->Remove(propose_timer_);
+      io_loop_->Remove(propose_timer_);
       if (propose_value_.machine_id() == learned_value.machine_id() &&
           propose_value_.user_data() == learned_value.user_data()) {
         my = true;

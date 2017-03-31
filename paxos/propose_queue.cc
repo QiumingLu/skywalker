@@ -3,12 +3,13 @@
 // found in the LICENSE file.
 
 #include "paxos/propose_queue.h"
+#include "paxos/schedule.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {
 
-ProposeQueue::ProposeQueue(Config* config)
-    : config_(config),
+ProposeQueue::ProposeQueue(Schedule* schedule)
+    : schedule_(schedule),
       exit_(false),
       thread_(),
       mutex_(),
@@ -97,7 +98,7 @@ void ProposeQueue::Propose() {
     assert(has_cb_);
     assert(!propose_queue_.empty());
     has_cb_ = false;
-    config_->GetLoop()->QueueInLoop(propose_queue_.front());
+    schedule_->IOLoop()->QueueInLoop(propose_queue_.front());
     propose_queue_.pop();
   }
 }

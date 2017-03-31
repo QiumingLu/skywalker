@@ -62,10 +62,11 @@ class NodeImpl : public Node {
  private:
   void OnReceiveMessage(const Slice& s);
 
+  bool stop_;
   const Options options_;
   uint64_t node_id_;
   Network network_;
-  std::map<uint32_t, Group*> groups_;
+  std::map<uint32_t, std::unique_ptr<Group> > groups_;
 
   // No copying allowed
   NodeImpl(const NodeImpl&);
