@@ -5,6 +5,8 @@
 #ifndef SKYWALKER_PAXOS_SCHEDULE_H_
 #define SKYWALKER_PAXOS_SCHEDULE_H_
 
+#include <memory>
+
 #include "util/runloop.h"
 #include "util/runloop_thread.h"
 #include "paxos/propose_queue.h"
@@ -18,7 +20,7 @@ class Schedule {
   void Start();
 
   RunLoop* MasterLoop() const;
-  
+
   RunLoop* LearnLoop() const;
 
   ProposeQueue* Queue() const ;
@@ -27,13 +29,13 @@ class Schedule {
 
  private:
   bool use_master_;
-  
+
   RunLoop* io_loop_;
   RunLoop* learn_loop_;
   RunLoop* master_loop_;
 
   RunLoopThread io_thread_;
-  
+
   std::unique_ptr<ProposeQueue> queue_;
 
   RunLoopThread learn_thread_;
