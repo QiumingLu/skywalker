@@ -26,6 +26,10 @@ class NodeImpl : public Node {
 
   bool StartWorking();
 
+  virtual uint32_t group_size() const {
+    return options_.group_size;
+  }
+
   virtual bool Propose(uint32_t group_id,
                        const std::string& value,
                        MachineContext* context,

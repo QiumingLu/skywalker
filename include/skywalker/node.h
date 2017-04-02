@@ -36,6 +36,8 @@ class Node {
   Node() { }
   virtual ~Node() { }
 
+  virtual uint32_t group_size() const = 0;
+
   // Propose a new value to the paxos library.
   // If propose success returns true, else returns false.
   // Callback Status::OK() on success.
