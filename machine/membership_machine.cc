@@ -19,6 +19,7 @@ MembershipMachine::MembershipMachine(const Options& options, Config* config)
   for (auto i : options.membership) {
     membership_.add_node_id(MakeNodeId(i));
   }
+  set_machine_id(0);
 }
 
 void MembershipMachine::Recover() {

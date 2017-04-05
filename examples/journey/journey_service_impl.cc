@@ -14,6 +14,7 @@ namespace journey {
 JourneyServiceImpl::JourneyServiceImpl()
     : group_size_(0),
       node_(nullptr) {
+  machine_.set_machine_id(6);
 }
 
 JourneyServiceImpl::~JourneyServiceImpl() {
@@ -60,7 +61,7 @@ void JourneyServiceImpl::Propose(
       std::string value;
       request->SerializeToString(&value);
       skywalker::MachineContext* context = new skywalker::MachineContext();
-      context->machine_id = machine_.GetMachineId();
+      context->machine_id = machine_.machine_id();
       context->user_data = response;
       propose = node_->Propose(
           group_id, value, context,

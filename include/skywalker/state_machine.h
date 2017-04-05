@@ -28,17 +28,19 @@ class MachineContext {
 
 class StateMachine {
  public:
-  StateMachine();
+  StateMachine() { }
   virtual ~StateMachine() { }
 
-  int GetMachineId() const { return id_; }
+  // id > 5
+  void set_machine_id(int id) { id_ = id; }
+  int machine_id() const { return id_; }
 
   virtual bool Execute(uint32_t group_id,
                        uint64_t instance_id,
                        const std::string& value,
                        MachineContext* context = nullptr) = 0;
  private:
-  const int id_;
+  int id_;
 
   // No copying allowed
   StateMachine(const StateMachine&);

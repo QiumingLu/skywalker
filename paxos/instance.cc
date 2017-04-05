@@ -43,10 +43,10 @@ bool Instance::Init() {
   return ret;
 }
 
-void Instance::SetIOLoop(RunLoop* loop) { 
-  io_loop_ = loop; 
+void Instance::SetIOLoop(RunLoop* loop) {
+  io_loop_ = loop;
   proposer_.SetIOLoop(loop);
-  learner_.SetIOLoop(loop); 
+  learner_.SetIOLoop(loop);
 }
 
 void Instance::SetLearnLoop(RunLoop* loop) {
@@ -61,12 +61,12 @@ void Instance::SyncData() {
 
 void Instance::AddMachine(StateMachine* machine) {
   MutexLock lock(&mutex_);
-  machines_.insert(std::make_pair(machine->GetMachineId(), machine));
+  machines_.insert(std::make_pair(machine->machine_id(), machine));
 }
 
 void Instance::RemoveMachine(StateMachine* machine) {
   MutexLock lock(&mutex_);
-  machines_.erase(machine->GetMachineId());
+  machines_.erase(machine->machine_id());
 }
 
 void Instance::OnPropose(const std::string& value,
@@ -80,9 +80,10 @@ void Instance::OnPropose(const std::string& value,
   assert(!is_proposing_);
   is_proposing_ = true;
 
+  assert(!context_);
   context_ = context;
-  if (context != nullptr) {
-    propose_value_.set_machine_id(context->machine_id);
+  if (context_ != nullptr) {
+    propose_value_.set_machine_id(context_->machine_id);
   } else {
     propose_value_.set_machine_id(-1);
   }
@@ -180,6 +181,7 @@ void Instance::CheckLearn() {
         propose_cb_(context_, Status::MachineError(msg), instance_id_);
       }
       is_proposing_ = false;
+      context_ = nullptr;
     }
 
     if (success) {
@@ -194,7 +196,7 @@ bool Instance::MachineExecute(const PaxosValue& value, bool my) {
   int id = value.machine_id();
   if (id != -1) {
     MutexLock lock(&mutex_);
-    auto i = machines_.find(value.machine_id());
+    auto i = machines_.find(id);
     if (i != machines_.end()) {
       assert(i->second != nullptr);
       MachineContext* context = nullptr;

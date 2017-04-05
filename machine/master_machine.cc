@@ -14,6 +14,7 @@ namespace skywalker {
 MasterMachine::MasterMachine(Config* config)
     : config_(config),
       db_(config->GetDB()) {
+  set_machine_id(1);
 }
 
 void MasterMachine::Recover() {
