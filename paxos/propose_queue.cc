@@ -35,7 +35,7 @@ void* ProposeQueue::StartWorking(void* data) {
 bool ProposeQueue::CheckCapacity() const {
   if (capacity_ != 0 && propose_queue_.size() > capacity_) {
     SWLog(WARN, "Too many proposals are waiting to be proposed!");
-    return false; 
+    return false;
   }
   return true;
 }

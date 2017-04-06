@@ -37,7 +37,7 @@ class ProposeQueue {
   static void* StartWorking(void* data);
   bool CheckCapacity() const;
   void Propose();
-  void ProposeComplete(MachineContext* context, 
+  void ProposeComplete(MachineContext* context,
                        const Status& s, uint64_t instance_id);
 
   Schedule* schedule_;

@@ -94,6 +94,7 @@ void Instance::OnPropose(const std::string& value,
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
     propose_cb_(context_, Status::Timeout(msg), instance_id_);
+    context_ = nullptr;
   });
 
   proposer_.NewPropose(propose_value_);
