@@ -6,15 +6,22 @@ endif()
 
 project (Skywalker C CXX)
 
+set(SKYWALKER_VERSION_MAJOR 1)
+set(SKYWALKER_VERSION_MINOR 2)
+set(SKYWALKER_VERSION_STRING ${SKYWALKER_VERSION_MAJOR}.${SKYWALKER_VERSION_MINOR})
+
 enable_testing()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "release")
 endif()
 
-if(NOT CMAKE_BUILD_SHARED_LIBS)
-  set(CMAKE_BUILD_SHARED_LIBS on)
+if(NOT CMAKE_INSTALL_DIR)
+  set(CMAKE_INSTALL_DIR "/usr/local")
 endif()
+
+option(BUILD_EXAMPLES "Build skywalker examples" on)
+option(BUILD_SHARED_LIBS "Build skywalker shared libraries" on)
 
 set(CXX_FLAGS
   -g
@@ -76,13 +83,13 @@ include(cmake/Targets.cmake)
 message(STATUS ${Skywalker_LINKER_LIBS})
 
 skywalker_set_skywalker_link()
-if(CMAKE_BUILD_SHARED_LIBS)
+if(BUILD_SHARED_LIBS)
   add_library(skywalker SHARED ${skywalker_SRCS})
   add_library(skywalker_static STATIC ${skywalker_SRCS})
   set_target_properties(skywalker_static PROPERTIES OUTPUT_NAME "skywalker")
-  set_target_properties(skywalker PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-  set_target_properties(skywalker_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-  set_target_properties(skywalker PROPERTIES VERSION 1.2 SOVERSION 1)
+  set_target_properties(skywalker PROPERTIES CLEAN_DIRECT_OUTPUT ${SKYWALKER_VERSION_MAJOR})
+  set_target_properties(skywalker_static PROPERTIES CLEAN_DIRECT_OUTPUT ${SKYWALKER_VERSION_MAJOR})
+  set_target_properties(skywalker PROPERTIES VERSION ${SKYWALKER_VERSION_STRING} SOVERSION ${SKYWALKER_VERSION_MAJOR})
   target_link_libraries(skywalker ${Skywalker_LINKER_LIBS})
   install(TARGETS skywalker DESTINATION lib)
   install(TARGETS skywalker_static LIBRARY DESTINATION lib ARCHIVE DESTINATION lib)
@@ -94,7 +101,7 @@ endif()
 
 install(DIRECTORY ${Skywalker_INCLUDE_DIR}/skywalker DESTINATION include)
 
-if (NOT CMAKE_BUILD_NO_EXAMPLES)
+if (BUILD_EXAMPLES)
   add_subdirectory(examples/journey)
   add_subdirectory(paxos/test)
 endif()

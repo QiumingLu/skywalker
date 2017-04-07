@@ -4,6 +4,7 @@ endmacro()
 
 file(GLOB_RECURSE proto_files proto/*.proto)
 skywalker_protobuf_generate_cpp(${proto_gen_folder} proto_SRCS proto_HDRS ${proto_files})
+set_source_files_properties(${proto_files} PROPERTIES COMPILE_FLAGS "-Wno-conversion -Wno-shorten-64-to-32 -Wno-deprecated-declarations -fPIC")
 
 file(GLOB_RECURSE util_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/util/*.cc)
 file(GLOB_RECURSE storage_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/storage/*.cc)
