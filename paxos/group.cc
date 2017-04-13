@@ -24,7 +24,14 @@ Group::Group(uint32_t group_id, uint64_t node_id,
       mutex_(),
       cond_(&mutex_),
       propose_end_(false),
+      propose_queue_(100),
       schedule_(new Schedule(options.use_master)) {
+  propose_cb_ =  std::bind(&ProposeQueue::ProposeComplete,
+                           &propose_queue_,
+                           std::placeholders::_1,
+                           std::placeholders::_2,
+                           std::placeholders::_3);
+  instance_.SetProposeCompleteCallback(propose_cb_);
   instance_.AddMachine(&membership_machine_);
   if (options.use_master) {
     instance_.AddMachine(&master_machine_);
@@ -36,14 +43,10 @@ bool Group::Start() {
     membership_machine_.Recover();
     master_machine_.Recover();
     schedule_->Start();
-    propose_cb_ =  std::bind(&ProposeQueue::ProposeComplete,
-                             schedule_->Queue(),
-                             std::placeholders::_1,
-                             std::placeholders::_2,
-                             std::placeholders::_3);
-    instance_.SetProposeCompleteCallback(propose_cb_);
     instance_.SetIOLoop(schedule_->IOLoop());
     instance_.SetLearnLoop(schedule_->LearnLoop());
+    propose_queue_.SetIOLoop(schedule_->IOLoop());
+    propose_queue_.SetCallbackLoop(schedule_->CallbackLoop());
     return true;
   } else {
     return false;
@@ -147,14 +150,14 @@ void Group::TryBeMasterInLoop(MachineContext* context) {
 bool Group::OnPropose(const std::string& value,
                       MachineContext* context,
                       const ProposeCompleteCallback& cb) {
-  return schedule_->Queue()->Put(
+  return propose_queue_.Put(
       std::bind(&Instance::OnPropose, &instance_, value, context), cb);
 }
 
 bool Group::OnPropose(const std::string& value,
                       MachineContext* context,
                       ProposeCompleteCallback&& cb) {
-  return schedule_->Queue()->Put(
+  return propose_queue_.Put(
       std::bind(&Instance::OnPropose, &instance_, value, context),
       std::move(cb));
 }
@@ -170,7 +173,7 @@ bool Group::AddMember(const IpPort& ip,
   uint64_t node_id(MakeNodeId(ip));
   MachineContext* context(
       new MachineContext(membership_machine_.machine_id()));
-  bool res = schedule_->Queue()->Put(
+  bool res = propose_queue_.Put(
       std::bind(&Group::AddMemberInLoop, this, node_id, context),
       [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
     cb(s, instance_id);
@@ -207,7 +210,7 @@ bool Group::RemoveMember(const IpPort& ip,
   uint64_t node_id(MakeNodeId(ip));
   MachineContext* context(
       new MachineContext(membership_machine_.machine_id()));
-  bool res = schedule_->Queue()->Put(
+  bool res = propose_queue_.Put(
       std::bind(&Group::RemoveMemberInLoop, this, node_id, context),
       [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
     cb(s, instance_id);
@@ -246,7 +249,7 @@ bool Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i,
   uint64_t j(MakeNodeId(old_i));
   MachineContext* context(
       new MachineContext(membership_machine_.machine_id()));
-  bool res = schedule_->Queue()->Put(
+  bool res = propose_queue_.Put(
       std::bind(&Group::ReplaceMemberInLoop, this, i, j, context),
       [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
     cb(s, instance_id);
@@ -293,7 +296,7 @@ bool Group::NewPropose(ProposeHandler&& f) {
   ProposeCompleteCallback cb =
       std::bind(&Group::ProposeComplete, this, std::placeholders::_1,
                 std::placeholders::_2, std::placeholders::_3);
-  bool res = schedule_->Queue()->Put(std::move(f), std::move(cb));
+  bool res = propose_queue_.Put(std::move(f), std::move(cb));
   if (res) {
     while (!propose_end_) {
       cond_.Wait();

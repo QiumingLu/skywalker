@@ -6,9 +6,8 @@
 #define SKYWALKER_PAXOS_PROPOSE_QUEUE_H_
 
 #include <queue>
-#include "util/thread.h"
+#include "util/runloop.h"
 #include "util/mutex.h"
-#include "util/mutexlock.h"
 #include "skywalker/status.h"
 #include "skywalker/state_machine.h"
 #include "skywalker/options.h"
@@ -16,16 +15,16 @@
 namespace skywalker {
 
 class Group;
-class Schedule;
 
 typedef std::function<void ()> ProposeHandler;
 
 class ProposeQueue {
  public:
-  explicit ProposeQueue(Schedule* schedule);
+  explicit ProposeQueue(size_t capacity = 0);
   ~ProposeQueue();
 
-  void SetCapacity(size_t capacity) { capacity_ = capacity; }
+  void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
+  void SetCallbackLoop(RunLoop* loop) { callback_loop_ = loop; }
 
   bool Put(const ProposeHandler& f, const ProposeCompleteCallback& cb);
   bool Put(ProposeHandler&& f, const ProposeCompleteCallback& cb);
@@ -34,20 +33,15 @@ class ProposeQueue {
 
  private:
   friend class Group;
-  static void* StartWorking(void* data);
   bool CheckCapacity() const;
-  void Propose();
   void ProposeComplete(MachineContext* context,
                        const Status& s, uint64_t instance_id);
-
-  Schedule* schedule_;
-  bool exit_;
-  Thread thread_;
+  size_t capacity_;
+  RunLoop* io_loop_;
+  RunLoop* callback_loop_;
 
   Mutex mutex_;
-  Condition cond_;
-  bool has_cb_;
-  size_t capacity_;
+  bool last_finished_;
   std::queue<ProposeHandler> propose_queue_;
   std::queue<ProposeCompleteCallback> cb_queue_;
 

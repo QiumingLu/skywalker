@@ -12,11 +12,8 @@ Schedule::Schedule(bool use_master)
 }
 
 void Schedule::Start() {
+  callback_loop_ = callback_thread_.Loop();
   io_loop_ = io_thread_.Loop();
- 
-  queue_.reset(new ProposeQueue(this)); 
-  queue_->SetCapacity(100);
-  
   learn_loop_ = learn_thread_.Loop();
   if (use_master_) {
     master_loop_ = master_thread_.Loop();
@@ -31,13 +28,12 @@ RunLoop* Schedule::LearnLoop() const {
   return learn_loop_;
 }
 
-ProposeQueue* Schedule::Queue() const {
-  assert(queue_);
-  return queue_.get();
-}
-
 RunLoop* Schedule::IOLoop() const {
   return io_loop_;
+}
+
+RunLoop* Schedule::CallbackLoop() const {
+  return callback_loop_;
 }
 
 }  // namespace skywalker

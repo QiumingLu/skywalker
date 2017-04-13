@@ -12,6 +12,7 @@
 #include "paxos/config.h"
 #include "paxos/instance.h"
 #include "paxos/schedule.h"
+#include "paxos/propose_queue.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
@@ -83,6 +84,7 @@ class Group {
   bool propose_end_;
   Status result_;
 
+  ProposeQueue propose_queue_;
   std::unique_ptr<Schedule> schedule_;
 
   // No copying allowed

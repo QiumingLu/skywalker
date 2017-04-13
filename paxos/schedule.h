@@ -9,7 +9,6 @@
 
 #include "util/runloop.h"
 #include "util/runloop_thread.h"
-#include "paxos/propose_queue.h"
 
 namespace skywalker {
 
@@ -23,21 +22,20 @@ class Schedule {
 
   RunLoop* LearnLoop() const;
 
-  ProposeQueue* Queue() const ;
-
   RunLoop* IOLoop() const;
+
+  RunLoop* CallbackLoop() const;
 
  private:
   bool use_master_;
 
+  RunLoop* callback_loop_;
   RunLoop* io_loop_;
   RunLoop* learn_loop_;
   RunLoop* master_loop_;
 
+  RunLoopThread callback_thread_;
   RunLoopThread io_thread_;
-
-  std::unique_ptr<ProposeQueue> queue_;
-
   RunLoopThread learn_thread_;
   RunLoopThread master_thread_;
 
