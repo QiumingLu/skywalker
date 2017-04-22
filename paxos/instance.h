@@ -13,6 +13,8 @@
 #include "paxos/acceptor.h"
 #include "paxos/learner.h"
 #include "paxos/proposer.h"
+#include "paxos/checkpoint_manager.h"
+#include "paxos/state_machine_manager.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
@@ -43,7 +45,7 @@ class Instance {
   void SetProposeCompleteCallback(const ProposeCompleteCallback& cb) {
     propose_cb_ = cb;
   }
-  
+
   void SetIOLoop(RunLoop* loop);
   void SetLearnLoop(RunLoop* loop);
 
@@ -64,6 +66,9 @@ class Instance {
   Learner learner_;
   Proposer proposer_;
 
+  StateMachineManager state_machine_manager_;
+  CheckpointManager checkpoint_manager_;
+
   uint64_t instance_id_;
 
   bool is_proposing_;
@@ -71,9 +76,6 @@ class Instance {
   PaxosValue propose_value_;
   ProposeCompleteCallback propose_cb_;
   TimerId propose_timer_;
-
-  Mutex mutex_;
-  std::map<int, StateMachine*> machines_;
 
   // No copying allowed
   Instance(const Instance&);

@@ -12,6 +12,7 @@ Options::Options()
       sync_interval(0),
       group_size(1),
       use_master(true),
+      checkpoint(false),
       ipport(),
       membership(),
       followers() {

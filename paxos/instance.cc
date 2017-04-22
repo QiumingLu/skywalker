@@ -18,6 +18,8 @@ Instance::Instance(Config* config)
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
       proposer_(config, this),
+      state_machine_manager_(),
+      checkpoint_manager_(config, &state_machine_manager_),
       instance_id_(0),
       is_proposing_(false),
       context_(nullptr) {
@@ -30,6 +32,11 @@ bool Instance::Init() {
   bool ret = acceptor_.Init(&instance_id_);
   if (!ret) {
     SWLog(ERROR, "Instance::Init - Acceptor init fail.\n");
+    return ret;
+  }
+  ret = checkpoint_manager_.Init(instance_id_);
+  if (!ret) {
+    SWLog(ERROR, "Instance::Init - CheckpointManager init fail.\n");
     return ret;
   }
   acceptor_.SetInstanceId(instance_id_);
@@ -60,13 +67,11 @@ void Instance::SyncData() {
 }
 
 void Instance::AddMachine(StateMachine* machine) {
-  MutexLock lock(&mutex_);
-  machines_.insert(std::make_pair(machine->machine_id(), machine));
+  state_machine_manager_.AddMachine(machine);
 }
 
 void Instance::RemoveMachine(StateMachine* machine) {
-  MutexLock lock(&mutex_);
-  machines_.erase(machine->machine_id());
+  state_machine_manager_.RemoveMachine(machine);
 }
 
 void Instance::OnPropose(const std::string& value,
@@ -196,17 +201,12 @@ void Instance::CheckLearn() {
 bool Instance::MachineExecute(const PaxosValue& value, bool my) {
   int id = value.machine_id();
   if (id != -1) {
-    MutexLock lock(&mutex_);
-    auto i = machines_.find(id);
-    if (i != machines_.end()) {
-      assert(i->second != nullptr);
-      MachineContext* context = nullptr;
-      if (my) {
-        context = context_;
-      }
-      return i->second->Execute(
-          config_->GetGroupId(), instance_id_, value.user_data(), context);
+    MachineContext* context = nullptr;
+    if (my) {
+      context = context_;
     }
+    return state_machine_manager_.Execute(
+        id, config_->GetGroupId(), instance_id_, value.user_data(), context);
   }
   return true;
 }

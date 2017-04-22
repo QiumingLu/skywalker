@@ -31,6 +31,8 @@ class MembershipMachine : public StateMachine {
                        const std::string& value,
                        MachineContext* /* context */);
 
+  virtual uint64_t GetCheckpointInstanceId(uint32_t group_id) const;
+
  public:
   Config* config_;
   DB* db_;

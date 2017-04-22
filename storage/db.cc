@@ -85,7 +85,8 @@ int DB::Get(uint64_t instance_id, std::string* value) {
   char key[sizeof(instance_id)];
   memcpy(key, &instance_id, sizeof(key));
   leveldb::Status status =
-      db_->Get(leveldb::ReadOptions(), leveldb::Slice(key, sizeof(key)), value);
+      db_->Get(leveldb::ReadOptions(),
+               leveldb::Slice(key, sizeof(key)), value);
   int ret = 0;
   if (!status.ok()) {
     if (status.IsNotFound()) {

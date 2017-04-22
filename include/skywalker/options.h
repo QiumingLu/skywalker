@@ -31,6 +31,7 @@ struct Options {
   uint32_t sync_interval;
   uint32_t group_size;
   bool use_master;
+  bool checkpoint;
   IpPort ipport;
   std::vector<IpPort> membership;
   std::vector<IpPort> followers;

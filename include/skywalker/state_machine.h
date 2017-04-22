@@ -39,6 +39,9 @@ class StateMachine {
                        uint64_t instance_id,
                        const std::string& value,
                        MachineContext* context = nullptr) = 0;
+
+  virtual uint64_t GetCheckpointInstanceId(uint32_t group_id) const;
+
  private:
   int id_;
 

@@ -16,6 +16,7 @@ Config::Config(uint32_t group_id, uint64_t node_id,
       log_storage_path_(options.log_storage_path),
       log_sync_(options.log_sync),
       sync_interval_(options.sync_interval),
+      checkpoint_(options.checkpoint),
       db_(new DB()),
       messager_(new Messager(this, network)) {
   char name[8];

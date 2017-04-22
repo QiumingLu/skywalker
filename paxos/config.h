@@ -28,6 +28,8 @@ class Config {
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
 
+  bool Checkpoint() const { return checkpoint_; }
+
   uint32_t GetGroupId() const { return group_id_; }
 
   uint64_t GetNodeId() const { return node_id_; }
@@ -49,7 +51,9 @@ class Config {
   std::string log_storage_path_;
   bool log_sync_;
   uint32_t sync_interval_;
-  
+
+  bool checkpoint_;
+
   Membership membership_;
   Membership followers_;
 

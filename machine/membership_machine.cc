@@ -37,9 +37,12 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
                                 MachineContext* /* context */) {
   Membership m;
   if (m.ParseFromString(value)) {
+    if (instance_id <= membership_.version()) {
+      return true;
+    }
+    m.set_version(instance_id);
     int ret = db_->SetMembership(m);
     if (ret == 0) {
-      m.set_version(instance_id);
       MutexLock lock(&mutex_);
       membership_ = m;
       // copy to config.
@@ -55,6 +58,11 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
     SWLog(ERROR, "MembershipMachine::Execute - m.ParseFromString failed.\n");
   }
   return false;
+}
+
+uint64_t MembershipMachine::GetCheckpointInstanceId(uint32_t group_id) const {
+  MutexLock lock(&mutex_);
+  return membership_.version();
 }
 
 const Membership& MembershipMachine::GetMembership() const {
