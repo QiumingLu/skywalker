@@ -6,21 +6,22 @@
 #define SKYWALKER_PAXOS_CHECKPOINT_MANAGER_H_
 
 #include "paxos/config.h"
-#include "paxos/state_machine_manager.h"
+#include "machine/machine_manager.h"
 
 namespace skywalker {
 
 class CheckpointManager {
  public:
-  CheckpointManager(Config* config, StateMachineManager* manager);
+  CheckpointManager(Config* config, MachineManager* manager);
 
-  bool Init(uint64_t instance_id);
+  bool Recover(uint64_t instance_id);
 
  private:
   bool ReplayLog(uint64_t from, uint64_t to);
 
   Config* config_;
-  StateMachineManager* state_machine_manager_;
+  MachineManager* machine_manager_;
+
   uint64_t min_chosen_id_;
 
   // No copying allowed

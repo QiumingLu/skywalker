@@ -18,8 +18,8 @@ Instance::Instance(Config* config)
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
       proposer_(config, this),
-      state_machine_manager_(),
-      checkpoint_manager_(config, &state_machine_manager_),
+      machine_manager_(),
+      checkpoint_manager_(config, &machine_manager_),
       instance_id_(0),
       is_proposing_(false),
       context_(nullptr) {
@@ -28,16 +28,16 @@ Instance::Instance(Config* config)
 Instance::~Instance() {
 }
 
-bool Instance::Init() {
-  bool ret = acceptor_.Init(&instance_id_);
-  if (!ret) {
-    SWLog(ERROR, "Instance::Init - Acceptor init fail.\n");
-    return ret;
+bool Instance::Recover() {
+  bool res = acceptor_.Recover(&instance_id_);
+  if (!res) {
+    SWLog(ERROR, "Acceptor recover failed.\n");
+    return res;
   }
-  ret = checkpoint_manager_.Init(instance_id_);
-  if (!ret) {
-    SWLog(ERROR, "Instance::Init - CheckpointManager init fail.\n");
-    return ret;
+  res = checkpoint_manager_.Recover(instance_id_);
+  if (!res) {
+    SWLog(ERROR, "CheckpointManager recover failed.\n");
+    return res;
   }
   acceptor_.SetInstanceId(instance_id_);
   learner_.SetInstanceId(instance_id_);
@@ -46,8 +46,8 @@ bool Instance::Init() {
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
   SWLog(INFO,
-        "Instance::Init - now instance_id=%" PRIu64".\n", instance_id_);
-  return ret;
+        "Instance::Recover - now instance_id=%" PRIu64".\n", instance_id_);
+  return res;
 }
 
 void Instance::SetIOLoop(RunLoop* loop) {
@@ -67,11 +67,11 @@ void Instance::SyncData() {
 }
 
 void Instance::AddMachine(StateMachine* machine) {
-  state_machine_manager_.AddMachine(machine);
+  machine_manager_.AddMachine(machine);
 }
 
 void Instance::RemoveMachine(StateMachine* machine) {
-  state_machine_manager_.RemoveMachine(machine);
+  machine_manager_.RemoveMachine(machine);
 }
 
 void Instance::OnPropose(const std::string& value,
@@ -205,7 +205,7 @@ bool Instance::MachineExecute(const PaxosValue& value, bool my) {
     if (my) {
       context = context_;
     }
-    return state_machine_manager_.Execute(
+    return machine_manager_.Execute(
         id, config_->GetGroupId(), instance_id_, value.user_data(), context);
   }
   return true;

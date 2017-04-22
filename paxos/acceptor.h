@@ -20,7 +20,7 @@ class Acceptor {
  public:
   Acceptor(Config* config, Instance* instance);
 
-  bool Init(uint64_t* instance_id);
+  bool Recover(uint64_t* instance_id);
 
   void SetInstanceId(uint64_t id) { instance_id_ = id; }
 

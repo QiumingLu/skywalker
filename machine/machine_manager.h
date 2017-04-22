@@ -1,5 +1,5 @@
-#ifndef SKYWALKER_PAXOS_STATE_MACHINE_MANAGER_H_
-#define SKYWALKER_PAXOS_STATE_MACHINE_MANAGER_H_
+#ifndef SKYWALKER_PAXOS_MACHINE_MANAGER_H_
+#define SKYWALKER_PAXOS_MACHINE_MANAGER_H_
 
 #include <map>
 
@@ -8,9 +8,9 @@
 
 namespace skywalker {
 
-class StateMachineManager{
+class MachineManager {
  public:
-  StateMachineManager();
+  MachineManager();
 
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
@@ -23,10 +23,10 @@ class StateMachineManager{
   std::map<int, StateMachine*> machines_;
 
   // No copying allowed
-  StateMachineManager(const StateMachineManager&);
-  void operator =(const StateMachineManager&);
+  MachineManager(const MachineManager&);
+  void operator =(const MachineManager&);
 };
 
 }  // namespace skywalker
 
-#endif  // SKYWALKER_PAXOS_STATE_MACHINE_MANAGER_H_
+#endif  // SKYWALKER_PAXOS_MACHINE_MANAGER_H_

@@ -39,18 +39,20 @@ Group::Group(uint32_t group_id, uint64_t node_id,
 }
 
 bool Group::Start() {
-  if (config_.Init() && instance_.Init()) {
+  bool res = config_.Init();
+  if (res) {
     membership_machine_.Recover();
     master_machine_.Recover();
-    schedule_->Start();
-    instance_.SetIOLoop(schedule_->IOLoop());
-    instance_.SetLearnLoop(schedule_->LearnLoop());
-    propose_queue_.SetIOLoop(schedule_->IOLoop());
-    propose_queue_.SetCallbackLoop(schedule_->CallbackLoop());
-    return true;
-  } else {
-    return false;
+    res = instance_.Recover();
+    if (res) {
+      schedule_->Start();
+      instance_.SetIOLoop(schedule_->IOLoop());
+      instance_.SetLearnLoop(schedule_->LearnLoop());
+      propose_queue_.SetIOLoop(schedule_->IOLoop());
+      propose_queue_.SetCallbackLoop(schedule_->CallbackLoop());
+    }
   }
+  return res;
 }
 
 void Group::SyncMembership() {

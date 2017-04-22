@@ -1,4 +1,4 @@
-#include "paxos/state_machine_manager.h"
+#include "machine/machine_manager.h"
 
 #include <assert.h>
 
@@ -6,20 +6,20 @@
 
 namespace skywalker {
 
-StateMachineManager::StateMachineManager() {
+MachineManager::MachineManager() {
 }
 
-void StateMachineManager::AddMachine(StateMachine* machine) {
+void MachineManager::AddMachine(StateMachine* machine) {
   MutexLock lock(&mutex_);
   machines_.insert(std::make_pair(machine->machine_id(), machine));
 }
 
-void StateMachineManager::RemoveMachine(StateMachine* machine) {
+void MachineManager::RemoveMachine(StateMachine* machine) {
   MutexLock lock(&mutex_);
   machines_.erase(machine->machine_id());
 }
 
-bool StateMachineManager::Execute(
+bool MachineManager::Execute(
     int machine_id, uint32_t group_id, uint64_t instance_id,
     const std::string& value, MachineContext* context) {
   MutexLock lock(&mutex_);

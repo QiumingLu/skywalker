@@ -17,7 +17,7 @@ Acceptor::Acceptor(Config* config, Instance* instance)
       log_sync_count_(0) {
 }
 
-bool Acceptor::Init(uint64_t* instance_id) {
+bool Acceptor::Recover(uint64_t* instance_id) {
   if (ReadFromDB()) {
     *instance_id = instance_id_;
     return true;

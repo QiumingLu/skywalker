@@ -14,7 +14,7 @@
 #include "paxos/learner.h"
 #include "paxos/proposer.h"
 #include "paxos/checkpoint_manager.h"
-#include "paxos/state_machine_manager.h"
+#include "machine/machine_manager.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
@@ -33,7 +33,7 @@ class Instance {
   explicit Instance(Config* config);
   ~Instance();
 
-  bool Init();
+  bool Recover();
 
   void SyncData();
 
@@ -66,7 +66,7 @@ class Instance {
   Learner learner_;
   Proposer proposer_;
 
-  StateMachineManager state_machine_manager_;
+  MachineManager machine_manager_;
   CheckpointManager checkpoint_manager_;
 
   uint64_t instance_id_;

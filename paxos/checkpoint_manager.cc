@@ -8,22 +8,21 @@
 namespace skywalker {
 
 CheckpointManager::CheckpointManager(Config* config,
-                                     StateMachineManager* manager)
+                                     MachineManager* manager)
     : config_(config),
-      state_machine_manager_(manager) {
+      machine_manager_(manager) {
 }
 
-bool CheckpointManager::Init(uint64_t instance_id) {
+bool CheckpointManager::Recover(uint64_t instance_id) {
   int res = config_->GetDB()->GetMinChosenInstanceId(&min_chosen_id_);
   if (res < 0) {
     return false;
   }
-  bool success = true;
   min_chosen_id_ += 1;
   if (min_chosen_id_ < instance_id) {
-    success = ReplayLog(min_chosen_id_, instance_id);
+    return ReplayLog(min_chosen_id_, instance_id);
   }
-  return success;
+  return true;
 }
 
 bool CheckpointManager::ReplayLog(uint64_t from, uint64_t to) {
@@ -39,7 +38,7 @@ bool CheckpointManager::ReplayLog(uint64_t from, uint64_t to) {
     AcceptorState state;
     state.ParseFromString(s);
     const PaxosValue& value = state.accepted_value();
-    bool success = state_machine_manager_->Execute(
+    bool success = machine_manager_->Execute(
         value.machine_id(), config_->GetGroupId(), instance_id,
         value.user_data(), nullptr);
     if (!success) {
