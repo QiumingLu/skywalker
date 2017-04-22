@@ -10,7 +10,8 @@ namespace skywalker {
 CheckpointManager::CheckpointManager(Config* config,
                                      MachineManager* manager)
     : config_(config),
-      machine_manager_(manager) {
+      machine_manager_(manager),
+      min_chosen_id_(-1) {
 }
 
 bool CheckpointManager::Recover(uint64_t instance_id) {
@@ -18,9 +19,9 @@ bool CheckpointManager::Recover(uint64_t instance_id) {
   if (res < 0) {
     return false;
   }
-  min_chosen_id_ += 1;
-  if (min_chosen_id_ < instance_id) {
-    return ReplayLog(min_chosen_id_, instance_id);
+  uint64_t id = machine_manager_->GetCheckpointInstanceId(config_->GetGroupId()) + 1;
+  if (id < instance_id) {
+    return ReplayLog(id, instance_id);
   }
   return true;
 }

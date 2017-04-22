@@ -15,8 +15,13 @@ class MachineManager {
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
 
+  uint64_t GetCheckpointInstanceId(uint32_t group_id) const;
+
   bool Execute(int machine_id, uint32_t group_id, uint64_t instance_id,
                const std::string& value, MachineContext* context);
+
+  bool BuildCheckpoint(int machine_id, uint32_t group_id, uint64_t instance_id,
+                       const std::string& value);
 
  private:
   Mutex mutex_;
