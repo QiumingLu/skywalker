@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKYWALKER_PAXOS_CHECKPOINT_MANAGER_H_
-#define SKYWALKER_PAXOS_CHECKPOINT_MANAGER_H_
+#ifndef SKYWALKER_CHECKPOINT_CHECKPOINT_MANAGER_H_
+#define SKYWALKER_CHECKPOINT_CHECKPOINT_MANAGER_H_
 
 #include "paxos/config.h"
 #include "machine/machine_manager.h"
@@ -31,4 +31,4 @@ class CheckpointManager {
 
 }  // namespace skywalker
 
-#endif  // SKYWALKER_PAXOS_CHECKPOINT_MANAGER_H_
+#endif  // SKYWALKER_CHECKPOINT_CHECKPOINT_MANAGER_H_

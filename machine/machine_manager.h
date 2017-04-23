@@ -24,7 +24,7 @@ class MachineManager {
                        const std::string& value);
 
  private:
-  Mutex mutex_;
+  mutable Mutex mutex_;
   std::map<int, StateMachine*> machines_;
 
   // No copying allowed

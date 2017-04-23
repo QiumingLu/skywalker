@@ -44,6 +44,7 @@ class StateMachine {
 
   virtual bool BuildCheckpoint(
       uint32_t group_id, uint64_t instance_id, const std::string& value);
+
   virtual bool LockCheckpoint();
   virtual bool GetCheckpoint(uint32_t group_id);
   virtual bool UnLockCheckpoint();

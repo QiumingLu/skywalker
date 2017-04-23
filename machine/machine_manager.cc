@@ -1,6 +1,7 @@
 #include "machine/machine_manager.h"
 
 #include <assert.h>
+#include <vector>
 
 #include "util/mutexlock.h"
 
@@ -23,6 +24,7 @@ uint64_t MachineManager::GetCheckpointInstanceId(uint32_t group_id) const {
   bool has = false;
   uint64_t inside = -1;
   uint64_t outside = -1;
+  MutexLock lock(&mutex_);
   for (std::map<int, StateMachine*>::const_iterator it = machines_.begin();
        it != machines_.end(); ++it) {
     uint64_t temp = it->second->GetCheckpointInstanceId(group_id);
@@ -57,9 +59,10 @@ bool MachineManager::Execute(
 bool MachineManager::BuildCheckpoint(
     int machine_id, uint32_t group_id, uint64_t instance_id ,
     const std::string& value) {
-  if (machine_id == 0 && machine_id == 1) {
+  if (machine_id == 0 || machine_id == 1) {
     return true;
   }
+  MutexLock lock(&mutex_);
   auto it = machines_.find(machine_id);
   if (it != machines_.end()) {
     return it->second->BuildCheckpoint(group_id, instance_id, value);
