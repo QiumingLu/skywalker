@@ -25,10 +25,10 @@ int main(int argc, char** argv) {
   }
 
   skywalker::Options options;
-  options.log_storage_path = std::string(path);
-  options.log_sync = true;
-  options.sync_interval = 0;
-  options.group_size = 1;
+//  options.log_storage_path = std::string(path);
+//  options.log_sync = true;
+//  options.sync_interval = 0;
+//  options.group_size = 1;
   // options.ipport.ip = "127.0.0.1";
   // options.ipport.port = 5666;
   // options.membership.push_back(options.ipport);
@@ -44,8 +44,8 @@ int main(int argc, char** argv) {
        it != others.end(); ++it) {
     std::vector<std::string> other;
     voyager::SplitStringUsing(*it, ":", &other);
-    options.membership.push_back(
-        skywalker::IpPort(other[0], atoi(&*(other[1].begin()))));
+//    options.membership.push_back(
+//        skywalker::IpPort(other[0], atoi(&*(other[1].begin()))));
   }
 
   skywalker::Node* node = nullptr;
@@ -56,7 +56,9 @@ int main(int argc, char** argv) {
     std::string value;
     std::getline(std::cin, value);
     node->Propose(
-        0, value, nullptr, [](skywalker::MachineContext*, const skywalker::Status& s, uint64_t instance_id) {
+        0, value, nullptr,
+        [](skywalker::MachineContext*, const skywalker::Status& s,
+           uint64_t instance_id) {
       printf("%s\n", s.ToString().c_str());
     });
   }

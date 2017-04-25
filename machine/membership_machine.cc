@@ -11,14 +11,10 @@
 
 namespace skywalker {
 
-MembershipMachine::MembershipMachine(const Options& options, Config* config)
+MembershipMachine::MembershipMachine(Config* config)
     : config_(config),
       db_(config->GetDB()),
       has_sync_membership_(false) {
-  membership_.set_version(0);
-  for (auto i : options.membership) {
-    membership_.add_node_id(MakeNodeId(i));
-  }
   set_machine_id(0);
 }
 
@@ -28,8 +24,10 @@ void MembershipMachine::Recover() {
   if (ret == 0) {
     has_sync_membership_ = true;
     membership_ = m;
+    config_->SetMembership(membership_);
+  } else {
+    membership_ = config_->GetMembership();
   }
-  config_->SetMembership(membership_);
 }
 
 bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
@@ -37,7 +35,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
                                 MachineContext* /* context */) {
   Membership m;
   if (m.ParseFromString(value)) {
-    if (instance_id <= membership_.version()) {
+    if (instance_id < membership_.version()) {
       return true;
     }
     m.set_version(instance_id);
@@ -58,11 +56,6 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
     SWLog(ERROR, "MembershipMachine::Execute - m.ParseFromString failed.\n");
   }
   return false;
-}
-
-uint64_t MembershipMachine::GetCheckpointInstanceId(uint32_t group_id) const {
-  MutexLock lock(&mutex_);
-  return membership_.version();
 }
 
 const Membership& MembershipMachine::GetMembership() const {

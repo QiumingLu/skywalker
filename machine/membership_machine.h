@@ -19,7 +19,7 @@ class Config;
 
 class MembershipMachine : public StateMachine {
  public:
-  explicit MembershipMachine(const Options& options, Config* config);
+  explicit MembershipMachine(Config* config);
 
   void Recover();
 
@@ -30,10 +30,7 @@ class MembershipMachine : public StateMachine {
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value,
                        MachineContext* /* context */);
-
-  virtual uint64_t GetCheckpointInstanceId(uint32_t group_id) const;
-
- public:
+ private:
   Config* config_;
   DB* db_;
 

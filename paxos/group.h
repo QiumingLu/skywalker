@@ -27,8 +27,7 @@ class Network;
 
 class Group {
  public:
-  Group(uint32_t group_id, uint64_t node_id,
-        const Options& options, Network* network);
+  Group(uint64_t node_id, const GroupOptions& options, Network* network);
 
   bool Start();
 
@@ -48,9 +47,6 @@ class Group {
   bool ReplaceMember(const IpPort& new_i, const IpPort& old_i,
                      const MembershipCompleteCallback& cb);
   void GetMembership(std::vector<IpPort>* result) const;
-
-  void AddMachine(StateMachine* machine);
-  void RemoveMachine(StateMachine* machine);
 
   void SetMasterLeaseTime(uint64_t micros);
   bool GetMaster(IpPort* i, uint64_t* version) const;

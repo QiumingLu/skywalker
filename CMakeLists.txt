@@ -20,7 +20,7 @@ if(NOT CMAKE_INSTALL_DIR)
   set(CMAKE_INSTALL_DIR "/usr/local")
 endif()
 
-option(BUILD_EXAMPLES "Build skywalker examples" on)
+option(BUILD_EXAMPLES "Build skywalker examples" off)
 option(BUILD_SHARED_LIBS "Build skywalker shared libraries" on)
 
 set(CXX_FLAGS
@@ -103,5 +103,5 @@ install(DIRECTORY ${Skywalker_INCLUDE_DIR}/skywalker DESTINATION include)
 
 if (BUILD_EXAMPLES)
   add_subdirectory(examples/journey)
-  add_subdirectory(paxos/test)
+  #  add_subdirectory(paxos/test)
 endif()

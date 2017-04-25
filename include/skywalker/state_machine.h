@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKYWALKER_STATE_MACHINE_H_
-#define SKYWALKER_STATE_MACHINE_H_
+#ifndef SKYWALKER_INCLUDE_STATE_MACHINE_H_
+#define SKYWALKER_INCLUDE_STATE_MACHINE_H_
 
 #include <stdint.h>
 #include <string>
@@ -40,16 +40,6 @@ class StateMachine {
                        const std::string& value,
                        MachineContext* context = nullptr) = 0;
 
-  virtual uint64_t GetCheckpointInstanceId(uint32_t group_id) const;
-
-  virtual bool BuildCheckpoint(
-      uint32_t group_id, uint64_t instance_id, const std::string& value);
-
-  virtual bool LockCheckpoint();
-  virtual bool GetCheckpoint(uint32_t group_id);
-  virtual bool UnLockCheckpoint();
-  virtual bool LoadCheckpoint(uint32_t group_id);
-
  private:
   int id_;
 
@@ -60,4 +50,4 @@ class StateMachine {
 
 }  // namespace skywalker
 
-#endif  // SKYWALKER_STATE_MACHINE_H_
+#endif  // SKYWALKER_INCLUDE_STATE_MACHINE_H_

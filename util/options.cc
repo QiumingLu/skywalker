@@ -6,16 +6,21 @@
 
 namespace skywalker {
 
-Options::Options()
-    : log_storage_path(),
-      log_sync(true),
-      sync_interval(0),
-      group_size(1),
+GroupOptions::GroupOptions()
+    : group_id(0),
       use_master(true),
-      checkpoint(false),
-      ipport(),
+      log_sync(true),
+      sync_interval(5),
+      keep_log_count(500),
+      log_storage_path(),
+      checkpoint(nullptr),
+      machines(),
       membership(),
       followers() {
+}
+
+Options::Options()
+    : ipport() {
 }
 
 }  // namespace skywalker

@@ -36,12 +36,16 @@ class Status {
   static Status Timeout(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kTimeout, msg, msg2);
   }
+  static Status IOError(const Slice& msg, const Slice& msg2 = Slice()) {
+    return Status(kIOError, msg, msg2);
+  }
 
   bool ok() const { return state_ == nullptr; }
   bool IsInvalidNode() const { return code() == kInvalidNode; }
   bool IsConflict() const {  return code() == kConflict; }
   bool IsMachineError() const { return code() == kMachineError; }
   bool IsTimeout() const { return code() == kTimeout; }
+  bool IsIOError() const { return code() == kIOError; }
 
   std::string ToString() const;
 
@@ -54,6 +58,7 @@ class Status {
     kConflict = 2,
     kMachineError = 3,
     kTimeout = 4,
+    kIOError = 5,
   };
 
   Code code() const {

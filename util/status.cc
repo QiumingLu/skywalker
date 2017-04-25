@@ -55,6 +55,9 @@ std::string Status::ToString() const {
       case kTimeout:
         type = "Timeout: ";
         break;
+      case kIOError:
+        type = "IOError: ";
+        break;
       default:
         snprintf(tmp, sizeof(tmp), "Unknown code(%d): ",
                  static_cast<int>(code()));

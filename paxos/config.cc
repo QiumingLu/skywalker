@@ -9,25 +9,29 @@
 
 namespace skywalker {
 
-Config::Config(uint32_t group_id, uint64_t node_id,
-               const Options& options, Network* network)
-    : group_id_(group_id),
-      node_id_(node_id),
-      log_storage_path_(options.log_storage_path),
+Config::Config(uint64_t node_id,
+               const GroupOptions& options, Network* network)
+    : node_id_(node_id),
+      group_id_(options.group_id),
       log_sync_(options.log_sync),
       sync_interval_(options.sync_interval),
+      keep_log_count_(options.keep_log_count),
+      log_storage_path_(options.log_storage_path),
       checkpoint_(options.checkpoint),
       db_(new DB()),
       messager_(new Messager(this, network)) {
   char name[8];
   if (log_storage_path_[log_storage_path_.size() - 1] != '/') {
-    snprintf(name, sizeof(name), "/g%d", group_id);
+    snprintf(name, sizeof(name), "/g%d", group_id_);
   } else {
-    snprintf(name, sizeof(name), "g%d", group_id);
+    snprintf(name, sizeof(name), "g%d", group_id_);
   }
 
   log_storage_path_ += name;
 
+  for (auto& i : options.membership) {
+    membership_.add_node_id(MakeNodeId(i));
+  }
   for (auto& i : options.followers) {
     followers_.add_node_id(MakeNodeId(i));
   }

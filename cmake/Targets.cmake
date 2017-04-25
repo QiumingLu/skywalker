@@ -11,7 +11,7 @@ file(GLOB_RECURSE storage_srcs ${CMAKE_CURRENT_SOURCE_DIR}/storage/*.cc)
 file(GLOB_RECURSE network_srcs ${CMAKE_CURRENT_SOURCE_DIR}/network/*.cc)
 file(GLOB_RECURSE paxos_srcs ${CMAKE_CURRENT_SOURCE_DIR}/paxos/*.cc)
 file(GLOB_RECURSE machine_srcs ${CMAKE_CURRENT_SOURCE_DIR}/machine/*.cc)
-file(GLOB_RECURSE checkpoint_srcs ${CMAKE_CURRENT_SOURCE_DIR}/checkpoint/*.cc)
+file(GLOB_RECURSE log_srcs ${CMAKE_CURRENT_SOURCE_DIR}/log/*.cc)
 
 set(skywalker_srcs
   ${proto_srcs}
@@ -20,5 +20,5 @@ set(skywalker_srcs
   ${network_srcs}
   ${paxos_srcs}
   ${machine_srcs}
-  ${checkpoint_srcs}
+  ${log_srcs}
  )

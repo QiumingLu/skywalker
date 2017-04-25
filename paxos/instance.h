@@ -14,7 +14,8 @@
 #include "paxos/learner.h"
 #include "paxos/proposer.h"
 #include "machine/machine_manager.h"
-#include "checkpoint/checkpoint_manager.h"
+#include "log/checkpoint_manager.h"
+#include "log/log_manager.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
@@ -66,8 +67,9 @@ class Instance {
   Learner learner_;
   Proposer proposer_;
 
-  MachineManager machine_manager_;
   CheckpointManager checkpoint_manager_;
+  MachineManager machine_manager_;
+  LogManager log_manager_;
 
   uint64_t instance_id_;
 

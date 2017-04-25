@@ -16,19 +16,18 @@ namespace skywalker {
 
 class Config {
  public:
-  Config(uint32_t group_id, uint64_t node_id,
-         const Options& options, Network* network);
+  Config(uint64_t node_id, const GroupOptions& options, Network* network);
   ~Config();
 
   bool Init();
 
+  Checkpoint* GetCheckpoint() const { return checkpoint_; }
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }
 
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
-
-  bool Checkpoint() const { return checkpoint_; }
+  uint32_t KeepLogCount() const { return keep_log_count_; }
 
   uint32_t GetGroupId() const { return group_id_; }
 
@@ -45,18 +44,18 @@ class Config {
   bool IsValidNodeId(uint64_t node_id) const;
 
  private:
-  uint32_t group_id_;
   uint64_t node_id_;
+  uint32_t group_id_;
 
-  std::string log_storage_path_;
   bool log_sync_;
   uint32_t sync_interval_;
-
-  bool checkpoint_;
+  uint32_t keep_log_count_;
+  std::string log_storage_path_;
 
   Membership membership_;
   Membership followers_;
 
+  Checkpoint* checkpoint_;
   DB* db_;
   Messager* messager_;
 

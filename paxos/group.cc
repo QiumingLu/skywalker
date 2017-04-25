@@ -12,14 +12,14 @@
 
 namespace skywalker {
 
-Group::Group(uint32_t group_id, uint64_t node_id,
-             const Options& options, Network* network)
+Group::Group(uint64_t node_id,
+             const GroupOptions& options, Network* network)
     : node_id_(node_id),
-      config_(group_id, node_id, options, network),
+      config_(node_id, options, network),
       instance_(&config_),
       lease_timeout_(10 * 1000 * 1000),
       retrie_master_(false),
-      membership_machine_(options, &config_),
+      membership_machine_(&config_),
       master_machine_(&config_),
       mutex_(),
       cond_(&mutex_),
@@ -35,6 +35,9 @@ Group::Group(uint32_t group_id, uint64_t node_id,
   instance_.AddMachine(&membership_machine_);
   if (options.use_master) {
     instance_.AddMachine(&master_machine_);
+  }
+  for (auto& machine : options.machines) {
+    instance_.AddMachine(machine);
   }
 }
 
@@ -93,6 +96,9 @@ void Group::SyncMembershipInLoop(MachineContext* context) {
 }
 
 void Group::SyncMaster() {
+  if (schedule_->MasterLoop() == nullptr) {
+    return;
+  }
   schedule_->MasterLoop()->QueueInLoop([this]() {
     TryBeMaster();
   });
@@ -320,14 +326,6 @@ void Group::ProposeComplete(MachineContext* context,
 
 void Group::GetMembership(std::vector<IpPort>* result) const {
   membership_machine_.GetMembership(result);
-}
-
-void Group::AddMachine(StateMachine* machine) {
-  instance_.AddMachine(machine);
-}
-
-void Group::RemoveMachine(StateMachine* machine) {
-  instance_.RemoveMachine(machine);
 }
 
 void Group::SetMasterLeaseTime(uint64_t micros) {

@@ -25,11 +25,11 @@ NodeImpl::~NodeImpl() {
 
 bool NodeImpl::StartWorking() {
   bool ret = true;
-  for (uint32_t i = 0; i < options_.group_size; ++i) {
-    std::unique_ptr<Group> group(new Group(i, node_id_, options_, &network_));
+  for (auto& g : options_.groups) {
+    std::unique_ptr<Group> group(new Group(node_id_, g, &network_));
     ret = group->Start();
     if (ret) {
-      groups_.insert(std::make_pair(i, std::move(group)));
+      groups_.insert(std::make_pair(g.group_id, std::move(group)));
     } else {
       return ret;
     }
@@ -42,12 +42,14 @@ bool NodeImpl::StartWorking() {
 
   for (auto& g : groups_) {
     g.second->SyncMembership();
-    if (options_.use_master) {
-      g.second->SyncMaster();
-    }
+    g.second->SyncMaster();
   }
 
   return ret;
+}
+
+size_t NodeImpl::group_size() const {
+  return groups_.size();
 }
 
 bool NodeImpl::Propose(uint32_t group_id,
@@ -107,28 +109,6 @@ void NodeImpl::GetMembership(uint32_t group_id,
   auto it = groups_.find(group_id);
   assert(it != groups_.end());
   it->second->GetMembership(result);
-}
-
-void NodeImpl::AddMachine(StateMachine* machine) {
-  for (auto& g : groups_) {
-    g.second->AddMachine(machine);
-  }
-}
-
-void NodeImpl::RemoveMachine(StateMachine* machine) {
-  for (auto& g : groups_) {
-    g.second->RemoveMachine(machine);
-  }
-}
-
-void NodeImpl::AddMachine(uint32_t group_id, StateMachine* machine) {
-  assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->AddMachine(machine);
-}
-
-void NodeImpl::RemoveMachine(uint32_t group_id, StateMachine* machine) {
-  assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->RemoveMachine(machine);
 }
 
 void NodeImpl::SetMasterLeaseTime(uint64_t micros) {

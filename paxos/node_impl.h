@@ -26,9 +26,7 @@ class NodeImpl : public Node {
 
   bool StartWorking();
 
-  virtual uint32_t group_size() const {
-    return options_.group_size;
-  }
+  virtual size_t group_size() const;
 
   virtual bool Propose(uint32_t group_id,
                        const std::string& value,
@@ -49,12 +47,6 @@ class NodeImpl : public Node {
                              const MembershipCompleteCallback& cb);
   virtual void GetMembership(uint32_t group_id,
                              std::vector<IpPort>* result) const;
-
-  virtual void AddMachine(StateMachine* machine);
-  virtual void RemoveMachine(StateMachine* machine);
-
-  virtual void AddMachine(uint32_t group_id, StateMachine* machine);
-  virtual void RemoveMachine(uint32_t group_id, StateMachine* machine);
 
   virtual void SetMasterLeaseTime(uint64_t micros);
   virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros);

@@ -18,8 +18,9 @@ Instance::Instance(Config* config)
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
       proposer_(config, this),
+      checkpoint_manager_(config),
       machine_manager_(),
-      checkpoint_manager_(config, &machine_manager_),
+      log_manager_(config, &checkpoint_manager_, &machine_manager_),
       instance_id_(0),
       is_proposing_(false),
       context_(nullptr) {
@@ -34,7 +35,7 @@ bool Instance::Recover() {
     SWLog(ERROR, "Acceptor recover failed.\n");
     return res;
   }
-  res = checkpoint_manager_.Recover(instance_id_);
+  res = log_manager_.Recover(instance_id_);
   if (!res) {
     SWLog(ERROR, "CheckpointManager recover failed.\n");
     return res;

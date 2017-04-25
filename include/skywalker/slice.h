@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#ifndef SKYWALKER_UTIL_SLICE_H_
-#define SKYWALKER_UTIL_SLICE_H_
+#ifndef SKYWALKER_INCLUDE_SLICE_H_
+#define SKYWALKER_INCLUDE_SLICE_H_
 
 #include <assert.h>
 #include <string.h>
@@ -74,4 +74,4 @@ inline bool operator!=(const Slice& x, const Slice& y) {
 
 }  // namespace skywalker
 
-#endif  // SKYWALKER_UTIL_SLICE_H_
+#endif  // SKYWALKER_INCLUDE_SLICE_H_

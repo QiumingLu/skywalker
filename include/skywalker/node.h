@@ -12,7 +12,6 @@
 
 #include "skywalker/options.h"
 #include "skywalker/slice.h"
-#include "skywalker/state_machine.h"
 #include "skywalker/status.h"
 
 namespace skywalker {
@@ -36,7 +35,7 @@ class Node {
   Node() { }
   virtual ~Node() { }
 
-  virtual uint32_t group_size() const = 0;
+  virtual size_t group_size() const = 0;
 
   // Propose a new value to the paxos library.
   // If propose success returns true, else returns false.
@@ -84,18 +83,6 @@ class Node {
   // Returns the membership.
   virtual void GetMembership(uint32_t group_id,
                              std::vector<IpPort>* result) const = 0;
-
-  // Add a state machine to all groups.
-  virtual void AddMachine(StateMachine* machine) = 0;
-
-  // Remove a state machine from all groups.
-  virtual void RemoveMachine(StateMachine* machine) = 0;
-
-  // Add a state machine to a specific group.
-  virtual void AddMachine(uint32_t group_id, StateMachine* machine) = 0;
-
-  // Remove a state machine from a specific group.
-  virtual void RemoveMachine(uint32_t group_id, StateMachine* machine) = 0;
 
   // Set the master's lease time for all groups.
   // default micros = 10 * 1000 * 1000.

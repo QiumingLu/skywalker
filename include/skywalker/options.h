@@ -10,6 +10,9 @@
 #include <string>
 #include <vector>
 
+#include "skywalker/state_machine.h"
+#include "skywalker/checkpoint.h"
+
 namespace skywalker {
 
 struct IpPort {
@@ -25,16 +28,26 @@ struct IpPort {
   }
 };
 
-struct Options {
-  std::string log_storage_path;
+struct GroupOptions {
+  uint32_t group_id;
+  bool use_master;
   bool log_sync;
   uint32_t sync_interval;
-  uint32_t group_size;
-  bool use_master;
-  bool checkpoint;
-  IpPort ipport;
+  uint32_t keep_log_count;
+  std::string log_storage_path;
+
+  Checkpoint* checkpoint;
+
+  std::vector<StateMachine*> machines;
   std::vector<IpPort> membership;
   std::vector<IpPort> followers;
+
+  GroupOptions();
+};
+
+struct Options {
+  IpPort ipport;
+  std::vector<GroupOptions> groups;
 
   Options();
 };

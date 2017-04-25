@@ -33,7 +33,7 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             MachineContext* context) {
   MasterState state;
   if (state.ParseFromString(value)) {
-    if (instance_id <= state_.version()) {
+    if (instance_id < state_.version()) {
       return true;
     }
     state.set_version(instance_id);
@@ -61,11 +61,6 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
     SWLog(ERROR, "MasterMachine::Execute - state.ParseFromString failed.\n");
   }
   return false;
-}
-
-uint64_t MasterMachine::GetCheckpointInstanceId(uint32_t group_id) const {
-  MutexLock lock(&mutex_);
-  return state_.version();
 }
 
 void MasterMachine::SetMasterState(const MasterState& state) {
