@@ -50,10 +50,10 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
       }
       return true;
     } else {
-      SWLog(ERROR, "MembershipMachine::Execute - update membership failed.\n");
+      SWLog(ERROR, "Update membership failed.\n");
     }
   } else {
-    SWLog(ERROR, "MembershipMachine::Execute - m.ParseFromString failed.\n");
+    SWLog(ERROR, " Membership ParseFromString failed.\n");
   }
   return false;
 }

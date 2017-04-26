@@ -23,11 +23,8 @@ class LogCleaner {
   void Start();
 
  private:
-  static const int kOnceLoop = 300;
-
   static void* StartGC(void* data);
   void GCLoop();
-  bool Delete(uint64_t instance_id);
 
   Config* config_;
   CheckpointManager* checkpoint_;

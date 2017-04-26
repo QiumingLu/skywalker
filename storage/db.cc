@@ -81,6 +81,17 @@ int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
   return 0;
 }
 
+int DB::Write(const WriteOptions& options, WriteBatch* updates) {
+  leveldb::WriteOptions op;
+  op.sync = options.sync;
+  leveldb::Status status = db_->Write(op, updates->batch_);
+  if (!status.ok()) {
+    SWLog(ERROR, "DB::Write - %s\n", status.ToString().c_str());
+    return -1;
+  }
+  return 0;
+}
+
 int DB::Get(uint64_t instance_id, std::string* value) {
   char key[sizeof(instance_id)];
   memcpy(key, &instance_id, sizeof(key));

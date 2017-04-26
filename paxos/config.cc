@@ -17,6 +17,7 @@ Config::Config(uint64_t node_id,
       sync_interval_(options.sync_interval),
       keep_log_count_(options.keep_log_count),
       log_storage_path_(options.log_storage_path),
+      has_machines_(!options.machines.empty()),
       checkpoint_(options.checkpoint),
       db_(new DB()),
       messager_(new Messager(this, network)) {

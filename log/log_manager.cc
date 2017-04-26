@@ -23,9 +23,9 @@ bool LogManager::Recover(uint64_t instance_id) {
   if (res == -1) {
     return false;
   }
-  uint64_t checkpoint_id = checkpoint_manager_->GetCheckpointInstanceId();
-  if (checkpoint_id < instance_id) {
-    return ReplayLog(checkpoint_id, instance_id);
+  uint64_t id = checkpoint_manager_->GetCheckpointInstanceId() + 1;
+  if (id + 1 < instance_id) {
+    return ReplayLog(id, instance_id);
   }
 
   cleaner_.Start();

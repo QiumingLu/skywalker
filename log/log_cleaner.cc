@@ -45,23 +45,23 @@ void LogCleaner::GCLoop() {
   std::default_random_engine generator;
   std::uniform_int_distribution<int> distribution(0, 500);
 
+  WriteOptions options;
+  options.sync = false;
+  WriteBatch batch;
+
   while (!exit_) {
     uint64_t min_chosen_id = manager_->GetMinChosenInstanceId();
     uint64_t max_chosen_id = manager_->GetMaxChosenInstanceId();
-    uint64_t checkpoint_id = checkpoint_->GetCheckpointInstanceId();
+    uint64_t checkpoint_id = checkpoint_->GetCheckpointInstanceId() + 1;
 
-    int deleted = 0;
     while (min_chosen_id + keep_log_count_ < max_chosen_id &&
            min_chosen_id + keep_log_count_ < checkpoint_id) {
-      bool res = Delete(min_chosen_id);
-      if (!res) {
-        break;
-      }
-      if (++deleted > kOnceLoop) {
-        deleted = 0;
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
-      }
-      ++min_chosen_id;
+      batch.Delete(min_chosen_id++);
+    }
+    int res = config_->GetDB()->Write(options, &batch);
+    if (res == 0) {
+      batch.Clear();
+      manager_->SetMinChosenInstanceId(min_chosen_id);
     }
 
     int dice_roll =  distribution(generator) + 500;
@@ -69,16 +69,4 @@ void LogCleaner::GCLoop() {
   }
 }
 
-bool LogCleaner::Delete(uint64_t instance_id) {
-  WriteOptions options;
-  options.sync = false;
-  int res = config_->GetDB()->Delete(options, instance_id);
-  if (res == 0) {
-    manager_->SetMinChosenInstanceId(instance_id + 1);
-    return true;
-  }
-  return false;
-}
-
 }  // namespace skywalker
-

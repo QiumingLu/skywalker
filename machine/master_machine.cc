@@ -50,15 +50,15 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
         state.set_lease_time(NowMicros() + state.lease_time());
       }
       SetMasterState(state);
-      SWLog(INFO, "MasterMachine::Execute - now the master's "
-            "version=%" PRIu64", node_id=%" PRIu64", lease_time=%" PRIu64"\n",
+      SWLog(INFO, "Now the master's version=%" PRIu64", "
+            "node_id=%" PRIu64", lease_time=%" PRIu64"\n",
             state.version(), state.node_id(), state.lease_time());
       return true;
     } else {
-      SWLog(ERROR, "MasterMachine::Execute - update master state failed.\n");
+      SWLog(ERROR, "Update master state failed.\n");
     }
   } else {
-    SWLog(ERROR, "MasterMachine::Execute - state.ParseFromString failed.\n");
+    SWLog(ERROR, "MasterState ParseFromString failed.\n");
   }
   return false;
 }

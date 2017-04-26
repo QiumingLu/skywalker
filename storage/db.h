@@ -10,6 +10,7 @@
 #include <leveldb/db.h>
 #include <leveldb/comparator.h>
 #include "proto/paxos.pb.h"
+#include "storage/write_batch.h"
 
 namespace skywalker {
 
@@ -48,6 +49,8 @@ class DB {
           const std::string& value);
 
   int Delete(const WriteOptions& options, uint64_t instance_id);
+
+  int Write(const WriteOptions& options, WriteBatch* updates);
 
   int Get(uint64_t instance_id, std::string* value);
 

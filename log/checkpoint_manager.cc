@@ -19,7 +19,16 @@ CheckpointManager::~CheckpointManager() {
 }
 
 uint64_t CheckpointManager::GetCheckpointInstanceId() const {
-  return checkpoint_->GetCheckpointInstanceId(config_->GetGroupId());
+  uint64_t id = -1;
+  if (!config_->HasMachines()) {
+    int res = config_->GetDB()->GetMaxInstanceId(&id);
+    if (res == 0) {
+      id = id - 1;
+    }
+  } else {
+    id = checkpoint_->GetCheckpointInstanceId(config_->GetGroupId());
+  }
+  return id;
 }
 
 bool CheckpointManager::SendCheckpoint() {
@@ -36,13 +45,12 @@ bool CheckpointManager::SendCheckpoint() {
       res = SendFile(fname);
       if (!res) {
         SWLog(ERROR, "Send file failed, file:%s\n", fname.c_str());
-        return res;
+        break;
       }
     }
     checkpoint_->UnLockCheckpoint(config_->GetGroupId());
-    return true;
   }
-  return false;
+  return res;
 }
 
 bool CheckpointManager::SendFile(const std::string& fname) {

@@ -29,6 +29,8 @@ class Config {
   uint32_t SyncInterval() const { return sync_interval_; }
   uint32_t KeepLogCount() const { return keep_log_count_; }
 
+  bool HasMachines() const { return has_machines_; }
+
   uint32_t GetGroupId() const { return group_id_; }
 
   uint64_t GetNodeId() const { return node_id_; }
@@ -51,6 +53,8 @@ class Config {
   uint32_t sync_interval_;
   uint32_t keep_log_count_;
   std::string log_storage_path_;
+
+  bool has_machines_;
 
   Membership membership_;
   Membership followers_;
