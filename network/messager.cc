@@ -22,7 +22,7 @@ std::shared_ptr<Content> Messager::PackMessage(PaxosMessage* msg) {
   return content_ptr;
 }
 
-std::shared_ptr<Content> Messager::PackMessage(CheckPointMessage* msg) {
+std::shared_ptr<Content> Messager::PackMessage(CheckpointMessage* msg) {
   std::shared_ptr<Content> content_ptr(new Content());
   content_ptr->set_type(CHECKPOINT_MESSAGE);
   content_ptr->set_group_id(config_->GetGroupId());

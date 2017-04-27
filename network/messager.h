@@ -26,7 +26,7 @@ class Messager {
       const std::shared_ptr<Content>& content_ptr);
 
   std::shared_ptr<Content> PackMessage(PaxosMessage* msg);
-  std::shared_ptr<Content> PackMessage(CheckPointMessage* msg);
+  std::shared_ptr<Content> PackMessage(CheckpointMessage* msg);
 
  private:
   Config* config_;

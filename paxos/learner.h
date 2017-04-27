@@ -9,6 +9,7 @@
 #include "proto/paxos.pb.h"
 #include "util/random.h"
 #include "util/runloop.h"
+#include "log/checkpoint_manager.h"
 
 namespace skywalker {
 
@@ -19,10 +20,11 @@ class Messager;
 
 class Learner {
  public:
-  Learner(Config* config, Instance* instance, Acceptor* acceptor);
+  Learner(Config* config, Instance* instance, Acceptor* acceptor,
+          CheckpointManager* checkpoint_manager);
 
   void SetInstanceId(uint64_t instance_id) { instance_id_ = instance_id; }
-  
+
   void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
   void SetLearnLoop(RunLoop* loop) { learn_loop_ = loop; }
 
@@ -33,6 +35,7 @@ class Learner {
   void OnSendNowInstanceId(const PaxosMessage& msg);
   void OnComfirmAskForLearn(const PaxosMessage& msg);
   void OnSendLearnedValue(const PaxosMessage& msg);
+  void OnSendCheckpoint(const CheckpointMessage& msg);
 
   bool HasLearned() const { return has_learned_; }
   const PaxosValue& GetLearnedValue() const { return learned_value_; }
@@ -44,6 +47,7 @@ class Learner {
   void ComfirmAskForLearn(const PaxosMessage& msg);
   void ASyncSend(uint64_t node_id, uint64_t from, uint64_t to);
   void SendLearnedValue(uint64_t node_id, const AcceptorState& state);
+  void SendCheckpoint(uint64_t node_id);
 
   bool WriteToDB(const PaxosMessage& msg);
   void FinishLearnValue(const PaxosValue& value);
@@ -55,6 +59,7 @@ class Learner {
   Messager* messager_;
   Instance* instance_;
   Acceptor* acceptor_;
+  CheckpointManager* checkpoint_manager_;
 
   RunLoop* io_loop_;
   RunLoop* learn_loop_;

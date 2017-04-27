@@ -54,7 +54,7 @@ class Instance {
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
   void OnPaxosMessage(const PaxosMessage& msg);
-  void OnCheckPointMessage(const CheckPointMessage& msg);
+  void OnCheckpointMessage(const CheckpointMessage& msg);
 
  private:
   void CheckLearn();
@@ -63,13 +63,14 @@ class Instance {
 
   Config* config_;
   RunLoop* io_loop_;
-  Acceptor acceptor_;
-  Learner learner_;
-  Proposer proposer_;
 
   CheckpointManager checkpoint_manager_;
   MachineManager machine_manager_;
   LogManager log_manager_;
+
+  Acceptor acceptor_;
+  Learner learner_;
+  Proposer proposer_;
 
   uint64_t instance_id_;
 

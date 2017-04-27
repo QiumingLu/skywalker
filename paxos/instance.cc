@@ -15,12 +15,12 @@ namespace skywalker {
 
 Instance::Instance(Config* config)
     : config_(config),
-      acceptor_(config, this),
-      learner_(config, this, &acceptor_),
-      proposer_(config, this),
       checkpoint_manager_(config),
       machine_manager_(),
       log_manager_(config, &checkpoint_manager_, &machine_manager_),
+      acceptor_(config, this),
+      learner_(config, this, &acceptor_, &checkpoint_manager_),
+      proposer_(config, this),
       instance_id_(0),
       is_proposing_(false),
       context_(nullptr) {
@@ -112,7 +112,7 @@ void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
       OnPaxosMessage(c->paxos_msg());
       break;
     case CHECKPOINT_MESSAGE:
-      OnCheckPointMessage(c->checkpoint_msg());
+      OnCheckpointMessage(c->checkpoint_msg());
       break;
     default:
       SWLog(ERROR, "Instance::OnReceiveContent - Invalid content type.\n");
@@ -157,8 +157,8 @@ void Instance::OnPaxosMessage(const PaxosMessage& msg) {
   CheckLearn();
 }
 
-void Instance::OnCheckPointMessage(const CheckPointMessage& msg) {
-  // TODO(handle checkpoint message)
+void Instance::OnCheckpointMessage(const CheckpointMessage& msg) {
+  learner_.OnSendCheckpoint(msg);
 }
 
 void Instance::CheckLearn() {

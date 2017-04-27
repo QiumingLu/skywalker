@@ -1,7 +1,7 @@
 syntax = "proto3";
 package skywalker;
 
-enum MessageType {
+enum PaxosMessageType {
   PREPARE = 0;
   PREPARE_REPLY = 1;
   ACCEPT = 2;
@@ -19,7 +19,7 @@ message PaxosValue {
 }
 
 message PaxosMessage {
-  MessageType type = 1;
+  PaxosMessageType type = 1;
   uint64 node_id = 2;
   uint64 instance_id = 3;
   uint64 proposal_id = 4;
@@ -31,8 +31,21 @@ message PaxosMessage {
   PaxosValue value = 10;
 }
 
-message CheckPointMessage {
-  MessageType type = 1;
+enum CheckpointMessageType {
+  CHECKPOINT_BEGIN = 0;
+  CHECKPOINT_FILE = 1;
+  CHECKPOINT_END = 2;
+  CHECKPOINT_COMFIRM = 3;
+}
+
+message CheckpointMessage {
+  CheckpointMessageType type = 1;
+  uint64 node_id = 2;
+  uint64 sequence_id = 3;
+  uint64 instance_id = 4;
+  string file = 5;
+  uint64 offset =6;
+  bytes data = 7;
 }
 
 enum ContentType {
@@ -45,7 +58,7 @@ message Content {
   uint32 group_id = 2;
   uint32 version = 3;
   PaxosMessage paxos_msg = 4;
-  CheckPointMessage checkpoint_msg = 5;
+  CheckpointMessage checkpoint_msg = 5;
 }
 
 message AcceptorState {

@@ -13,11 +13,13 @@
 
 namespace skywalker {
 
-Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
+Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor,
+                 CheckpointManager* checkpoint_manager)
     : config_(config),
       messager_(config_->GetMessager()),
       instance_(instance),
       acceptor_(acceptor),
+      checkpoint_manager_(checkpoint_manager),
       instance_id_(0),
       max_instance_id_(0),
       max_instance_id_from_node_id_(0),
@@ -147,6 +149,14 @@ void Learner::OnSendLearnedValue(const PaxosMessage& msg) {
       BroadcastMessageToFollower(b);
     }
   }
+}
+
+void Learner::SendCheckpoint(uint64_t node_id) {
+  checkpoint_manager_->SendCheckpoint(node_id);
+}
+
+void Learner::OnSendCheckpoint(const CheckpointMessage& msg) {
+  checkpoint_manager_->ReceiveCheckpoint(msg);
 }
 
 void Learner::SetMaxInstanceId(uint64_t instance_id,
