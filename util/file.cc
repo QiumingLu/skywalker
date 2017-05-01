@@ -8,7 +8,6 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <pthread.h>
 
 namespace skywalker{
 
@@ -125,7 +124,7 @@ class PosixWritableFile : public WritableFile {
       : filename_(fname), file_(f) { }
 
   ~PosixWritableFile() {
-    if (file_ != NULL) {
+    if (file_ != nullptr) {
       fclose(file_);
     }
   }
@@ -143,7 +142,7 @@ class PosixWritableFile : public WritableFile {
     if (fclose(file_) != 0) {
       result = IOError(filename_, errno);
     }
-    file_ = NULL;
+    file_ = nullptr;
     return result;
   }
 
@@ -175,8 +174,8 @@ WritableFile::~WritableFile() {
 Status FileManager::NewSequentialFile(const std::string& fname,
                                       SequentialFile** result) {
   FILE* f = fopen(fname.c_str(), "r");
-  if (f == NULL) {
-    *result = NULL;
+  if (f == nullptr) {
+    *result = nullptr;
     return IOError(fname, errno);
   } else {
     *result = new PosixSequentialFile(fname, f);
@@ -186,7 +185,7 @@ Status FileManager::NewSequentialFile(const std::string& fname,
 
 Status FileManager::NewRandomAccessFile(const std::string& fname,
                                         RandomAccessFile** result) {
-  *result = NULL;
+  *result = nullptr;
   Status s;
   int fd = open(fname.c_str(), O_RDONLY);
   if (fd < 0) {
@@ -196,7 +195,7 @@ Status FileManager::NewRandomAccessFile(const std::string& fname,
     uint64_t size;
     s = GetFileSize(fname, &size);
     if (s.ok()) {
-      void* base = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
+      void* base = mmap(nullptr, size, PROT_READ, MAP_SHARED, fd, 0);
       if (base != MAP_FAILED) {
         *result = new PosixMmapReadableFile(fname, base, size);
       } else {
@@ -214,8 +213,8 @@ Status FileManager::NewWritableFile(const std::string& fname,
                                     WritableFile** result) {
   Status s;
   FILE* f = fopen(fname.c_str(), "w");
-  if (f == NULL) {
-    *result = NULL;
+  if (f == nullptr) {
+    *result = nullptr;
     s = IOError(fname, errno);
   } else {
     *result = new PosixWritableFile(fname, f);

@@ -1,6 +1,7 @@
 #ifndef SKYWALKER_UTIL_FILE_H_
 #define SKYWALKER_UTIL_FILE_H_
 
+#include <pthread.h>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -46,23 +47,22 @@ class FileManager {
   // Get the children of the specified directory.
   Status GetChildren(const std::string& dir, std::vector<std::string>* result);
 
-  // Check if the named file exists.
-  bool FileExists(const std::string& fname);
-
   // Rename file src to target
   Status RenameFile(const std::string& src, const std::string& target);
 
   // Store the size of fname in *file_size.
   Status GetFileSize(const std::string& fname, uint64_t* size);
 
+  // Check if the named file exists.
+  bool FileExists(const std::string& fname);
+
  private:
   static pthread_once_t once_;
   static FileManager* file_manager_;
   static void InitFileManager();
 
-  // No copying allowed
   FileManager() { }
-  ~FileManager() { }
+  ~FileManager() { delete file_manager_; file_manager_ =  nullptr; }
   FileManager(const FileManager&);
   void operator=(const FileManager&);
 };
