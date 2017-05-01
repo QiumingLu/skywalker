@@ -17,7 +17,7 @@ Config::Config(uint64_t node_id,
       sync_interval_(options.sync_interval),
       keep_log_count_(options.keep_log_count),
       log_storage_path_(options.log_storage_path),
-      has_machines_(!options.machines.empty()),
+      machines_(options.machines),
       checkpoint_(options.checkpoint),
       db_(new DB()),
       messager_(new Messager(this, network)) {
@@ -44,7 +44,8 @@ Config::~Config() {
 }
 
 bool Config::Init() {
-  int ret = db_->Open(group_id_, log_storage_path_);
+  std::string log = log_storage_path_ + "/log";
+  int ret = db_->Open(group_id_, log);
   if (ret != 0) {
     SWLog(ERROR, "Config::Init - db open failed, which path is %s\n",
           log_storage_path_.c_str());

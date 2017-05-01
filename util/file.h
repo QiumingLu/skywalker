@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 #include "skywalker/status.h"
 #include "skywalker/slice.h"
 
@@ -30,6 +31,15 @@ class FileManager {
 
   // Delete the named file.
   Status DeleteFile(const std::string& fname);
+
+  // Create the specified directory.
+  Status CreateDir(const std::string& dirname);
+
+  // Delete the specified directory.
+  Status DeleteDir(const std::string& dirname);
+
+  // Get files of the specified directory.
+  Status GetFiles(const std::string& dir, std::vector<std::string>* files);
 
   // Store the size of fname in *file_size.
   Status GetFileSize(const std::string& fname, uint64_t* size);

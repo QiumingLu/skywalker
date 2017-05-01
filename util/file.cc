@@ -2,10 +2,12 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 namespace skywalker{
 
@@ -227,6 +229,40 @@ Status FileManager::DeleteFile(const std::string& fname) {
   }
   return result;
 }
+
+Status FileManager::CreateDir(const std::string& dirname) {
+  Status result;
+  if (mkdir(dirname.c_str(), 0755) != 0) {
+    result = IOError(dirname, errno);
+  }
+  return result;
+}
+
+Status FileManager::DeleteDir(const std::string& dirname) {
+  Status result;
+  if (rmdir(dirname.c_str()) != 0) {
+    result = IOError(dirname, errno);
+  }
+  return result;
+}
+
+Status FileManager::GetFiles(const std::string& dir,
+                             std::vector<std::string>* files) {
+  DIR* dirp = nullptr;
+  struct dirent* ptr;
+  dirp = opendir(dir.c_str());
+  if (dirp == nullptr) {
+    return IOError(dir, errno);
+  }
+  while ((ptr = readdir(dirp)) != nullptr) {
+    if (ptr->d_type == DT_REG) {
+      files->push_back(ptr->d_name);
+    }
+  }
+  closedir(dirp);
+  return Status::OK();
+}
+
 
 Status FileManager::GetFileSize(const std::string& fname, uint64_t* size) {
   Status s;

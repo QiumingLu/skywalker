@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "util/timeops.h"
 #include "paxos/acceptor.h"
 #include "paxos/config.h"
 #include "paxos/instance.h"

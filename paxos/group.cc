@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "util/mutexlock.h"
+#include "util/timeops.h"
 #include "paxos/node_util.h"
 #include "skywalker/logging.h"
 

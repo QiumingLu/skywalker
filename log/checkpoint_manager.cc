@@ -4,6 +4,7 @@
 
 #include "log/checkpoint_manager.h"
 #include "util/mutexlock.h"
+#include "util/timeops.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {
@@ -13,7 +14,11 @@ CheckpointManager::CheckpointManager(Config* config)
       checkpoint_(config_->GetCheckpoint()),
       messager_(config_->GetMessager()),
       file_manager_(new FileManager()),
-      sequence_id_(0) {
+      send_node_id_(0),
+      sequence_id_(0),
+      mutex_(),
+      cond_(&mutex_),
+      ack_sequence_id_(0) {
 }
 
 CheckpointManager::~CheckpointManager() {
@@ -22,7 +27,7 @@ CheckpointManager::~CheckpointManager() {
 
 uint64_t CheckpointManager::GetCheckpointInstanceId() const {
   uint64_t id = -1;
-  if (!config_->HasMachines()) {
+  if (config_->StateMachines().empty()) {
     int res = config_->GetDB()->GetMaxInstanceId(&id);
     if (res == 0) {
       id = id - 1;
@@ -34,11 +39,17 @@ uint64_t CheckpointManager::GetCheckpointInstanceId() const {
 }
 
 bool CheckpointManager::SendCheckpoint(uint64_t node_id) {
+  send_node_id_ = node_id;
+  sequence_id_ = 0;
+  ack_sequence_id_ = 0;
+  error_ = false;
   bool res = checkpoint_->LockCheckpoint(config_->GetGroupId());
   if (res) {
     uint64_t instance_id = GetCheckpointInstanceId();
     BeginToSend(node_id, instance_id);
+
     res = SendCheckpointFiles(node_id, instance_id);
+
     if (res) {
       EndToSend(node_id, instance_id);
     }
@@ -62,61 +73,75 @@ bool CheckpointManager::SendCheckpointFiles(
   bool res = true;
   std::string dir;
   std::vector<std::string> files;
-  res = checkpoint_->GetCheckpoint(config_->GetGroupId(), &dir, &files);
-  if (!res) {
-    SWLog(ERROR, "Get checkpoint failed, which groud_id=%" PRIu32"\n",
-          config_->GetGroupId());
-    return res;
-  }
-  if (dir.empty()) {
-    return res;
-  }
-  if (dir[dir.size() - 1] != '/') {
-    dir += '/';
-  }
-  for (auto& file : files) {
-    std::string fname = dir + file;
-    res = SendFile(node_id, instance_id, fname);
+
+  const std::vector<StateMachine*>& machines = config_->StateMachines();
+  for (auto& machine : machines) {
+    files.clear();
+    res = checkpoint_->GetCheckpoint(config_->GetGroupId(),
+                                     machine->machine_id(),
+                                     &dir, &files);
     if (!res) {
-      SWLog(ERROR, "Send file failed, file:%s\n", fname.c_str());
-      break;
+      SWLog(ERROR, "Get checkpoint failed, "
+            "which groud_id=%" PRIu32", machine_id=%d\n",
+            config_->GetGroupId(), machine->machine_id());
+      return res;
+    }
+
+    if (dir.empty()) {
+      continue;
+    }
+    if (dir[dir.size() - 1] != '/') {
+      dir += '/';
+    }
+    for (auto& file : files) {
+      res = SendFile(node_id, instance_id, machine->machine_id(), dir, file);
+      if (!res) {
+        SWLog(ERROR, "Send file failed, file:%s%s\n", dir.c_str(), file.c_str());
+        break;
+      }
     }
   }
   return res;
 }
 
-bool CheckpointManager::SendFile(uint64_t node_id, uint64_t instance_id,
-                                 const std::string& fname) {
-  SequentialFile* file;
-  Status s = file_manager_->NewSequentialFile(fname, &file);
+bool CheckpointManager::SendFile(
+    uint64_t node_id, uint64_t instance_id, int machine_id,
+    const std::string& dir, const std::string& file) {
+  std::string fname = dir + file;
+  SequentialFile* seq_file;
+  Status s = file_manager_->NewSequentialFile(fname, &seq_file);
   if (!s.ok()) {
     SWLog(ERROR, "%s\n", s.ToString().c_str());
     return false;
   }
   bool res = true;
-  while (true) {
+  size_t offset = 0;
+  while (res) {
     Slice fragmenet;
-    s = file->Read(kBufferSize, &fragmenet, buffer);
+    s = seq_file->Read(kBufferSize, &fragmenet, buffer);
     if (!s.ok()) {
       res = false;
       SWLog(ERROR, "%s\n", s.ToString().c_str());
-      break;
     }
     if (fragmenet.empty()) {
       break;
     }
+
+    offset += fragmenet.size();
 
     CheckpointMessage* msg = new CheckpointMessage();
     msg->set_type(CHECKPOINT_FILE);
     msg->set_node_id(config_->GetNodeId());
     msg->set_sequence_id(sequence_id_++);
     msg->set_instance_id(instance_id);
+    msg->set_machine_id(machine_id);
     msg->set_file(fname);
-    msg->set_offset(fragmenet.size());
+    msg->set_offset(offset);
     msg->set_data(fragmenet.data(), fragmenet.size());
     messager_->SendMessage(node_id, messager_->PackMessage(msg));
+    res = CheckReceive();
   }
-  delete file;
+  delete seq_file;
 
   return res;
 }
@@ -151,31 +176,136 @@ bool CheckpointManager::ReceiveCheckpoint(const CheckpointMessage& msg) {
       SWLog(ERROR, "Error checkpoint message type\n");
       break;
   }
-  ComfirmReceive(res);
+  ComfirmReceive(msg, res);
   return res;
 }
 
 bool CheckpointManager::BeginToReceive(const CheckpointMessage& msg) {
-  last_received_sender_node_id_ = msg.node_id();
-  last_received_sequence_id_ = 0;
+  receive_node_id_ = msg.node_id();
+  receive_sequence_id_ = 0;
+  char dir[512];
+  snprintf(dir, sizeof(dir), "%s/checkpoint", config_->LogStoragePath().c_str());
+  file_manager_->DeleteDir(dir);
   return true;
 }
 
 bool CheckpointManager::ReceiveFiles(const CheckpointMessage& msg) {
-  if (msg.node_id() != last_received_sender_node_id_) {
+  if (msg.node_id() != receive_node_id_) {
     return false;
   }
-  return true;
+
+  if (msg.sequence_id() ==  receive_sequence_id_) {
+    return true;
+  }
+
+  if (msg.sequence_id() != receive_sequence_id_ + 1) {
+    return false;
+  }
+
+  if (dirs_.find(msg.machine_id()) == dirs_.end()) {
+    char dir[512];
+    snprintf(dir, sizeof(dir), "%s/checkpoint/%d/",
+             config_->LogStoragePath().c_str(), msg.machine_id());
+    dirs_[msg.machine_id()] = std::string(dir);
+  }
+
+  Status s;
+  std::string fname = dirs_[msg.machine_id()] + msg.file();
+  if (fname != last_wtitable_fname_) {
+    WritableFile* file;
+    s = file_manager_->NewWritableFile(fname, &file);
+    if (s.ok()) {
+      writable_file_.reset(file);
+    }
+    last_wtitable_fname_ = fname;
+  }
+  if (s.ok()) {
+    s = writable_file_->Append(msg.data());
+    if (s.ok()) {
+      ++receive_sequence_id_;
+    }
+  }
+  return s.ok() ? true : false;
 }
 
 bool CheckpointManager::EndToReceive(const CheckpointMessage& msg) {
-  return true;
+  if (msg.node_id() != receive_node_id_ ||
+      msg.sequence_id() != receive_sequence_id_ + 1) {
+    return false;
+  }
+  const std::vector<StateMachine*>& machines(config_->StateMachines());
+  bool res = true;
+  for (auto machine : machines) {
+    if (dirs_.find(machine->machine_id()) != dirs_.end()) {
+      std::vector<std::string> files;
+      Status s = file_manager_->GetFiles(dirs_[machine->machine_id()], &files);
+      if (!s.ok()) {
+        SWLog(ERROR, "%s\n", s.ToString().c_str());
+        res = false;
+        break;
+      }
+      if (files.empty()) {
+        continue;
+      }
+      res = checkpoint_->LoadCheckpoint(
+          config_->GetGroupId(), machine->machine_id(),
+          dirs_[machine->machine_id()], files);
+      if (!res) {
+        SWLog(ERROR, "Load checkpoint failed. "
+              "group_id=%" PRIu32", machine_id=%d, dir=%s.\n",
+              config_->GetGroupId(), machine->machine_id(),
+              dirs_[machine->machine_id()].c_str());
+        break;
+      }
+    }
+  }
+
+  return res;
 }
 
-void CheckpointManager::ComfirmReceive(bool res) {
+void CheckpointManager::ComfirmReceive(const CheckpointMessage& msg, bool res) {
+  CheckpointMessage* reply_msg = new CheckpointMessage();
+  reply_msg->set_type(CHECKPOINT_COMFIRM);
+  reply_msg->set_node_id(config_->GetNodeId());
+  reply_msg->set_sequence_id(msg.sequence_id());
+  reply_msg->set_flag(res);
+  messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+  if (!res) {
+    receive_node_id_ = 0;
+    receive_sequence_id_ = 0;
+    dirs_.clear();
+    last_wtitable_fname_.clear();
+    writable_file_.reset();
+  }
 }
 
 void CheckpointManager::OnComfirmReceive(const CheckpointMessage& msg) {
+  MutexLock lock(&mutex_);
+  if (msg.node_id() == send_node_id_ && msg.sequence_id() == ack_sequence_id_) {
+    ++ack_sequence_id_;
+    error_ = msg.flag();
+    cond_.Signal();
+  } else {
+    SWLog(ERROR, "receive confirm message node_id = %" PRIu64", "
+          "sequence_id=%" PRIu64", but send_node_id_=%" PRIu64", "
+          "ack_sequence_id_=%" PRIu64".",
+          msg.node_id(), msg.sequence_id(), send_node_id_, ack_sequence_id_);
+  }
+}
+
+bool CheckpointManager::CheckReceive() {
+  bool res = true;
+  MutexLock lock(&mutex_);
+  while (!error_ && sequence_id_ > ack_sequence_id_ + 10 && res) {
+    res = cond_.Wait(25 * 1000 * 1000);
+    if (!res) {
+      SWLog(ERROR, "receive comfirm message timeout!\n");
+    }
+  }
+  if (error_) {
+    res = false;
+  }
+  return res;
 }
 
 }  // namespace skywalker

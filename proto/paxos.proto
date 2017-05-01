@@ -43,9 +43,11 @@ message CheckpointMessage {
   uint64 node_id = 2;
   uint64 sequence_id = 3;
   uint64 instance_id = 4;
-  string file = 5;
-  uint64 offset =6;
-  bytes data = 7;
+  int32 machine_id = 5;
+  string file = 6;
+  uint64 offset =7;
+  bytes data = 8;
+  bool flag = 9;
 }
 
 enum ContentType {

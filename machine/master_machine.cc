@@ -7,6 +7,7 @@
 #include "paxos/node_util.h"
 #include "skywalker/logging.h"
 #include "util/timerlist.h"
+#include "util/timeops.h"
 #include "util/mutexlock.h"
 
 namespace skywalker {

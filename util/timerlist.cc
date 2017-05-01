@@ -3,10 +3,7 @@
 // found in the LICENSE file.
 
 #include "util/timerlist.h"
-
-#include <sys/time.h>
-#include <time.h>
-
+#include "util/timeops.h"
 #include "util/runloop.h"
 
 namespace skywalker {
@@ -44,13 +41,7 @@ class Timer {
   bool repeat;
 };
 
-uint64_t NowMicros() {
-  struct timeval tv;
-  gettimeofday(&tv, nullptr);
-  return static_cast<uint64_t>(tv.tv_sec)*1000000 + tv.tv_usec;
-}
-
-TimerList::TimerList(RunLoop* loop) 
+TimerList::TimerList(RunLoop* loop)
     : loop_(loop) {
 }
 
@@ -101,7 +92,7 @@ TimerId TimerList::RunEvery(uint64_t micros_interval,
 TimerId TimerList::RunEvery(uint64_t micros_interval,
                             TimerProcCallback&& cb) {
   uint64_t micros_value = NowMicros() + micros_interval;
-  TimerId timer(micros_value, 
+  TimerId timer(micros_value,
                 new Timer(micros_value, micros_interval, std::move(cb)));
   InsertInLoop(timer);
   return timer;

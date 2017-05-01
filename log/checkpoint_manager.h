@@ -1,10 +1,12 @@
 #ifndef SKYWALKER_LOG_CHECKPOINT_MANAGER_H_
 #define SKYWALKER_LOG_CHECKPOINT_MANAGER_H_
 
+#include <memory>
+
 #include "util/mutex.h"
+#include "util/file.h"
 #include "paxos/config.h"
 #include "skywalker/checkpoint.h"
-#include "util/file.h"
 
 namespace skywalker {
 
@@ -23,16 +25,17 @@ class CheckpointManager {
 
   void BeginToSend(uint64_t node_id, uint64_t instance_id);
   bool SendCheckpointFiles(uint64_t node_id, uint64_t instance_id);
-  bool SendFile(uint64_t node_id, uint64_t instance_id,
-                const std::string& fname);
+  bool SendFile(uint64_t node_id, uint64_t instance_id, int machine_id,
+                const std::string& dir, const std::string& file);
   void EndToSend(uint64_t node_id, uint64_t instance_id);
 
   bool BeginToReceive(const CheckpointMessage& msg);
   bool ReceiveFiles(const CheckpointMessage& msg);
   bool EndToReceive(const CheckpointMessage& msg);
 
-  void ComfirmReceive(bool res);
+  void ComfirmReceive(const CheckpointMessage& msg, bool res);
   void OnComfirmReceive(const CheckpointMessage& msg);
+  bool CheckReceive();
 
   char buffer[kBufferSize];
 
@@ -42,11 +45,21 @@ class CheckpointManager {
   FileManager* file_manager_;
 
   // for send
+  uint64_t send_node_id_;
   uint64_t sequence_id_;
 
+  Mutex mutex_;
+  Condition cond_;
+  uint64_t ack_sequence_id_;
+  bool error_;
+
   // for receive
-  uint64_t last_received_sender_node_id_;
-  uint64_t last_received_sequence_id_;
+  uint64_t receive_node_id_;
+  uint64_t receive_sequence_id_;
+  std::map<int, std::string> dirs_;
+
+  std::string last_wtitable_fname_;
+  std::unique_ptr<WritableFile> writable_file_;
 
   // No copying allowed
   CheckpointManager(const CheckpointManager&);

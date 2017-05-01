@@ -13,8 +13,6 @@
 
 namespace skywalker {
 
-extern uint64_t NowMicros();
-
 class RunLoop;
 
 class Timer;
