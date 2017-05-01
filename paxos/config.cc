@@ -6,6 +6,7 @@
 #include "paxos/node_util.h"
 #include "skywalker/logging.h"
 #include "util/timerlist.h"
+#include "skywalker/file.h"
 
 namespace skywalker {
 
@@ -30,6 +31,9 @@ Config::Config(uint64_t node_id,
 
   log_storage_path_ += name;
 
+  checkpoint_path_ = log_storage_path_ + "/checkpoint";
+  log_path_ = log_storage_path_ + "/log";
+
   for (auto& i : options.membership) {
     membership_.add_node_id(MakeNodeId(i));
   }
@@ -44,8 +48,21 @@ Config::~Config() {
 }
 
 bool Config::Init() {
-  std::string log = log_storage_path_ + "/log";
-  int ret = db_->Open(group_id_, log);
+  Status s = FileManager::Instance()->CreateDir(checkpoint_path_);
+  if (!s.ok()) {
+    SWLog(ERROR, "Create checkpoint path %s failed, %s.\n",
+          checkpoint_path_.c_str(), s.ToString().c_str());
+    return false;
+  }
+
+  s = FileManager::Instance()->CreateDir(log_path_);
+  if (!s.ok()) {
+    SWLog(ERROR, "Create log path %s failed, %s.\n",
+          log_path_.c_str(), s.ToString().c_str());
+    return false;
+  }
+
+ int ret = db_->Open(group_id_, log_path_);
   if (ret != 0) {
     SWLog(ERROR, "Config::Init - db open failed, which path is %s\n",
           log_storage_path_.c_str());

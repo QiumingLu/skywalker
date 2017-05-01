@@ -15,7 +15,8 @@ class WritableFile;
 
 class FileManager {
  public:
-  FileManager() { }
+
+  static FileManager* Instance();
 
   // The returned file will only be accessed by one thread at a time.
   Status NewSequentialFile(const std::string& fname,
@@ -29,6 +30,10 @@ class FileManager {
   Status NewWritableFile(const std::string& fname,
                          WritableFile** result);
 
+  // The returned file will only be accessed by one thread at a time.
+  Status NewAppendableFile(const std::string& fname,
+                           WritableFile** result);
+
   // Delete the named file.
   Status DeleteFile(const std::string& fname);
 
@@ -38,14 +43,26 @@ class FileManager {
   // Delete the specified directory.
   Status DeleteDir(const std::string& dirname);
 
-  // Get files of the specified directory.
-  Status GetFiles(const std::string& dir, std::vector<std::string>* files);
+  // Get the children of the specified directory.
+  Status GetChildren(const std::string& dir, std::vector<std::string>* result);
+
+  // Check if the named file exists.
+  bool FileExists(const std::string& fname);
+
+  // Rename file src to target
+  Status RenameFile(const std::string& src, const std::string& target);
 
   // Store the size of fname in *file_size.
   Status GetFileSize(const std::string& fname, uint64_t* size);
 
  private:
+  static pthread_once_t once_;
+  static FileManager* file_manager_;
+  static void InitFileManager();
+
   // No copying allowed
+  FileManager() { }
+  ~FileManager() { }
   FileManager(const FileManager&);
   void operator=(const FileManager&);
 };

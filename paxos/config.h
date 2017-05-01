@@ -30,6 +30,8 @@ class Config {
   uint32_t KeepLogCount() const { return keep_log_count_; }
 
   const std::string& LogStoragePath() const { return log_storage_path_; }
+  const std::string& LogPath() const { return log_path_; }
+  const std::string& CheckpointPath() const { return checkpoint_path_; }
 
   const std::vector<StateMachine*>& StateMachines() const { return machines_; }
 
@@ -55,6 +57,8 @@ class Config {
   uint32_t sync_interval_;
   uint32_t keep_log_count_;
   std::string log_storage_path_;
+  std::string log_path_;
+  std::string checkpoint_path_;
 
   std::vector<StateMachine*> machines_;
 

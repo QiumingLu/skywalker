@@ -1,4 +1,4 @@
-#include "util/file.h"
+#include "skywalker/file.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <pthread.h>
 
 namespace skywalker{
 
@@ -222,6 +223,19 @@ Status FileManager::NewWritableFile(const std::string& fname,
   return s;
 }
 
+Status FileManager::NewAppendableFile(const std::string& fname,
+                                      WritableFile** result) {
+  Status s;
+  FILE* f = fopen(fname.c_str(), "a");
+  if (f == nullptr) {
+    *result = nullptr;
+    s = IOError(fname, errno);
+  } else {
+    *result = new PosixWritableFile(fname, f);
+  }
+  return s;
+}
+
 Status FileManager::DeleteFile(const std::string& fname) {
   Status result;
   if (unlink(fname.c_str()) != 0) {
@@ -246,23 +260,33 @@ Status FileManager::DeleteDir(const std::string& dirname) {
   return result;
 }
 
-Status FileManager::GetFiles(const std::string& dir,
-                             std::vector<std::string>* files) {
-  DIR* dirp = nullptr;
-  struct dirent* ptr;
-  dirp = opendir(dir.c_str());
-  if (dirp == nullptr) {
+Status FileManager::GetChildren(const std::string& dir,
+                                std::vector<std::string>* result) {
+  result->clear();
+  DIR* d = opendir(dir.c_str());
+  if (d == nullptr) {
     return IOError(dir, errno);
   }
-  while ((ptr = readdir(dirp)) != nullptr) {
-    if (ptr->d_type == DT_REG) {
-      files->push_back(ptr->d_name);
-    }
+  struct dirent* entry;
+  while ((entry = readdir(d)) != nullptr) {
+    result->push_back(entry->d_name);
   }
-  closedir(dirp);
+  closedir(d);
   return Status::OK();
 }
 
+bool FileManager::FileExists(const std::string& fname) {
+  return access(fname.c_str(), F_OK) == 0;
+}
+
+Status FileManager::RenameFile(const std::string& src,
+                               const std::string& target) {
+  Status result;
+  if (rename(src.c_str(), target.c_str()) != 0) {
+    result = IOError(src, errno);
+  }
+  return result;
+}
 
 Status FileManager::GetFileSize(const std::string& fname, uint64_t* size) {
   Status s;
@@ -334,6 +358,15 @@ Status WriteStringToFile(FileManager* manager, const Slice& data,
 Status WriteStringToFileSync(FileManager* manager, const Slice& data,
                              const std::string& fname) {
   return DoWriteStringToFile(manager, data, fname, true);
+}
+
+pthread_once_t FileManager::once_ = PTHREAD_ONCE_INIT;
+FileManager* FileManager::file_manager_ = nullptr;
+void FileManager::InitFileManager() { file_manager_ =  new FileManager(); }
+
+FileManager* FileManager::Instance() {
+  pthread_once(&once_, &FileManager::InitFileManager);
+  return file_manager_;
 }
 
 }  // namespace skywalker

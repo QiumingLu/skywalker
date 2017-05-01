@@ -13,7 +13,6 @@ CheckpointManager::CheckpointManager(Config* config)
     : config_(config),
       checkpoint_(config_->GetCheckpoint()),
       messager_(config_->GetMessager()),
-      file_manager_(new FileManager()),
       send_node_id_(0),
       sequence_id_(0),
       mutex_(),
@@ -22,7 +21,6 @@ CheckpointManager::CheckpointManager(Config* config)
 }
 
 CheckpointManager::~CheckpointManager() {
-  delete file_manager_;
 }
 
 uint64_t CheckpointManager::GetCheckpointInstanceId() const {
@@ -109,7 +107,7 @@ bool CheckpointManager::SendFile(
     const std::string& dir, const std::string& file) {
   std::string fname = dir + file;
   SequentialFile* seq_file;
-  Status s = file_manager_->NewSequentialFile(fname, &seq_file);
+  Status s = FileManager::Instance()->NewSequentialFile(fname, &seq_file);
   if (!s.ok()) {
     SWLog(ERROR, "%s\n", s.ToString().c_str());
     return false;
@@ -183,10 +181,26 @@ bool CheckpointManager::ReceiveCheckpoint(const CheckpointMessage& msg) {
 bool CheckpointManager::BeginToReceive(const CheckpointMessage& msg) {
   receive_node_id_ = msg.node_id();
   receive_sequence_id_ = 0;
-  char dir[512];
-  snprintf(dir, sizeof(dir), "%s/checkpoint", config_->LogStoragePath().c_str());
-  file_manager_->DeleteDir(dir);
-  return true;
+
+  bool res = true;
+  std::vector<std::string> dirs;
+  FileManager::Instance()->GetChildren(config_->CheckpointPath(), &dirs);
+  for (auto& dir : dirs) {
+    std::string abs_dir = config_->CheckpointPath() + "/" + dir;
+    std::vector<std::string> filenames;
+    FileManager::Instance()->GetChildren(abs_dir, &filenames);
+    if (filenames.empty()) {
+      continue;
+    }
+    for (auto& filename : filenames) {
+      Status del = FileManager::Instance()->DeleteFile(abs_dir + "/" + filename);
+      if (!del.ok()) {
+        res = false;
+      }
+    }
+    FileManager::Instance()->DeleteDir(abs_dir);
+  }
+  return res;
 }
 
 bool CheckpointManager::ReceiveFiles(const CheckpointMessage& msg) {
@@ -204,26 +218,21 @@ bool CheckpointManager::ReceiveFiles(const CheckpointMessage& msg) {
 
   if (dirs_.find(msg.machine_id()) == dirs_.end()) {
     char dir[512];
-    snprintf(dir, sizeof(dir), "%s/checkpoint/%d/",
-             config_->LogStoragePath().c_str(), msg.machine_id());
+    snprintf(dir, sizeof(dir), "%s/machine_%d",
+             config_->CheckpointPath().c_str(), msg.machine_id());
+    FileManager::Instance()->CreateDir(dir);
     dirs_[msg.machine_id()] = std::string(dir);
   }
 
-  Status s;
-  std::string fname = dirs_[msg.machine_id()] + msg.file();
-  if (fname != last_wtitable_fname_) {
-    WritableFile* file;
-    s = file_manager_->NewWritableFile(fname, &file);
-    if (s.ok()) {
-      writable_file_.reset(file);
-    }
-    last_wtitable_fname_ = fname;
-  }
+  WritableFile* file;
+  std::string fname = dirs_[msg.machine_id()] + "/" + msg.file();
+  Status s = FileManager::Instance()->NewAppendableFile(fname, &file);
   if (s.ok()) {
-    s = writable_file_->Append(msg.data());
+    s = file->Append(msg.data());
     if (s.ok()) {
       ++receive_sequence_id_;
     }
+    delete file;
   }
   return s.ok() ? true : false;
 }
@@ -238,7 +247,8 @@ bool CheckpointManager::EndToReceive(const CheckpointMessage& msg) {
   for (auto machine : machines) {
     if (dirs_.find(machine->machine_id()) != dirs_.end()) {
       std::vector<std::string> files;
-      Status s = file_manager_->GetFiles(dirs_[machine->machine_id()], &files);
+      Status s = FileManager::Instance()->GetChildren(
+          dirs_[machine->machine_id()], &files);
       if (!s.ok()) {
         SWLog(ERROR, "%s\n", s.ToString().c_str());
         res = false;
@@ -274,8 +284,6 @@ void CheckpointManager::ComfirmReceive(const CheckpointMessage& msg, bool res) {
     receive_node_id_ = 0;
     receive_sequence_id_ = 0;
     dirs_.clear();
-    last_wtitable_fname_.clear();
-    writable_file_.reset();
   }
 }
 

@@ -4,8 +4,8 @@
 #include <memory>
 
 #include "util/mutex.h"
-#include "util/file.h"
 #include "paxos/config.h"
+#include "skywalker/file.h"
 #include "skywalker/checkpoint.h"
 
 namespace skywalker {
@@ -42,7 +42,6 @@ class CheckpointManager {
   Config* config_;
   Checkpoint* checkpoint_;
   Messager* messager_;
-  FileManager* file_manager_;
 
   // for send
   uint64_t send_node_id_;
@@ -57,9 +56,6 @@ class CheckpointManager {
   uint64_t receive_node_id_;
   uint64_t receive_sequence_id_;
   std::map<int, std::string> dirs_;
-
-  std::string last_wtitable_fname_;
-  std::unique_ptr<WritableFile> writable_file_;
 
   // No copying allowed
   CheckpointManager(const CheckpointManager&);
