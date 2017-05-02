@@ -46,7 +46,7 @@ int DB::Open(uint32_t group_id, const std::string& name) {
   options.write_buffer_size = 1024 * 1024 + group_id * 10 * 1024;
   leveldb::Status status = leveldb::DB::Open(options, name, &db_);
   if (!status.ok()) {
-    SWLog(ERROR, "DB::Open - %s\n", status.ToString().c_str());
+    LOG_ERROR("DB::Open - %s", status.ToString().c_str());
     return -1;
   }
   return 0;
@@ -62,7 +62,7 @@ int DB::Put(const WriteOptions& options,
   leveldb::Status status =
       db_->Put(op, leveldb::Slice(key, sizeof(key)), value);
   if (!status.ok()) {
-    SWLog(ERROR, "DB::Put - %s\n", status.ToString().c_str());
+    LOG_ERROR("DB::Put - %s", status.ToString().c_str());
     return -1;
   }
   return 0;
@@ -75,7 +75,7 @@ int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
   op.sync = options.sync;
   leveldb::Status status = db_->Delete(op, leveldb::Slice(key, sizeof(key)));
   if (!status.ok()) {
-    SWLog(ERROR, "DB::Delete - %s\n", status.ToString().c_str());
+    LOG_ERROR("DB::Delete - %s", status.ToString().c_str());
     return -1;
   }
   return 0;
@@ -86,7 +86,7 @@ int DB::Write(const WriteOptions& options, WriteBatch* updates) {
   op.sync = options.sync;
   leveldb::Status status = db_->Write(op, updates->batch_);
   if (!status.ok()) {
-    SWLog(ERROR, "DB::Write - %s\n", status.ToString().c_str());
+    LOG_ERROR("DB::Write - %s", status.ToString().c_str());
     return -1;
   }
   return 0;
@@ -104,7 +104,7 @@ int DB::Get(uint64_t instance_id, std::string* value) {
       ret = 1;
     } else {
       ret = -1;
-      SWLog(ERROR, "DB::Get - %s\n", status.ToString().c_str());
+      LOG_ERROR("DB::Get - %s", status.ToString().c_str());
     }
   }
 
@@ -148,7 +148,7 @@ int DB::GetMinChosenInstanceId(uint64_t* id) {
 int DB::SetMembership(const Membership& m) {
   std::string s;
   if (!m.SerializeToString(&s)) {
-    SWLog(ERROR, "DB::SetMembership - m.SerializeToString failed!\n");
+    LOG_ERROR("DB::SetMembership - m.SerializeToString failed!");
     return -1;
   }
   return Put(WriteOptions(), kMembership, s);
@@ -163,7 +163,7 @@ int DB::GetMembership(Membership* m) {
   if (m->ParseFromString(s)) {
     return 0;
   } else {
-    SWLog(ERROR, "DB::GetMembership - m.ParseFromString failed!\n");
+    LOG_ERROR("DB::GetMembership - m.ParseFromString failed!");
     return -1;
   }
 }
@@ -171,7 +171,7 @@ int DB::GetMembership(Membership* m) {
 int DB::SetMasterState(const MasterState& state) {
   std::string s;
   if (!state.SerializeToString(&s)) {
-    SWLog(ERROR, "DB::SetMasterState - state.SerializeToString failed!\n");
+    LOG_ERROR("DB::SetMasterState - state.SerializeToString failed!");
     return -1;
   }
   return Put(WriteOptions(), kMasterState, s);
@@ -186,7 +186,7 @@ int DB::GetMasterState(MasterState* state) {
   if (state->ParseFromString(s)) {
     return 0;
   } else {
-    SWLog(ERROR, "DB::GetMasterState - state.ParseFromString failed!\n");
+    LOG_ERROR("DB::GetMasterState - state.ParseFromString failed!");
     return -1;
   }
 }

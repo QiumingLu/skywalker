@@ -124,8 +124,8 @@ void Learner::ASyncSend(uint64_t node_id, uint64_t from, uint64_t to) {
       SendLearnedValue(node_id, state);
       ++from;
     } else {
-      SWLog(ERROR, "Learner::OnComfirmAskForLearn - "
-            "no found data of instance %" PRIu64"\n", from);
+      LOG_ERROR("Learner::OnComfirmAskForLearn - "
+                "no found data of instance %" PRIu64"", from);
       break;
     }
   }
@@ -193,8 +193,8 @@ bool Learner::WriteToDB(const PaxosMessage& msg) {
 void Learner::FinishLearnValue(const PaxosValue& value) {
   learned_value_ = value;
   has_learned_ = true;
-  SWLog(INFO, "Learner::FinishLearnValue - learn a new value=%s.\n",
-        learned_value_.user_data().c_str());
+  LOG_INFO("Learner::FinishLearnValue - learn a new value=%s.",
+           learned_value_.user_data().c_str());
 }
 
 void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {

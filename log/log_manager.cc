@@ -19,18 +19,19 @@ LogManager::LogManager(Config* config,
 }
 
 bool LogManager::Recover(uint64_t instance_id) {
-  int res = config_->GetDB()->GetMinChosenInstanceId(&min_chosen_id_);
-  if (res == -1) {
+  if (config_->GetDB()->GetMinChosenInstanceId(&min_chosen_id_) == -1) {
     return false;
   }
+
+  bool res = true;
   uint64_t id = checkpoint_manager_->GetCheckpointInstanceId() + 1;
-  if (id + 1 < instance_id) {
-    return ReplayLog(id, instance_id);
+  if (id < instance_id) {
+    res = ReplayLog(id, instance_id);
   }
-
-  cleaner_.Start();
-
-  return true;
+  if (res) {
+    cleaner_.Start();
+  }
+  return res;
 }
 
 bool LogManager::ReplayLog(uint64_t from, uint64_t to) {
@@ -38,9 +39,9 @@ bool LogManager::ReplayLog(uint64_t from, uint64_t to) {
     std::string s;
     int res = config_->GetDB()->Get(instance_id, &s);
     if (res != 0) {
-      SWLog(ERROR, "ReplayLog failed, which group_id:%" PRIu32", "
-            "instance_id:%" PRIu64".\n",
-            config_->GetGroupId(), instance_id);
+      LOG_ERROR("ReplayLog failed, "
+                "which group_id:%" PRIu32", instance_id:%" PRIu64".",
+                config_->GetGroupId(), instance_id);
       return false;
     }
     AcceptorState state;
@@ -50,9 +51,9 @@ bool LogManager::ReplayLog(uint64_t from, uint64_t to) {
         value.machine_id(), config_->GetGroupId(), instance_id,
         value.user_data(), nullptr);
     if (!success) {
-      SWLog(INFO, "StateMachine execute failed, which machine_id:%d, "
-            "group_id:%" PRIu32", instance_id:%" PRIu64".\n",
-            value.machine_id(), config_->GetGroupId(), instance_id);
+      LOG_INFO("StateMachine execute failed, which machine_id:%d, "
+               "group_id:%" PRIu32", instance_id:%" PRIu64".",
+               value.machine_id(), config_->GetGroupId(), instance_id);
     }
   }
   return true;

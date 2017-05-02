@@ -19,7 +19,7 @@ ProposeQueue::~ProposeQueue() {
 
 bool ProposeQueue::CheckCapacity() const {
   if (capacity_ != 0 && propose_queue_.size() > capacity_) {
-    SWLog(WARN, "Too many proposals are waiting to be proposed!");
+    LOG_WARN("Too many proposals are waiting to be proposed!");
     return false;
   }
   return true;

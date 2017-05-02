@@ -14,7 +14,7 @@ namespace skywalker {
 
 static void PthreadCall(const char* label, int result) {
   if (result != 0) {
-    SWLog(FATAL, "%s: %s\n", label, strerror(result));
+    LOG_FATAL("%s: %s", label, strerror(result));
   }
 }
 

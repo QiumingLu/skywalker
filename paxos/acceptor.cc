@@ -43,8 +43,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
         reply_msg->set_allocated_value(new PaxosValue(accepted_value_));
       }
       if (!WriteToDB()) {
-        SWLog(ERROR, "Acceptor::OnPrepare - "
-              "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
+        LOG_ERROR("write instance_id=%" PRIu64" to db failed.", instance_id_);
       }
     } else {
       reply_msg->set_rejected_id(promised_ballot_.GetProposalId());
@@ -76,8 +75,7 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
       accepted_ballot_ = b;
       accepted_value_ = msg.value();
       if (!WriteToDB()) {
-        SWLog(ERROR, "Acceptor::OnAccpet - "
-              "write instance_id=%" PRIu64" to db failed.\n", instance_id_);
+        LOG_ERROR("write instance_id=%" PRIu64" to db failed.", instance_id_);
       }
     } else {
       reply_msg->set_rejected_id(promised_ballot_.GetProposalId());

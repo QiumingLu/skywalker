@@ -322,7 +322,7 @@ void Group::ProposeComplete(MachineContext* context,
   result_ = result;
   propose_end_ = true;
   cond_.Signal();
-  SWLog(DEBUG, "Group::ProposeComplete - %s\n", result_.ToString().c_str());
+  LOG_DEBUG("Group::ProposeComplete - %s", result_.ToString().c_str());
 }
 
 void Group::GetMembership(std::vector<IpPort>* result) const {
@@ -339,7 +339,7 @@ void Group::SetMasterLeaseTime(uint64_t micros) {
       }
     });
   } else {
-    SWLog(WARN, "Group::SetMasterLeaseTime - You don't use master.\n");
+    LOG_WARN("Group::SetMasterLeaseTime - You don't use master.");
   }
 }
 
@@ -357,7 +357,7 @@ void Group::RetireMaster() {
       retrie_master_ = true;
     });
   } else {
-    SWLog(WARN, "Group::RetireMaster - You don't use master.\n");
+    LOG_WARN("Group::RetireMaster - You don't use master.");
   }
 }
 

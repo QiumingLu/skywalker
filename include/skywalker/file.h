@@ -1,5 +1,9 @@
-#ifndef SKYWALKER_UTIL_FILE_H_
-#define SKYWALKER_UTIL_FILE_H_
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+#ifndef SKYWALKER_INCLUDE_FILE_H_
+#define SKYWALKER_INCLUDE_FILE_H_
 
 #include <pthread.h>
 #include <stdint.h>
@@ -45,12 +49,13 @@ class FileManager {
   Status DeleteDir(const std::string& dirname);
 
   // Get the children of the specified directory.
-  Status GetChildren(const std::string& dir, std::vector<std::string>* result);
+  Status GetChildren(const std::string& dir,
+                     std::vector<std::string>* result);
 
   // Rename file src to target
   Status RenameFile(const std::string& src, const std::string& target);
 
-  // Store the size of fname in *file_size.
+  // Store the size of fname in *size.
   Status GetFileSize(const std::string& fname, uint64_t* size);
 
   // Check if the named file exists.
@@ -62,7 +67,7 @@ class FileManager {
   static void InitFileManager();
 
   FileManager() { }
-  ~FileManager() { delete file_manager_; file_manager_ =  nullptr; }
+  ~FileManager() { }
   FileManager(const FileManager&);
   void operator=(const FileManager&);
 };
@@ -131,4 +136,4 @@ extern Status WriteStringToFileSync(FileManager* manager,
 
 }  // namespace skywalker
 
-#endif  // SKYWALKER_UTIL_FILE_H_
+#endif  // SKYWALKER_INCLUDE_FILE_H_

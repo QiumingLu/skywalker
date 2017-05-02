@@ -64,13 +64,13 @@ void DefaultLogHandler(LogLevel level, const char* filename, int line,
       }
     }
 
-    if (p == base || p[-1] != '\n') {
-      *p++ = '\n';
-    }
+    // if (p == base || p[-1] != '\n') {
+    //   *p++ = '\n';
+    // }
 
     assert(p <= limit);
 
-    fprintf(stderr, "%s", base);
+    fprintf(stderr, "%s\n", base);
 
     if (base != buffer) {
       delete[] base;

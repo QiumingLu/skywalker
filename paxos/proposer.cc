@@ -52,12 +52,12 @@ void Proposer::Prepare(bool need_new_proposal_id) {
     proposal_id_ += 1;
   }
 
-  SWLog(DEBUG,
-        "Proposer::Prepare - start a new prepare, now "
-        "node_id=%" PRIu64", instance_id=%" PRIu64", "
-        "proposal_id=%" PRIu64", value=%s.\n",
-        config_->GetNodeId(), instance_id_,
-        proposal_id_, value_.user_data().c_str());
+  LOG_DEBUG(
+      "start a new prepare, now "
+      "node_id=%" PRIu64", instance_id=%" PRIu64", "
+      "proposal_id=%" PRIu64", value=%s.\n",
+      config_->GetNodeId(), instance_id_,
+      proposal_id_, value_.user_data().c_str());
 
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(PREPARE);
@@ -89,15 +89,14 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
     }
 
     if (counter_.IsPassedOnThisRound()) {
-      SWLog(DEBUG, "Proposer::OnPrepareReply - Prepare pass.\n");
+      LOG_DEBUG("Prepare pass.");
       preparing_ = false;
       skip_prepare_ = true;
       RemoveRetryTimer();
       Accept();
     } else if (counter_.IsRejectedOnThisRound() ||
                counter_.IsReceiveAllOnThisRound()) {
-      SWLog(DEBUG, "Proposer::OnPrepareReply - "
-            "Prepare not pass, reprepare about 30ms later.\n");
+      LOG_DEBUG("Prepare not pass, reprepare about 30ms later.");
       preparing_ = false;
       RemoveRetryTimer();
       AddRetryTimer((rand_.Uniform(15) + 15) * 1000);
@@ -109,11 +108,11 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
 void Proposer::Accept() {
   preparing_ = false;
   accepting_ = true;
-  SWLog(DEBUG,
-        "Proposer::Accept - start to accept, "
+  LOG_DEBUG(
+        "start to accept, "
         "now node_id=%" PRIu64", instance_id=%" PRIu64", "
-        "proposal_id=%" PRIu64", value=%s.\n",
-        config_->GetNodeId(), instance_id_, proposal_id_,
+        "proposal_id=%" PRIu64", value=%s.",
+        config_->GetNodeId(), instance_id_, proposal_id_, 
         value_.user_data().c_str());
 
   PaxosMessage* msg = new PaxosMessage();
@@ -141,14 +140,13 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
     }
 
     if (counter_.IsPassedOnThisRound()) {
-      SWLog(DEBUG, "Proposer::OnAccpetReply - Accept pass.\n");
+      LOG_DEBUG("Accept pass.\n");
       accepting_ = false;
       RemoveRetryTimer();
       NewChosenValue();
     } else if (counter_.IsRejectedOnThisRound() ||
                counter_.IsReceiveAllOnThisRound()) {
-      SWLog(DEBUG, "Proposer::OnAccpetReply - "
-            "Accept not pass, reprepare about 30ms later.\n");
+      LOG_DEBUG("Accept not pass, reprepare about 30ms later.");
       accepting_ = false;
       RemoveRetryTimer();
       AddRetryTimer((rand_.Uniform(15) + 15) * 1000);

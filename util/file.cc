@@ -59,8 +59,8 @@ class PosixSequentialFile : public SequentialFile {
 
 class PosixRandomAccessFile : public RandomAccessFile {
  private:
-   std::string filename_;
-   int fd_;
+  std::string filename_;
+  int fd_;
 
  public:
   PosixRandomAccessFile(const std::string& fname, int fd)
@@ -123,7 +123,7 @@ class PosixWritableFile : public WritableFile {
   PosixWritableFile(const std::string& fname, FILE* f)
       : filename_(fname), file_(f) { }
 
-  ~PosixWritableFile() {
+  virtual ~PosixWritableFile() {
     if (file_ != nullptr) {
       fclose(file_);
     }
@@ -154,8 +154,7 @@ class PosixWritableFile : public WritableFile {
   }
 
   virtual Status Sync() {
-    if (fflush(file_) != 0 ||
-        fsync(fileno(file_)) != 0) {
+    if (fflush(file_) != 0 || fsync(fileno(file_)) != 0) {
       return IOError(filename_, errno);
     }
     return Status::OK();
@@ -274,10 +273,6 @@ Status FileManager::GetChildren(const std::string& dir,
   return Status::OK();
 }
 
-bool FileManager::FileExists(const std::string& fname) {
-  return access(fname.c_str(), F_OK) == 0;
-}
-
 Status FileManager::RenameFile(const std::string& src,
                                const std::string& target) {
   Status result;
@@ -297,6 +292,10 @@ Status FileManager::GetFileSize(const std::string& fname, uint64_t* size) {
     *size = sbuf.st_size;
   }
   return s;
+}
+
+bool FileManager::FileExists(const std::string& fname) {
+  return access(fname.c_str(), F_OK) == 0;
 }
 
 Status ReadFileToString(FileManager* manager,
@@ -360,8 +359,12 @@ Status WriteStringToFileSync(FileManager* manager, const Slice& data,
 }
 
 pthread_once_t FileManager::once_ = PTHREAD_ONCE_INIT;
+
 FileManager* FileManager::file_manager_ = nullptr;
-void FileManager::InitFileManager() { file_manager_ =  new FileManager(); }
+
+void FileManager::InitFileManager() {
+  file_manager_ =  new FileManager();
+}
 
 FileManager* FileManager::Instance() {
   pthread_once(&once_, &FileManager::InitFileManager);

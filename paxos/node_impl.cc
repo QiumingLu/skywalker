@@ -34,11 +34,11 @@ bool NodeImpl::StartWorking() {
       return ret;
     }
   }
-  SWLog(DEBUG, "Node::Start - Group Start Successfully!\n");
+  LOG_DEBUG("Node::Start - Group Start Successfully!");
 
   network_.StartServer(
       std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
-  SWLog(DEBUG, "Node::Start - Network StartServer Successfully!\n");
+  LOG_DEBUG("Node::Start - Network StartServer Successfully!");
 
   for (auto& g : groups_) {
     g.second->SyncMembership();
@@ -79,8 +79,8 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
     if (it != groups_.end()) {
       it->second->OnReceiveContent(c);
     } else {
-      SWLog(ERROR, "NodeImpl::OnReceiveMessage - "
-            "group_id=%" PRIu32" is wrong!\n", c->group_id());
+      LOG_ERROR("NodeImpl::OnReceiveMessage - group_id=%" PRIu32" is wrong!",
+                c->group_id());
     }
   }
 }

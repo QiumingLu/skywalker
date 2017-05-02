@@ -120,8 +120,7 @@ bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,
     memcpy(buf, &size, kHeaderSize);
     s->replace(s->begin(), s->begin() + kHeaderSize, buf, kHeaderSize);
   } else {
-    SWLog(ERROR,
-          "Network::SendMessage - Content.SerializeToString error.\n");
+    LOG_ERROR("Network::SendMessage - Content.SerializeToString error.");
   }
   return res;
 }

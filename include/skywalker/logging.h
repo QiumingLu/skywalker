@@ -25,9 +25,25 @@ extern void Log(LogLevel level, const char* filename, int line,
 #    endif
      ;
 
-#define SWLog(LEVEL, format, ...)  \
+#define LOG_DEBUG(format, ...)  \
   ::skywalker::Log(                 \
-    ::skywalker::LOGLEVEL_##LEVEL, __FILE__, __LINE__, format, ## __VA_ARGS__)
+    ::skywalker::LOGLEVEL_DEBUG, __FILE__, __LINE__, format, ## __VA_ARGS__)
+
+#define LOG_INFO(format, ...)  \
+  ::skywalker::Log(                 \
+    ::skywalker::LOGLEVEL_INFO, __FILE__, __LINE__, format, ## __VA_ARGS__)
+
+#define LOG_WARN(format, ...)  \
+  ::skywalker::Log(                 \
+    ::skywalker::LOGLEVEL_WARN, __FILE__, __LINE__, format, ## __VA_ARGS__)
+
+#define LOG_ERROR(format, ...)  \
+  ::skywalker::Log(                 \
+    ::skywalker::LOGLEVEL_ERROR, __FILE__, __LINE__, format, ## __VA_ARGS__)
+
+#define LOG_FATAL(format, ...)  \
+  ::skywalker::Log(                 \
+    ::skywalker::LOGLEVEL_FATAL, __FILE__, __LINE__, format, ## __VA_ARGS__)
 
 extern void DefaultLogHandler(LogLevel level, const char* filename, int line,
                               const char* format, va_list ap);

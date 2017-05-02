@@ -50,22 +50,22 @@ Config::~Config() {
 bool Config::Init() {
   Status s = FileManager::Instance()->CreateDir(checkpoint_path_);
   if (!s.ok()) {
-    SWLog(ERROR, "Create checkpoint path %s failed, %s.\n",
-          checkpoint_path_.c_str(), s.ToString().c_str());
+    LOG_ERROR("Create checkpoint path %s failed, %s.",
+              checkpoint_path_.c_str(), s.ToString().c_str());
     return false;
   }
 
   s = FileManager::Instance()->CreateDir(log_path_);
   if (!s.ok()) {
-    SWLog(ERROR, "Create log path %s failed, %s.\n",
-          log_path_.c_str(), s.ToString().c_str());
+    LOG_ERROR("Create log path %s failed, %s.",
+              log_path_.c_str(), s.ToString().c_str());
     return false;
   }
 
  int ret = db_->Open(group_id_, log_path_);
   if (ret != 0) {
-    SWLog(ERROR, "Config::Init - db open failed, which path is %s\n",
-          log_storage_path_.c_str());
+    LOG_ERROR("Config::Init - db open failed, which path is %s.",
+              log_storage_path_.c_str());
     return false;
   }
   return true;

@@ -32,12 +32,12 @@ Instance::~Instance() {
 bool Instance::Recover() {
   bool res = acceptor_.Recover(&instance_id_);
   if (!res) {
-    SWLog(ERROR, "Acceptor recover failed.\n");
+    LOG_ERROR("Acceptor recover failed.");
     return res;
   }
   res = log_manager_.Recover(instance_id_);
   if (!res) {
-    SWLog(ERROR, "CheckpointManager recover failed.\n");
+    LOG_ERROR("CheckpointManager recover failed.");
     return res;
   }
   acceptor_.SetInstanceId(instance_id_);
@@ -46,8 +46,8 @@ bool Instance::Recover() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
-  SWLog(INFO,
-        "Instance::Recover - now instance_id=%" PRIu64".\n", instance_id_);
+  LOG_INFO("Instance::Recover - now instance_id=%" PRIu64".", instance_id_);
+
   return res;
 }
 
@@ -115,7 +115,7 @@ void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
       OnCheckpointMessage(c->checkpoint_msg());
       break;
     default:
-      SWLog(ERROR, "Instance::OnReceiveContent - Invalid content type.\n");
+      LOG_ERROR("Instance::OnReceiveContent - Invalid content type.");
       break;
   }
 }
@@ -150,7 +150,7 @@ void Instance::OnPaxosMessage(const PaxosMessage& msg) {
       learner_.OnComfirmAskForLearn(msg);
       break;
     default:
-      SWLog(ERROR, "Instance::OnPaxosMessage - Invalid message type.\n");
+      LOG_ERROR("Instance::OnPaxosMessage - Invalid message type.");
       break;
   }
 
@@ -217,8 +217,8 @@ void Instance::NextInstance() {
   acceptor_.NextInstance();
   proposer_.NextInstance();
   learner_.NextInstance();
-  SWLog(INFO, "Instance::NextInstance - new instance is starting, "
-        "now instance_id=%" PRIu64".\n", instance_id_);
+  LOG_INFO("Instance::NextInstance - new instance is starting, "
+           "now instance_id=%" PRIu64".", instance_id_);
 }
 
 }  // namespace skywalker
