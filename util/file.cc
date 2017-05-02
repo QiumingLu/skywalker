@@ -259,7 +259,8 @@ Status FileManager::DeleteDir(const std::string& dirname) {
 }
 
 Status FileManager::GetChildren(const std::string& dir,
-                                std::vector<std::string>* result) {
+                                std::vector<std::string>* result,
+                                bool only_file) {
   result->clear();
   DIR* d = opendir(dir.c_str());
   if (d == nullptr) {
@@ -267,7 +268,13 @@ Status FileManager::GetChildren(const std::string& dir,
   }
   struct dirent* entry;
   while ((entry = readdir(d)) != nullptr) {
-    result->push_back(entry->d_name);
+    if (only_file) {
+      if (entry->d_type == DT_REG) {
+        result->push_back(entry->d_name);
+      }
+    } else {
+      result->push_back(entry->d_name);
+    }
   }
   closedir(d);
   return Status::OK();

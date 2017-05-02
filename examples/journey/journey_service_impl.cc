@@ -13,23 +13,26 @@ namespace journey {
 
 JourneyServiceImpl::JourneyServiceImpl()
     : group_size_(0),
+      machine_(new JourneyDBMachine()),
       node_(nullptr) {
-  machine_.set_machine_id(6);
+  machine_->set_machine_id(6);
 }
 
 JourneyServiceImpl::~JourneyServiceImpl() {
   delete node_;
+  delete machine_;
 }
 
 bool JourneyServiceImpl::Start(const std::string& db_path,
-                               const skywalker::Options& options) {
-  bool res = machine_.OpenDB(db_path);
+                               skywalker::Options& options) {
+  bool res = machine_->OpenDB(db_path);
   if (res) {
-    group_size_ = options.group_size;
+    group_size_ = static_cast<uint32_t>(options.groups.size());
+    for (auto& g : options.groups) {
+      g.machines.push_back(machine_);
+    }
     res = skywalker::Node::Start(options, &node_);
-    if (res) {
-      node_->AddMachine(&machine_);
-    } else {
+    if (!res) {
       std::cout << "Node::Start failed." << std::endl;
     }
   } else {
@@ -50,7 +53,7 @@ void JourneyServiceImpl::Propose(
   if (node_->IsMaster(group_id)) {
     if (request->type() == PROPOSE_TYPE_GET) {
       std::string s;
-      int res = machine_.Get(request->key(), &s);
+      int res = machine_->Get(request->key(), &s);
       if (res == 0) {
         response->set_result(PROPOSE_RESULT_SUCCESS);
         response->set_value(s);
@@ -61,7 +64,7 @@ void JourneyServiceImpl::Propose(
       std::string value;
       request->SerializeToString(&value);
       skywalker::MachineContext* context = new skywalker::MachineContext();
-      context->machine_id = machine_.machine_id();
+      context->machine_id = machine_->machine_id();
       context->user_data = response;
       propose = node_->Propose(
           group_id, value, context,

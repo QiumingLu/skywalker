@@ -31,13 +31,13 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
 
   for (auto& dir : dirs) {
     std::string d = config_->CheckpointPath() + "/" + dir;
-    std::vector<std::string> filenames;
-    FileManager::Instance()->GetChildren(d, &filenames);
-    if (filenames.empty()) {
+    std::vector<std::string> files;
+    FileManager::Instance()->GetChildren(d, &files, true);
+    if (files.empty()) {
       continue;
     }
-    for (auto& filename : filenames) {
-      Status del = FileManager::Instance()->DeleteFile(d + "/" + filename);
+    for (auto& file : files) {
+      Status del = FileManager::Instance()->DeleteFile(d + "/" + file);
       if (!del.ok()) {
         res = false;
       }
@@ -101,7 +101,7 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
     auto it = dirs_.find(machine->machine_id());
     if (it != dirs_.end()) {
       std::vector<std::string> files;
-      Status s = FileManager::Instance()->GetChildren(it->second, &files);
+      Status s = FileManager::Instance()->GetChildren(it->second, &files, true);
       if (!s.ok()) {
         LOG_ERROR("%s", s.ToString().c_str());
         res = false;

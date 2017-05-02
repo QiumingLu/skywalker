@@ -78,6 +78,9 @@ clean:
 $(STATIC_OUTDIR):
 	mkdir $@
 
+$(STATIC_OUTDIR)/log: | $(STATIC_OUTDIR)
+	mkdir $@
+
 $(STATIC_OUTDIR)/machine: | $(STATIC_OUTDIR)
 	mkdir $@
 
@@ -98,6 +101,7 @@ $(STATIC_OUTDIR)/proto: | $(STATIC_OUTDIR)
 
 .PHONY: STATIC_OBJDIRS
 STATIC_OBJDIRS: \
+  $(STATIC_OUTDIR)/log \
   $(STATIC_OUTDIR)/machine \
   $(STATIC_OUTDIR)/network \
   $(STATIC_OUTDIR)/storage \
@@ -107,6 +111,9 @@ STATIC_OBJDIRS: \
 
 
 $(SHARED_OUTDIR):
+	mkdir $@
+
+$(SHARED_OUTDIR)/log: | $(SHARED_OUTDIR)
 	mkdir $@
 
 $(SHARED_OUTDIR)/machine: | $(SHARED_OUTDIR)
@@ -129,6 +136,7 @@ $(SHARED_OUTDIR)/proto: | $(SHARED_OUTDIR)
 
 .PHONY: SHARED_OBJDIRS
 SHARED_OBJDIRS: \
+  $(SHARED_OUTDIR)/log \
   $(SHARED_OUTDIR)/machine \
   $(SHARED_OUTDIR)/network \
   $(SHARED_OUTDIR)/storage \

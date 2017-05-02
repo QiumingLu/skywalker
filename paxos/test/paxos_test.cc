@@ -10,7 +10,8 @@
 #include <string>
 #include <vector>
 #include <voyager/util/string_util.h>
-#include "skywalker/node.h"
+#include <skywalker/node.h>
+#include "checkpoint_impl.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {
@@ -24,14 +25,18 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  skywalker::Checkpoint* checkpoint = new CheckpointImpl();
+
+  skywalker::GroupOptions g_options;
+  g_options.group_id = 0;
+  g_options.use_master = true;
+  g_options.log_sync = true;
+  g_options.sync_interval = 0;
+  g_options.keep_log_count = 1000;
+  g_options.log_storage_path = std::string(path);
+  g_options.checkpoint = checkpoint;
+
   skywalker::Options options;
-//  options.log_storage_path = std::string(path);
-//  options.log_sync = true;
-//  options.sync_interval = 0;
-//  options.group_size = 1;
-  // options.ipport.ip = "127.0.0.1";
-  // options.ipport.port = 5666;
-  // options.membership.push_back(options.ipport);
 
   std::vector<std::string> my;
   voyager::SplitStringUsing(std::string(argv[1]), ":", &my);
@@ -42,11 +47,15 @@ int main(int argc, char** argv) {
   voyager::SplitStringUsing(std::string(argv[2]), ",", &others);
   for (std::vector<std::string>::iterator it = others.begin();
        it != others.end(); ++it) {
-    std::vector<std::string> other;
-    voyager::SplitStringUsing(*it, ":", &other);
-//    options.membership.push_back(
-//        skywalker::IpPort(other[0], atoi(&*(other[1].begin()))));
+    size_t found = it->find(":");
+    if (found != std::string::npos) {
+      std::string ip = it->substr(0, found);
+      uint16_t port = atoi(it->substr(found + 1).c_str());
+      g_options.membership.push_back(skywalker::IpPort(ip, port));
+    }
   }
+
+  options.groups.push_back(g_options);
 
   skywalker::Node* node = nullptr;
   bool res = skywalker::Node::Start(options, &node);
@@ -63,7 +72,9 @@ int main(int argc, char** argv) {
     });
   }
 
+  delete checkpoint;
   delete node;
+
   printf("paxos test end\n");
 
   return 0;

@@ -18,7 +18,7 @@ class JourneyServiceImpl : public JourneyService {
   JourneyServiceImpl();
   ~JourneyServiceImpl();
 
-  bool Start(const std::string& db_path, const skywalker::Options& options);
+  bool Start(const std::string& db_path, skywalker::Options& options);
 
   virtual void Propose(google::protobuf::RpcController* controller,
                        const journey::RequestMessage* request,
@@ -28,8 +28,9 @@ class JourneyServiceImpl : public JourneyService {
  private:
   uint32_t Shard(const std::string& key);
 
-  JourneyDBMachine machine_;
   uint32_t group_size_;
+
+  JourneyDBMachine* machine_;
   skywalker::Node* node_;
 
   // No copying allowed

@@ -61,7 +61,7 @@ if [ "$TARGET_OS" = "Darwin" ]; then
   PLATFORM_SHARED_LDFLAGS="-dynamiclib -install_name $INSTALL_PATH/"
 fi
  
-DIRS="$PREFIX/machine $PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util $PREFIX/proto"
+DIRS="$PREFIX/log $PREFIX/machine $PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util $PREFIX/proto"
 
 PROTOC=protoc 
 PROTOS_PATH=$PREFIX/proto

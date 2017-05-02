@@ -50,7 +50,8 @@ class FileManager {
 
   // Get the children of the specified directory.
   Status GetChildren(const std::string& dir,
-                     std::vector<std::string>* result);
+                     std::vector<std::string>* result,
+                     bool only_file = false);
 
   // Rename file src to target
   Status RenameFile(const std::string& src, const std::string& target);
