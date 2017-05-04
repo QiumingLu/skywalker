@@ -30,11 +30,11 @@ Config::Config(uint64_t node_id,
   }
 
   log_storage_path_ += name;
-
   checkpoint_path_ = log_storage_path_ + "/checkpoint";
   log_path_ = log_storage_path_ + "/log";
 
   for (auto& i : options.membership) {
+    membership_.set_version(0);
     membership_.add_node_id(MakeNodeId(i));
   }
   for (auto& i : options.followers) {
@@ -48,21 +48,15 @@ Config::~Config() {
 }
 
 bool Config::Init() {
-  Status s = FileManager::Instance()->CreateDir(checkpoint_path_);
-  if (!s.ok()) {
-    LOG_ERROR("Create checkpoint path %s failed, %s.",
-              checkpoint_path_.c_str(), s.ToString().c_str());
+  FileManager::Instance()->CreateDir(log_storage_path_);
+  FileManager::Instance()->CreateDir(checkpoint_path_);
+  bool res = FileManager::Instance()->FileExists(checkpoint_path_);
+  if (!res) {
+    LOG_ERROR("Config::Init - checkpoint path %s access failed.",
+              checkpoint_path_.c_str());
     return false;
   }
-
-  s = FileManager::Instance()->CreateDir(log_path_);
-  if (!s.ok()) {
-    LOG_ERROR("Create log path %s failed, %s.",
-              log_path_.c_str(), s.ToString().c_str());
-    return false;
-  }
-
- int ret = db_->Open(group_id_, log_path_);
+  int ret = db_->Open(group_id_, log_path_);
   if (ret != 0) {
     LOG_ERROR("Config::Init - db open failed, which path is %s.",
               log_storage_path_.c_str());

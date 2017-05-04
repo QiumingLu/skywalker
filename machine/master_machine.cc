@@ -24,6 +24,7 @@ void MasterMachine::Recover() {
     if (state_.node_id() != config_->GetNodeId()) {
       state_.set_lease_time(NowMicros() + state_.lease_time());
     } else {
+      state_.set_version(0);
       state_.set_lease_time(NowMicros());
     }
   }
