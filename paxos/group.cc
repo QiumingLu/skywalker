@@ -33,8 +33,10 @@ Group::Group(uint64_t node_id,
                            std::placeholders::_2,
                            std::placeholders::_3);
   instance_.SetProposeCompleteCallback(propose_cb_);
+  config_.SetMembershipMachine(&membership_machine_);
   instance_.AddMachine(&membership_machine_);
   if (options.use_master) {
+    config_.SetMasterMachine(&master_machine_);
     instance_.AddMachine(&master_machine_);
   }
   for (auto& machine : options.machines) {

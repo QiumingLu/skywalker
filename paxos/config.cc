@@ -21,8 +21,10 @@ Config::Config(uint64_t node_id,
       machines_(options.machines),
       checkpoint_(options.checkpoint),
       db_(new DB()),
-      messager_(new Messager(this, network)) {
-  char name[8];
+      messager_(new Messager(this, network)),
+      membership_machine_(nullptr),
+      master_machine_(nullptr) {
+ char name[8];
   if (log_storage_path_[log_storage_path_.size() - 1] != '/') {
     snprintf(name, sizeof(name), "/g%d", group_id_);
   } else {

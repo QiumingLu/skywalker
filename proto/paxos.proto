@@ -30,7 +30,9 @@ message PaxosMessage {
   uint64 rejected_id = 8;
   uint64 now_instance_id = 9;
   uint64 min_chosen_instance_id = 10;
-  PaxosValue value = 11;
+  string membership = 11;
+  string master_state = 12;
+  PaxosValue value = 13;
 }
 
 enum CheckpointMessageType {
@@ -60,7 +62,6 @@ enum ContentType {
 message Content {
   ContentType type = 1;
   uint32 group_id = 2;
-  uint32 version = 3;
   PaxosMessage paxos_msg = 4;
   CheckpointMessage checkpoint_msg = 5;
 }

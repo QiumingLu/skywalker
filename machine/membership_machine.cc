@@ -30,6 +30,7 @@ void MembershipMachine::Recover() {
   }
 }
 
+
 bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
                                 const std::string& value,
                                 MachineContext* /* context */) {
@@ -41,13 +42,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
     m.set_version(instance_id);
     int ret = db_->SetMembership(m);
     if (ret == 0) {
-      MutexLock lock(&mutex_);
-      membership_ = m;
-      // copy to config.
-      config_->SetMembership(m);
-      if (!has_sync_membership_) {
-        has_sync_membership_ = true;
-      }
+      SetMembership(m);
       return true;
     } else {
       LOG_ERROR("Update membership failed.");
@@ -58,8 +53,31 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
   return false;
 }
 
+std::string MembershipMachine::GetString() const {
+  std::string s;
+  membership_.SerializeToString(&s);
+  return s;
+}
+
+void MembershipMachine::SetString(const std::string& s) {
+  Membership membership;
+  membership.ParseFromString(s);
+  if (membership.version() > membership_.version()) {
+    SetMembership(membership);
+  }
+}
+
 const Membership& MembershipMachine::GetMembership() const {
   return membership_;
+}
+
+void MembershipMachine::SetMembership(const Membership& m) {
+  MutexLock lock(&mutex_);
+  membership_ =m ;
+  config_->SetMembership(m);
+  if (!has_sync_membership_) {
+    has_sync_membership_ = true;
+  }
 }
 
 void MembershipMachine::GetMembership(std::vector<IpPort>* result) const {

@@ -11,6 +11,8 @@
 #include "network/messager.h"
 #include "storage/db.h"
 #include "skywalker/options.h"
+#include "machine/membership_machine.h"
+#include "machine/master_machine.h"
 
 namespace skywalker {
 
@@ -46,6 +48,20 @@ class Config {
     return (membership_.node_id_size() / 2 + 1);
   }
 
+  void SetMembershipMachine(MembershipMachine* m) {
+    membership_machine_ = m;
+  }
+  MembershipMachine* GetMembershipMachine() const {
+    return membership_machine_;
+  }
+
+  void SetMasterMachine(MasterMachine* m) {
+    master_machine_ = m;
+  }
+  MasterMachine* GetMasterMachine() const {
+    return master_machine_;
+  }
+
   void SetMembership(const Membership& m) { membership_ = m; }
   const Membership& GetMembership() const { return membership_; }
   const Membership& GetFollowers() const { return followers_; }
@@ -70,6 +86,9 @@ class Config {
   Checkpoint* checkpoint_;
   DB* db_;
   Messager* messager_;
+
+  MembershipMachine* membership_machine_;
+  MasterMachine* master_machine_;
 
   // No copying allowed
   Config(const Config&);

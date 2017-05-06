@@ -23,9 +23,13 @@ class MembershipMachine : public StateMachine {
 
   void Recover();
 
+  void SetMembership(const Membership& m);
   const Membership& GetMembership() const;
   void GetMembership(std::vector<IpPort>* result) const;
   bool HasSyncMembership() const;
+
+  std::string GetString() const;
+  void SetString(const std::string& s);
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value,
