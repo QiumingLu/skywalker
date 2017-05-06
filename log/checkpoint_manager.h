@@ -22,6 +22,8 @@ class CheckpointManager {
   Config* config_;
   Checkpoint* checkpoint_;
 
+  std::set<uint64_t> nodes_;
+
   CheckpointSender sender_;
   CheckpointReceiver receiver_;
 

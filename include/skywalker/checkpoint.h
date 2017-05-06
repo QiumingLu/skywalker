@@ -24,7 +24,7 @@ class Checkpoint {
 
   virtual bool GetCheckpoint(
       uint32_t group_id, int machine_id,
-      std::string* dirs, std::vector<std::string>* files) = 0;
+      std::string* dir, std::vector<std::string>* files) = 0;
 
   virtual bool LoadCheckpoint(
       uint32_t group_id, int machine_id,

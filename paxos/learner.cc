@@ -15,18 +15,21 @@
 namespace skywalker {
 
 Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor,
-                 CheckpointManager* checkpoint_manager)
+                 CheckpointManager* checkpoint_manager,
+                 LogManager* log_manager)
     : config_(config),
       messager_(config_->GetMessager()),
       instance_(instance),
       acceptor_(acceptor),
       checkpoint_manager_(checkpoint_manager),
+      log_manager_(log_manager),
       instance_id_(0),
       max_instance_id_(0),
       max_instance_id_from_node_id_(0),
       rand_(static_cast<uint32_t>(NowMicros())),
       is_learning_(false),
-      has_learned_(false) {
+      has_learned_(false),
+      is_receiving_checkponit_(false) {
 }
 
 void Learner::OnNewChosenValue(const PaxosMessage& msg) {
@@ -48,16 +51,25 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
 
 void Learner::AskForLearn() {
   is_learning_ = false;
+  is_receiving_checkponit_ = false;
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(ASK_FOR_LEARN);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   messager_->BroadcastMessage(messager_->PackMessage(msg));
 
-  uint64_t delay = 1000 * (30 * 1000 + rand_.Uniform(10 * 1000));
-  io_loop_->RunAfter(delay, [this]() {
+  uint64_t delay = 1000 * (50 * 1000 + rand_.Uniform(10 * 1000));
+  AddLearnTimer(delay);
+}
+
+void Learner::AddLearnTimer(uint64_t timeout) {
+  learn_timer_ = io_loop_->RunAfter(timeout, [this]() {
     AskForLearn();
   });
+}
+
+void Learner::RemoveLearnTimer() {
+  io_loop_->Remove(learn_timer_);
 }
 
 void Learner::OnAskForLearn(const PaxosMessage& msg) {
@@ -83,17 +95,33 @@ void Learner::SendNowInstanceId(const PaxosMessage& msg) {
   reply_msg->set_node_id(config_->GetNodeId());
   reply_msg->set_instance_id(msg.instance_id());
   reply_msg->set_now_instance_id(instance_id_);
-  messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+  reply_msg->set_min_chosen_instance_id(
+      log_manager_->GetMinChosenInstanceId());
+
+  // in order to make it run in learn loop.
+  uint64_t node_id = msg.node_id();
+  std::shared_ptr<Content> out = messager_->PackMessage(reply_msg);
+  learn_loop_->QueueInLoop([this, node_id, out]() {
+    messager_->SendMessage(node_id, out);
+  });
 }
 
 void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_ &&
       msg.now_instance_id() > instance_id_) {
-    if (!is_learning_) {
-      ComfirmAskForLearn(msg);
-      is_learning_ = true;
+    if (msg.min_chosen_instance_id() > instance_id_) {
+       if (!is_receiving_checkponit_) {
+         AskForCheckpoint(msg);
+         is_receiving_checkponit_ = true;
+       }
+    } else {
+      if (!is_receiving_checkponit_ && !is_learning_) {
+        ComfirmAskForLearn(msg);
+        is_learning_ = true;
+      }
     }
   }
+  // FIXME
   SetMaxInstanceId(msg.now_instance_id(), msg.node_id());
 }
 
@@ -152,12 +180,30 @@ void Learner::OnSendLearnedValue(const PaxosMessage& msg) {
   }
 }
 
+void Learner::AskForCheckpoint(const PaxosMessage& msg) {
+  PaxosMessage* reply_msg = new PaxosMessage();
+  reply_msg->set_type(ASK_FOR_CHECKPOINT);
+  reply_msg->set_node_id(config_->GetNodeId());
+  reply_msg->set_instance_id(instance_id_);
+  messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+}
+
+void Learner::OnAskForCheckpoint(const PaxosMessage& msg) {
+  uint64_t node_id = msg.node_id();
+  learn_loop_->QueueInLoop([this, node_id] {
+    SendCheckpoint(node_id);
+  });
+}
+
 void Learner::SendCheckpoint(uint64_t node_id) {
   checkpoint_manager_->SendCheckpoint(node_id);
 }
 
 void Learner::OnSendCheckpoint(const CheckpointMessage& msg) {
-  checkpoint_manager_->ReceiveCheckpoint(msg);
+  bool success = checkpoint_manager_->ReceiveCheckpoint(msg);
+  uint64_t timeout = success ? 120 * 1000 * 1000 : 1000;
+  RemoveLearnTimer();
+  AddLearnTimer(timeout);
 }
 
 void Learner::SetMaxInstanceId(uint64_t instance_id,

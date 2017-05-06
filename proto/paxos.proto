@@ -11,6 +11,7 @@ enum PaxosMessageType {
   SEND_LEARNED_VALUE = 6;
   SEND_NOW_INSTANCE_ID = 7;
   COMFIRM_ASK_FOR_LEARN = 8;
+  ASK_FOR_CHECKPOINT = 9;
 }
 
 message PaxosValue {
@@ -28,7 +29,8 @@ message PaxosMessage {
   uint64 pre_accepted_node_id = 7;
   uint64 rejected_id = 8;
   uint64 now_instance_id = 9;
-  PaxosValue value = 10;
+  uint64 min_chosen_instance_id = 10;
+  PaxosValue value = 11;
 }
 
 enum CheckpointMessageType {

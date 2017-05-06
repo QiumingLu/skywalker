@@ -64,7 +64,7 @@ bool CheckpointSender::SendCheckpointFiles(uint64_t instance_id) {
   std::string dir;
   std::vector<std::string> files;
 
-  const std::vector<StateMachine*>& machines = config_->StateMachines();
+  const std::vector<StateMachine*>& machines = config_->GetStateMachines();
   for (auto& machine : machines) {
     files.clear();
     res = checkpoint_->GetCheckpoint(config_->GetGroupId(),
@@ -157,7 +157,8 @@ void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
         "receive confirm message, which node_id = %" PRIu64", "
         "sequence_id=%" PRIu64", but send_node_id_=%" PRIu64", "
         "ack_sequence_id_=%" PRIu64".",
-        msg.node_id(), msg.sequence_id(), receiver_node_id_, ack_sequence_id_);
+        msg.node_id(), msg.sequence_id(),
+        receiver_node_id_, ack_sequence_id_);
   }
 }
 

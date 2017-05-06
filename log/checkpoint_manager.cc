@@ -19,7 +19,7 @@ CheckpointManager::~CheckpointManager() {
 
 uint64_t CheckpointManager::GetCheckpointInstanceId() const {
   uint64_t id = -1;
-  if (config_->StateMachines().empty()) {
+  if (config_->GetStateMachines().empty()) {
     int res = config_->GetDB()->GetMaxInstanceId(&id);
     if (res == 0) {
       id = id - 1;
@@ -31,7 +31,6 @@ uint64_t CheckpointManager::GetCheckpointInstanceId() const {
 }
 
 bool CheckpointManager::SendCheckpoint(uint64_t node_id) {
-  // TODO
   return sender_.SendCheckpoint(node_id);
 }
 
@@ -51,8 +50,7 @@ bool CheckpointManager::ReceiveCheckpoint(const CheckpointMessage& msg) {
       sender_.OnComfirmReceive(msg);
       break;
     default:
-      res = false;
-      LOG_ERROR("Error checkpoint message type.");
+      LOG_ERROR("Invalid checkpoint message type.");
       break;
   }
   return res;

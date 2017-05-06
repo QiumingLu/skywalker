@@ -23,7 +23,7 @@ class CheckpointReceiver {
 
  private:
   bool ReceiveFiles(const CheckpointMessage& msg);
-  void ComfirmReceive(const CheckpointMessage& msg, bool res);
+  bool ComfirmReceive(const CheckpointMessage& msg, bool res);
   void Reset();
 
   Config* config_;

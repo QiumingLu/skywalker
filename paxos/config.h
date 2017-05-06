@@ -33,7 +33,9 @@ class Config {
   const std::string& LogPath() const { return log_path_; }
   const std::string& CheckpointPath() const { return checkpoint_path_; }
 
-  const std::vector<StateMachine*>& StateMachines() const { return machines_; }
+  const std::vector<StateMachine*>& GetStateMachines() const {
+    return machines_;
+  }
 
   uint32_t GetGroupId() const { return group_id_; }
 

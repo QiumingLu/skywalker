@@ -122,7 +122,7 @@ void Group::TryBeMaster() {
       state = master_machine_.GetMasterState();
       if (state.node_id() == node_id_) {
         if (result_.ok()) {
-          next_time = state.lease_time() - 50 * 1000;
+          next_time = state.lease_time() - 12* 1000;
         } else if (result_.IsConflict()) {
           next_time = state.lease_time();
         }

@@ -19,7 +19,7 @@ Instance::Instance(Config* config)
       machine_manager_(),
       log_manager_(config, &checkpoint_manager_, &machine_manager_),
       acceptor_(config, this),
-      learner_(config, this, &acceptor_, &checkpoint_manager_),
+      learner_(config, this, &acceptor_, &checkpoint_manager_, &log_manager_),
       proposer_(config, this),
       instance_id_(0),
       is_proposing_(false),
@@ -121,6 +121,9 @@ void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
 }
 
 void Instance::OnPaxosMessage(const PaxosMessage& msg) {
+  if (learner_.IsReceivingCheckpoint()) {
+    return;
+  }
   switch (msg.type()) {
     case PREPARE:
       acceptor_.OnPrepare(msg);
@@ -148,6 +151,9 @@ void Instance::OnPaxosMessage(const PaxosMessage& msg) {
       break;
     case COMFIRM_ASK_FOR_LEARN:
       learner_.OnComfirmAskForLearn(msg);
+      break;
+    case ASK_FOR_CHECKPOINT:
+      learner_.OnAskForCheckpoint(msg);
       break;
     default:
       LOG_ERROR("Instance::OnPaxosMessage - Invalid message type.");

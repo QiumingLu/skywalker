@@ -45,14 +45,12 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
     FileManager::Instance()->DeleteDir(d);
   }
 
-  ComfirmReceive(msg, res);
-  return res;
+  return ComfirmReceive(msg, res);
 }
 
 bool CheckpointReceiver::ReceiveCheckpoint(const CheckpointMessage& msg) {
   bool res = ReceiveFiles(msg);
-  ComfirmReceive(msg, res);
-  return res;
+  return ComfirmReceive(msg, res);
 }
 
 bool CheckpointReceiver::ReceiveFiles(const CheckpointMessage& msg) {
@@ -90,12 +88,14 @@ bool CheckpointReceiver::ReceiveFiles(const CheckpointMessage& msg) {
 }
 
 bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
-  if (msg.node_id() != sender_node_id_ ||
-      msg.sequence_id() != sequence_id_ + 1) {
-    ComfirmReceive(msg, false);
+  if (msg.node_id() != sender_node_id_) {
+    return true;
+  }
+
+  if ( msg.sequence_id() != sequence_id_ + 1) {
     return false;
   }
-  const std::vector<StateMachine*>& machines(config_->StateMachines());
+  const std::vector<StateMachine*>& machines(config_->GetStateMachines());
   bool res = true;
   for (auto machine : machines) {
     auto it = dirs_.find(machine->machine_id());
@@ -120,11 +120,14 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
       }
     }
   }
-  ComfirmReceive(msg, res);
+  if (res) {
+    // FIXME
+    exit(-1);
+  }
   return res;
 }
 
-void CheckpointReceiver::ComfirmReceive(
+bool CheckpointReceiver::ComfirmReceive(
     const CheckpointMessage& msg, bool res) {
   CheckpointMessage* reply_msg = new CheckpointMessage();
   reply_msg->set_type(CHECKPOINT_COMFIRM);
@@ -134,7 +137,9 @@ void CheckpointReceiver::ComfirmReceive(
   messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
   if (!res && msg.node_id() == sender_node_id_) {
     Reset();
+    return false;
   }
+  return true;
 }
 
 void CheckpointReceiver::Reset() {
