@@ -11,7 +11,6 @@
 #include <vector>
 #include <voyager/util/string_util.h>
 #include <skywalker/node.h>
-#include "checkpoint_impl.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {
@@ -25,8 +24,6 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  skywalker::Checkpoint* checkpoint = new CheckpointImpl();
-
   skywalker::GroupOptions g_options;
   g_options.group_id = 0;
   g_options.use_master = true;
@@ -34,7 +31,7 @@ int main(int argc, char** argv) {
   g_options.sync_interval = 0;
   g_options.keep_log_count = 1000;
   g_options.log_storage_path = std::string(path);
-  g_options.checkpoint = checkpoint;
+  g_options.checkpoint = new skywalker::Checkpoint();
 
   skywalker::Options options;
 
@@ -72,7 +69,7 @@ int main(int argc, char** argv) {
     });
   }
 
-  delete checkpoint;
+  delete g_options.checkpoint;
   delete node;
 
   printf("paxos test end\n");
