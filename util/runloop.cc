@@ -64,7 +64,7 @@ void RunLoop::AssertInMyLoop() {
 
 void RunLoop::RunInLoop(const Func& func) {
   if (IsInMyLoop()) {
-   func();
+    func();
   } else {
     QueueInLoop(func);
   }
@@ -72,7 +72,7 @@ void RunLoop::RunInLoop(const Func& func) {
 
 void RunLoop::RunInLoop(Func&& func) {
   if (IsInMyLoop()) {
-   func();
+    func();
   } else {
     QueueInLoop(std::move(func));
   }

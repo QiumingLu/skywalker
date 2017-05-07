@@ -5,29 +5,20 @@
 #ifndef SKYWALKER_PAXOS_INSTANCE_H_
 #define SKYWALKER_PAXOS_INSTANCE_H_
 
-#include <functional>
-#include <map>
 #include <memory>
 #include <string>
 
+#include "util/mutex.h"
+#include "util/runloop.h"
 #include "paxos/acceptor.h"
 #include "paxos/learner.h"
 #include "paxos/proposer.h"
-#include "machine/machine_manager.h"
-#include "log/checkpoint_manager.h"
-#include "log/log_manager.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
-#include "skywalker/slice.h"
-#include "skywalker/status.h"
-#include "skywalker/state_machine.h"
-#include "util/mutex.h"
-#include "util/timerlist.h"
 
 namespace skywalker {
 
 class Config;
-class RunLoop;
 
 class Instance {
  public:
@@ -39,9 +30,6 @@ class Instance {
   void SyncData();
 
   uint64_t GetInstanceId() const { return instance_id_; }
-
-  void AddMachine(StateMachine* machine);
-  void RemoveMachine(StateMachine* machine);
 
   void SetProposeCompleteCallback(const ProposeCompleteCallback& cb) {
     propose_cb_ = cb;
@@ -63,10 +51,6 @@ class Instance {
 
   Config* config_;
   RunLoop* io_loop_;
-
-  CheckpointManager checkpoint_manager_;
-  MachineManager machine_manager_;
-  LogManager log_manager_;
 
   Acceptor acceptor_;
   Learner learner_;

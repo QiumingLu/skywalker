@@ -13,6 +13,8 @@ extern uint64_t NowMicros();
 
 extern uint64_t NowMillis();
 
+extern void SleepForMicroseconds(int micros);
+
 }  // namespace skywalker
 
 #endif  // SKYWALKER_UTIL_TIMEOPS_H_

@@ -11,14 +11,12 @@
 #include <vector>
 
 #include "skywalker/options.h"
-#include "skywalker/slice.h"
-#include "skywalker/status.h"
 
 namespace skywalker {
 
 // Update Makefile if you change these
 static const int kMajorVersion = 1;
-static const int kMinorVersion = 2;
+static const int kMinorVersion = 3;
 
 // A Node is safe for concurrent access from multiple threads without
 // any external synchronization.

@@ -7,6 +7,7 @@
 #include <leveldb/options.h>
 #include <leveldb/status.h>
 
+#include "paxos/config.h"
 #include "skywalker/logging.h"
 
 namespace {
@@ -31,7 +32,7 @@ int Comparator::Compare(const leveldb::Slice& a,
   return key > key2 ? 1 : -1;
 }
 
-DB::DB()
+DB::DB(Config* config)
     : db_(nullptr) {
 }
 
@@ -39,11 +40,11 @@ DB::~DB() {
   delete db_;
 }
 
-int DB::Open(uint32_t group_id, const std::string& name) {
+int DB::Open(const std::string& name) {
   leveldb::Options options;
   options.comparator = &comparator_;
   options.create_if_missing = true;
-  options.write_buffer_size = 1024 * 1024 + group_id * 10 * 1024;
+  options.write_buffer_size = 1024 * 1024 + config_->GetGroupId() * 10 * 1024;
   leveldb::Status status = leveldb::DB::Open(options, name, &db_);
   if (!status.ok()) {
     LOG_ERROR("DB::Open - %s", status.ToString().c_str());
@@ -148,7 +149,6 @@ int DB::GetMinChosenInstanceId(uint64_t* id) {
 int DB::SetMembership(const Membership& m) {
   std::string s;
   if (!m.SerializeToString(&s)) {
-    LOG_ERROR("DB::SetMembership - m.SerializeToString failed!");
     return -1;
   }
   return Put(WriteOptions(), kMembership, s);
@@ -163,7 +163,6 @@ int DB::GetMembership(Membership* m) {
   if (m->ParseFromString(s)) {
     return 0;
   } else {
-    LOG_ERROR("DB::GetMembership - m.ParseFromString failed!");
     return -1;
   }
 }
@@ -171,7 +170,6 @@ int DB::GetMembership(Membership* m) {
 int DB::SetMasterState(const MasterState& state) {
   std::string s;
   if (!state.SerializeToString(&s)) {
-    LOG_ERROR("DB::SetMasterState - state.SerializeToString failed!");
     return -1;
   }
   return Put(WriteOptions(), kMasterState, s);
@@ -186,7 +184,6 @@ int DB::GetMasterState(MasterState* state) {
   if (state->ParseFromString(s)) {
     return 0;
   } else {
-    LOG_ERROR("DB::GetMasterState - state.ParseFromString failed!");
     return -1;
   }
 }

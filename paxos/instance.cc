@@ -7,7 +7,6 @@
 #include <utility>
 
 #include "paxos/config.h"
-#include "util/runloop.h"
 #include "util/mutexlock.h"
 #include "skywalker/logging.h"
 
@@ -15,11 +14,8 @@ namespace skywalker {
 
 Instance::Instance(Config* config)
     : config_(config),
-      checkpoint_manager_(config),
-      machine_manager_(),
-      log_manager_(config, &checkpoint_manager_, &machine_manager_),
       acceptor_(config, this),
-      learner_(config, this, &acceptor_, &checkpoint_manager_, &log_manager_),
+      learner_(config, this, &acceptor_),
       proposer_(config, this),
       instance_id_(0),
       is_proposing_(false),
@@ -32,12 +28,14 @@ Instance::~Instance() {
 bool Instance::Recover() {
   bool res = acceptor_.Recover(&instance_id_);
   if (!res) {
-    LOG_ERROR("Acceptor recover failed.");
+    LOG_ERROR("Group %u - Acceptor recover failed.",
+              config_->GetGroupId());
     return res;
   }
-  res = log_manager_.Recover(instance_id_);
+  res = config_->GetLogManager()->Recover(instance_id_);
   if (!res) {
-    LOG_ERROR("CheckpointManager recover failed.");
+    LOG_ERROR("Group %u - CheckpointManager recover failed.",
+              config_->GetGroupId());
     return res;
   }
   acceptor_.SetInstanceId(instance_id_);
@@ -46,8 +44,8 @@ bool Instance::Recover() {
   proposer_.SetStartProposalId(
       acceptor_.GetPromisedBallot().GetProposalId() + 1);
 
-  LOG_INFO("Instance::Recover - now instance_id=%" PRIu64".", instance_id_);
-
+  LOG_INFO("Group %u - Instance recover successful, now instance_id=%llu.",
+           config_->GetGroupId(), (unsigned long long)instance_id_);
   return res;
 }
 
@@ -65,14 +63,6 @@ void Instance::SyncData() {
   io_loop_->QueueInLoop([this]() {
     learner_.AskForLearn();
   });
-}
-
-void Instance::AddMachine(StateMachine* machine) {
-  machine_manager_.AddMachine(machine);
-}
-
-void Instance::RemoveMachine(StateMachine* machine) {
-  machine_manager_.RemoveMachine(machine);
 }
 
 void Instance::OnPropose(const std::string& value,
@@ -115,7 +105,8 @@ void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
       OnCheckpointMessage(c->checkpoint_msg());
       break;
     default:
-      LOG_ERROR("Instance::OnReceiveContent - Invalid content type.");
+      LOG_ERROR("Group %u - receive an invalid content.",
+                config_->GetGroupId());
       break;
   }
 }
@@ -156,7 +147,8 @@ void Instance::OnPaxosMessage(const PaxosMessage& msg) {
       learner_.OnAskForCheckpoint(msg);
       break;
     default:
-      LOG_ERROR("Instance::OnPaxosMessage - Invalid message type.");
+      LOG_ERROR("Group %u - receive an invalid paxos message.",
+                config_->GetGroupId());
       break;
   }
 
@@ -206,16 +198,11 @@ void Instance::CheckLearn() {
 }
 
 bool Instance::MachineExecute(const PaxosValue& value, bool my) {
-  int id = value.machine_id();
-  if (id != -1) {
-    MachineContext* context = nullptr;
-    if (my) {
-      context = context_;
-    }
-    return machine_manager_.Execute(
-        id, config_->GetGroupId(), instance_id_, value.user_data(), context);
+  MachineContext* context = nullptr;
+  if (my) {
+    context = context_;
   }
-  return true;
+  return config_->GetMachineManager()->Execute(instance_id_, value, context);
 }
 
 void Instance::NextInstance() {
@@ -223,8 +210,8 @@ void Instance::NextInstance() {
   acceptor_.NextInstance();
   proposer_.NextInstance();
   learner_.NextInstance();
-  LOG_INFO("Instance::NextInstance - new instance is starting, "
-           "now instance_id=%" PRIu64".", instance_id_);
+  LOG_INFO("Group %u - new instance is starting, which instance_id=%llu.",
+           config_->GetGroupId(), (unsigned long long)instance_id_);
 }
 
 }  // namespace skywalker

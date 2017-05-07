@@ -3,8 +3,11 @@
 // found in the LICENSE file.
 
 #include "paxos/propose_queue.h"
-#include "skywalker/logging.h"
+
+#include <utility>
+
 #include "util/mutexlock.h"
+#include "skywalker/logging.h"
 
 namespace skywalker {
 

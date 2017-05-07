@@ -14,6 +14,8 @@
 
 namespace skywalker {
 
+class Config;
+
 struct WriteOptions {
   bool sync;
 
@@ -39,10 +41,10 @@ class Comparator : public leveldb::Comparator {
 
 class DB {
  public:
-  DB();
+  explicit DB(Config* config);
   ~DB();
 
-  int Open(uint32_t group_id, const std::string& name);
+  int Open(const std::string& name);
 
   int Put(const WriteOptions& options,
           uint64_t instance_id,
@@ -66,6 +68,7 @@ class DB {
   int GetMasterState(MasterState* state);
 
  private:
+  Config* config_;
   leveldb::DB* db_;
   Comparator comparator_;
 

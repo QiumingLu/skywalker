@@ -24,7 +24,6 @@ void MasterMachine::Recover() {
     if (state_.node_id() != config_->GetNodeId()) {
       state_.set_lease_time(NowMicros() + state_.lease_time());
     } else {
-      state_.set_version(0);
       state_.set_lease_time(NowMicros());
     }
   }
@@ -52,15 +51,19 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
         state.set_lease_time(NowMicros() + state.lease_time());
       }
       SetMasterState(state);
-      LOG_INFO("Now the master's version=%" PRIu64", "
-               "node_id=%" PRIu64", lease_time=%" PRIu64".",
-               state.version(), state.node_id(), state.lease_time());
+      LOG_INFO("Group %u - now the master's version=%llu, "
+               "node_id=%llu, lease_time=%llu.",
+               config_->GetGroupId(), (unsigned long long)state.version(),
+               (unsigned long long)state.node_id(),
+               (unsigned long long)state.lease_time());
       return true;
     } else {
-      LOG_ERROR("Update master state failed.");
+      LOG_ERROR("Group %u - update master state failed.",
+                config_->GetGroupId());
     }
   } else {
-    LOG_ERROR("MasterState ParseFromString failed.");
+    LOG_ERROR("Group %u - master state parse from string failed.",
+              config_->GetGroupId());
   }
   return false;
 }

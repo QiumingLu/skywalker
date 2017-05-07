@@ -5,18 +5,16 @@
 #ifndef SKYWALKER_LOG_LOG_MANAGER_H_
 #define SKYWALKER_LOG_LOG_MANAGER_H_
 
-#include "paxos/config.h"
-#include "machine/machine_manager.h"
-#include "log/checkpoint_manager.h"
+#include <atomic>
 #include "log/log_cleaner.h"
 
 namespace skywalker {
 
+class Config;
+
 class LogManager {
  public:
-  LogManager(Config* config,
-             CheckpointManager* checkpoint_manager,
-             MachineManager* machine_manager);
+  explicit LogManager(Config* config);
 
   bool Recover(uint64_t instance_id);
 
@@ -30,11 +28,9 @@ class LogManager {
   bool ReplayLog(uint64_t from, uint64_t to);
 
   Config* config_;
-  CheckpointManager* checkpoint_manager_;
-  MachineManager* machine_manager_;
 
-  uint64_t min_chosen_id_;
-  uint64_t max_chosen_id_;
+  std::atomic<uint64_t> min_chosen_id_;
+  std::atomic<uint64_t> max_chosen_id_;
 
   LogCleaner cleaner_;
 

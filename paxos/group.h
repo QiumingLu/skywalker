@@ -5,19 +5,18 @@
 #ifndef SKYWALKER_PAXOS_GROUP_H_
 #define SKYWALKER_PAXOS_GROUP_H_
 
+#include <stdint.h>
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "util/mutex.h"
 #include "paxos/config.h"
 #include "paxos/instance.h"
 #include "paxos/schedule.h"
 #include "paxos/propose_queue.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
-#include "skywalker/slice.h"
-#include "skywalker/status.h"
-#include "util/mutex.h"
 #include "machine/membership_machine.h"
 #include "machine/master_machine.h"
 

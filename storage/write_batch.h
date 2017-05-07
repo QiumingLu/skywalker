@@ -5,6 +5,7 @@
 #ifndef SKYWALKER_STORAGE_WRITE_BATCH_H_
 #define SKYWALKER_STORAGE_WRITE_BATCH_H_
 
+#include <string>
 #include <leveldb/write_batch.h>
 
 namespace skywalker {

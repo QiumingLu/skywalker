@@ -3,7 +3,13 @@
 // found in the LICENSE file.
 
 #include "log/checkpoint_receiver.h"
+
+#include <vector>
+
+#include "util/timeops.h"
+#include "paxos/config.h"
 #include "log/checkpoint_manager.h"
+#include "skywalker/checkpoint.h"
 #include "skywalker/logging.h"
 #include "skywalker/file.h"
 
@@ -12,8 +18,6 @@ namespace skywalker {
 CheckpointReceiver::CheckpointReceiver(Config* config,
                                        CheckpointManager* manager)
     : config_(config),
-      checkpoint_(config_->GetCheckpoint()),
-      messager_(config_->GetMessager()),
       manager_(manager) {
 }
 
@@ -39,7 +43,10 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
     for (auto& file : files) {
       Status del = FileManager::Instance()->DeleteFile(d + "/" + file);
       if (!del.ok()) {
+        LOG_ERROR("Group %u - %s.",
+                  config_->GetGroupId(), del.ToString().c_str());
         res = false;
+        break;
       }
     }
     FileManager::Instance()->DeleteDir(d);
@@ -68,9 +75,15 @@ bool CheckpointReceiver::ReceiveFiles(const CheckpointMessage& msg) {
 
   if (dirs_.find(msg.machine_id()) == dirs_.end()) {
     char dir[512];
-    snprintf(dir, sizeof(dir), "%s/machine_%d",
+    snprintf(dir, sizeof(dir), "%s/m%d",
              config_->CheckpointPath().c_str(), msg.machine_id());
     FileManager::Instance()->CreateDir(dir);
+    bool exits = FileManager::Instance()->FileExists(dir);
+    if (!exits) {
+      LOG_ERROR("Group %u - create checkpoint dir=%s failed.",
+                config_->GetGroupId(), dir);
+      return false;
+    }
     dirs_[msg.machine_id()] = std::string(dir);
   }
 
@@ -84,7 +97,11 @@ bool CheckpointReceiver::ReceiveFiles(const CheckpointMessage& msg) {
     }
     delete file;
   }
-  return s.ok() ? true : false;
+  if (!s.ok()) {
+    LOG_ERROR("Group %u - %s.", config_->GetGroupId(), s.ToString().c_str());
+    return false;
+  }
+  return true;
 }
 
 bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
@@ -92,36 +109,41 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
     return true;
   }
 
-  if ( msg.sequence_id() != sequence_id_ + 1) {
+  if (msg.sequence_id() != sequence_id_ + 1) {
     return false;
   }
-  const std::vector<StateMachine*>& machines(config_->GetStateMachines());
+
   bool res = true;
-  for (auto machine : machines) {
-    auto it = dirs_.find(machine->machine_id());
-    if (it != dirs_.end()) {
-      std::vector<std::string> files;
-      Status s = FileManager::Instance()->GetChildren(it->second, &files, true);
-      if (!s.ok()) {
-        LOG_ERROR("%s", s.ToString().c_str());
-        res = false;
-        break;
-      }
-      if (files.empty()) {
-        continue;
-      }
-      res = checkpoint_->LoadCheckpoint(config_->GetGroupId(),
-                                        it->first, it->second, files);
-      if (!res) {
-        LOG_ERROR("Load checkpoint failed. "
-                  "which group_id=%" PRIu32", machine_id=%d, dir=%s.",
-                  config_->GetGroupId(), it->first, it->second.c_str());
-        break;
-      }
+
+  bool lock = false;
+  while (!lock) {
+    lock = config_->GetCheckpoint()->LockCheckpoint(config_->GetGroupId());
+    SleepForMicroseconds(1000);
+  }
+  std::vector<std::string> files;
+  for (auto& d : dirs_) {
+    Status s = FileManager::Instance()->GetChildren(d.second, &files, true);
+    if (!s.ok()) {
+      LOG_ERROR("Group %u - %s", config_->GetGroupId(), s.ToString().c_str());
+      res = false;
+      break;
+    }
+    if (files.empty()) {
+      continue;
+    }
+    res = config_->GetCheckpoint()->LoadCheckpoint(
+        config_->GetGroupId(), d.first, d.second, files);
+    if (!res) {
+      LOG_ERROR("Group %u - load checkpoint failed, the machine_id=%d, dir=%s.",
+                config_->GetGroupId(), d.first, d.second.c_str());
+      break;
     }
   }
+  config_->GetCheckpoint()->UnLockCheckpoint(config_->GetGroupId());
+
   if (res) {
-    // FIXME
+    LOG_INFO("Group %u - load checkpoint successful, so exit process now!",
+             config_->GetGroupId());
     exit(-1);
   }
   return res;
@@ -134,7 +156,8 @@ bool CheckpointReceiver::ComfirmReceive(
   reply_msg->set_node_id(config_->GetNodeId());
   reply_msg->set_sequence_id(msg.sequence_id());
   reply_msg->set_flag(res);
-  messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+  config_->GetMessager()->SendMessage(
+      msg.node_id(), config_->GetMessager()->PackMessage(reply_msg));
   if (!res && msg.node_id() == sender_node_id_) {
     Reset();
     return false;

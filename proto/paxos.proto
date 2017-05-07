@@ -45,8 +45,8 @@ enum CheckpointMessageType {
 message CheckpointMessage {
   CheckpointMessageType type = 1;
   uint64 node_id = 2;
-  uint64 sequence_id = 3;
-  uint64 instance_id = 4;
+  uint64 instance_id = 3;
+  int32 sequence_id = 4;
   int32 machine_id = 5;
   string file = 6;
   uint64 offset =7;

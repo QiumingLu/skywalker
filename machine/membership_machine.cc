@@ -45,10 +45,11 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
       SetMembership(m);
       return true;
     } else {
-      LOG_ERROR("Update membership failed.");
+      LOG_ERROR("Group %u - update membership failed.", config_->GetGroupId());
     }
   } else {
-    LOG_ERROR("Membership ParseFromString failed.");
+    LOG_ERROR("Group %u - membership parse from string failed.",
+              config_->GetGroupId());
   }
   return false;
 }
@@ -73,7 +74,7 @@ const Membership& MembershipMachine::GetMembership() const {
 
 void MembershipMachine::SetMembership(const Membership& m) {
   MutexLock lock(&mutex_);
-  membership_ =m ;
+  membership_ = m;
   config_->SetMembership(m);
   if (!has_sync_membership_) {
     has_sync_membership_ = true;

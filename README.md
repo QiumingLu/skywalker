@@ -27,6 +27,7 @@ Skywalker是一个基于[Leslie Lamport](https://en.wikipedia.org/wiki/Leslie_La
 * Propose提议不阻塞用户线程，以异步架构实现，并且严格地按照用户提交顺序来进行提交，结果通过Callback的形式向用户返回提交结果。
 * 一次Propose提议的完成，每台机器的性能消耗可以做到只有一次网络RTT，一次磁盘写入。
 * 自动定时地发起学习操作，使得集群内的机器能够及时地保持状态对齐，可以正常地参与Paxos协议过程，降低集群停止正常工作的风险。
+* 如果用户已经实现checkpoint接口，对于状态落后较大的节点，Skywalker会自动地通过checkpoint来进行学习，从而可以加快学习的速度。
 * 内置Master选举功能。
 * 内置成员变更管理配置功能。
 * 基于Voyager来完成网络传输功能。
@@ -35,7 +36,6 @@ Skywalker是一个基于[Leslie Lamport](https://en.wikipedia.org/wiki/Leslie_La
 * 接口简单方便使用，基本的操作为Propose。
 
 ## 局限
-* 目前还没有实现Checkpoint功能，对于状态落后较大的节点，学习成本较高。
 * 没有做特别的过载保护，可能会导致节点在高压的情况下不能自适应地运转。
 * 没有实现实时监控功能，需要开发者自行开发。
 * 没有像Chubby、Zookeeper那样实现内建的client-server功能，但开发者可以像Journey示例那样，基于Voyager网络库进行开发。

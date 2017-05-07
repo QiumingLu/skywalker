@@ -1,12 +1,18 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_LOG_CHECKPOINT_SENDER_H_
 #define SKYWALKER_LOG_CHECKPOINT_SENDER_H_
 
+#include <string>
+
 #include "util/mutex.h"
-#include "paxos/config.h"
-#include "skywalker/checkpoint.h"
+#include "proto/paxos.pb.h"
 
 namespace skywalker {
 
+class Config;
 class CheckpointManager;
 
 class CheckpointSender {
@@ -18,7 +24,7 @@ class CheckpointSender {
   void OnComfirmReceive(const CheckpointMessage& msg);
 
  private:
-  static const int kBufferSize = 65536;
+  static const int kBufferSize = 256 * 1024;
 
   void BeginToSend(uint64_t instance_id);
   bool SendCheckpointFiles(uint64_t instance_id);
@@ -31,16 +37,14 @@ class CheckpointSender {
   char buffer[kBufferSize];
 
   Config* config_;
-  Checkpoint* checkpoint_;
-  Messager* messager_;
   CheckpointManager* manager_;
 
   uint64_t receiver_node_id_;
-  uint64_t sequence_id_;
+  int sequence_id_;
 
   Mutex mutex_;
   Condition cond_;
-  uint64_t ack_sequence_id_;
+  int ack_sequence_id_;
   bool error_;
 
   // No copying allowed

@@ -31,7 +31,7 @@ class StateMachine {
   StateMachine() { }
   virtual ~StateMachine() { }
 
-  // id > 5
+  // must set the id > 5
   void set_machine_id(int id) { id_ = id; }
   int machine_id() const { return id_; }
 

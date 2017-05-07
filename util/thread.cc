@@ -6,13 +6,14 @@
 
 #include <assert.h>
 #include <string.h>
-
 #include <unistd.h>
 #include <sys/syscall.h>
 
 #ifdef __linux__
 #include <sys/prctl.h>
 #endif
+
+#include <algorithm>
 
 #include "skywalker/logging.h"
 
@@ -61,7 +62,7 @@ class ThreadInitializer {
 
 ThreadInitializer thread_init;
 
-}
+}  // namespace
 
 namespace CurrentThread {
 

@@ -4,8 +4,9 @@
 
 #include "util/timeops.h"
 
-#include <sys/time.h>
+#include <unistd.h>
 #include <time.h>
+#include <sys/time.h>
 
 namespace skywalker {
 
@@ -17,6 +18,10 @@ uint64_t NowMicros() {
 
 uint64_t NowMillis() {
   return NowMicros() / 1000;
+}
+
+void SleepForMicroseconds(int micros) {
+  usleep(micros);
 }
 
 }  // namespace skywalker

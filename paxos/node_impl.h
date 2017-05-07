@@ -7,13 +7,12 @@
 
 #include <stdint.h>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "paxos/group.h"
 #include "network/network.h"
-#include "skywalker/slice.h"
-#include "skywalker/status.h"
 #include "skywalker/options.h"
 #include "skywalker/node.h"
 
@@ -59,7 +58,7 @@ class NodeImpl : public Node {
   void OnReceiveMessage(const Slice& s);
 
   bool stop_;
-  const Options options_;
+  Options options_;
   uint64_t node_id_;
   Network network_;
   std::map<uint32_t, std::unique_ptr<Group> > groups_;

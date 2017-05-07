@@ -3,28 +3,31 @@
 // found in the LICENSE file.
 
 #include "log/log_manager.h"
+
+#include <string>
+
+#include "paxos/config.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {
 
-LogManager::LogManager(Config* config,
-                       CheckpointManager* checkpoint_manager,
-                       MachineManager* machine_manager)
+LogManager::LogManager(Config* config)
     : config_(config),
-      checkpoint_manager_(checkpoint_manager),
-      machine_manager_(machine_manager),
       min_chosen_id_(0),
       max_chosen_id_(0),
-      cleaner_(config, checkpoint_manager_, this) {
+      cleaner_(config, this) {
 }
 
 bool LogManager::Recover(uint64_t instance_id) {
-  if (config_->GetDB()->GetMinChosenInstanceId(&min_chosen_id_) == -1) {
+  uint64_t temp = 0;
+  if (config_->GetDB()->GetMinChosenInstanceId(&temp) == -1) {
     return false;
   }
+  min_chosen_id_ = temp;
+  max_chosen_id_ = instance_id;
 
   bool res = true;
-  uint64_t id = checkpoint_manager_->GetCheckpointInstanceId() + 1;
+  uint64_t id = config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
   if (id < instance_id) {
     res = ReplayLog(id, instance_id);
   }
@@ -39,22 +42,14 @@ bool LogManager::ReplayLog(uint64_t from, uint64_t to) {
     std::string s;
     int res = config_->GetDB()->Get(instance_id, &s);
     if (res != 0) {
-      LOG_ERROR("ReplayLog failed, "
-                "which group_id:%" PRIu32", instance_id:%" PRIu64".",
-                config_->GetGroupId(), instance_id);
+      LOG_ERROR("Group %u - replay log failed, the instance_id=%llu.",
+                config_->GetGroupId(), (unsigned long long)instance_id);
       return false;
     }
     AcceptorState state;
     state.ParseFromString(s);
     const PaxosValue& value = state.accepted_value();
-    bool success = machine_manager_->Execute(
-        value.machine_id(), config_->GetGroupId(), instance_id,
-        value.user_data(), nullptr);
-    if (!success) {
-      LOG_INFO("StateMachine execute failed, which machine_id:%d, "
-               "group_id:%" PRIu32", instance_id:%" PRIu64".",
-               value.machine_id(), config_->GetGroupId(), instance_id);
-    }
+    config_->GetMachineManager()->Execute(instance_id, value, nullptr);
   }
   return true;
 }

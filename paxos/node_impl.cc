@@ -4,7 +4,7 @@
 
 #include "paxos/node_impl.h"
 
-#include <memory>
+#include <utility>
 
 #include "paxos/node_util.h"
 #include "proto/paxos.pb.h"
@@ -24,28 +24,29 @@ NodeImpl::~NodeImpl() {
 }
 
 bool NodeImpl::StartWorking() {
-  bool ret = true;
+  bool res = true;
   for (auto& g : options_.groups) {
     std::unique_ptr<Group> group(new Group(node_id_, g, &network_));
-    ret = group->Start();
-    if (ret) {
+    res = group->Start();
+    if (res) {
+      LOG_DEBUG("Group %u start successful!", g.group_id);
       groups_.insert(std::make_pair(g.group_id, std::move(group)));
     } else {
-      return ret;
+      LOG_DEBUG("Group %u start failed!", g.group_id);
+      return res;
     }
   }
-  LOG_DEBUG("Node::Start - Group Start Successfully!");
 
   network_.StartServer(
       std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
-  LOG_DEBUG("Node::Start - Network StartServer Successfully!");
+  LOG_DEBUG("Skywalker server start successful!");
 
   for (auto& g : groups_) {
     g.second->SyncMembership();
     g.second->SyncMaster();
   }
 
-  return ret;
+  return res;
 }
 
 size_t NodeImpl::group_size() const {
@@ -74,13 +75,11 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   if (!stop_) {
     std::shared_ptr<Content> c(new Content());
     c->ParseFromArray(s.data(), static_cast<int>(s.size()));
-
     auto it = groups_.find(c->group_id());
     if (it != groups_.end()) {
       it->second->OnReceiveContent(c);
     } else {
-      LOG_ERROR("NodeImpl::OnReceiveMessage - group_id=%" PRIu32" is wrong!",
-                c->group_id());
+      LOG_ERROR("Receive a message which group_id=%u is wrong!", c->group_id());
     }
   }
 }
@@ -106,9 +105,8 @@ bool NodeImpl::ReplaceMember(uint32_t group_id,
 
 void NodeImpl::GetMembership(uint32_t group_id,
                              std::vector<IpPort>* result) const {
-  auto it = groups_.find(group_id);
-  assert(it != groups_.end());
-  it->second->GetMembership(result);
+  assert(groups_.find(group_id) != groups_.end());
+  groups_.at(group_id)->GetMembership(result);
 }
 
 void NodeImpl::SetMasterLeaseTime(uint64_t micros) {
@@ -124,15 +122,13 @@ void NodeImpl::SetMasterLeaseTime(uint32_t group_id, uint64_t micros) {
 
 bool NodeImpl::GetMaster(uint32_t group_id,
                          IpPort* i, uint64_t* version) const {
-  auto it = groups_.find(group_id);
-  assert(it != groups_.end());
-  return it->second->GetMaster(i, version);
+  assert(groups_.find(group_id) != groups_.end());
+  return groups_.at(group_id)->GetMaster(i, version);
 }
 
 bool NodeImpl::IsMaster(uint32_t group_id) const {
-  auto it = groups_.find(group_id);
-  assert(it != groups_.end());
-  return it->second->IsMaster();
+  assert(groups_.find(group_id) != groups_.end());
+  return groups_.at(group_id)->IsMaster();
 }
 
 void NodeImpl::RetireMaster(uint32_t group_id) {
@@ -143,13 +139,13 @@ void NodeImpl::RetireMaster(uint32_t group_id) {
 bool Node::Start(const Options& options, Node** nodeptr) {
   *nodeptr = nullptr;
   NodeImpl* impl = new NodeImpl(options);
-  bool ret = impl->StartWorking();
-  if (ret) {
+  bool res = impl->StartWorking();
+  if (res) {
     *nodeptr = impl;
   } else {
     delete impl;
   }
-  return ret;
+  return res;
 }
 
 }  // namespace skywalker

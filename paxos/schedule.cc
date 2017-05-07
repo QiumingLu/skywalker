@@ -17,7 +17,7 @@ void Schedule::Start() {
   learn_loop_ = learn_thread_.Loop();
   if (use_master_) {
     master_loop_ = master_thread_.Loop();
-  }	
+  }
 }
 
 RunLoop* Schedule::MasterLoop() const {

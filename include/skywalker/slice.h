@@ -61,6 +61,8 @@ class Slice {
  private:
   const char *data_;
   size_t size_;
+
+  // Intentionally copyable
 };
 
 inline bool operator==(const Slice& x, const Slice& y) {

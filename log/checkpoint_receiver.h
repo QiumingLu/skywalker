@@ -1,13 +1,18 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_LOG_CHECKPOINT_RECEIVER_H_
 #define SKYWALKER_LOG_CHECKPOINT_RECEIVER_H_
 
 #include <map>
+#include <string>
 
-#include "paxos/config.h"
-#include "skywalker/checkpoint.h"
+#include "proto/paxos.pb.h"
 
 namespace skywalker {
 
+class Config;
 class CheckpointManager;
 
 class CheckpointReceiver {
@@ -27,12 +32,10 @@ class CheckpointReceiver {
   void Reset();
 
   Config* config_;
-  Checkpoint* checkpoint_;
-  Messager* messager_;
   CheckpointManager* manager_;
 
   uint64_t sender_node_id_;
-  uint64_t sequence_id_;
+  int sequence_id_;
   std::map<int, std::string> dirs_;
 
   // No copying allowed

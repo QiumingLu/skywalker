@@ -1,10 +1,18 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #include "machine/machine_manager.h"
 
 #include <assert.h>
+#include <utility>
+
+#include "paxos/config.h"
 
 namespace skywalker {
 
-MachineManager::MachineManager() {
+MachineManager::MachineManager(Config* config)
+    : config_(config) {
 }
 
 void MachineManager::AddMachine(StateMachine* machine) {
@@ -16,12 +24,13 @@ void MachineManager::RemoveMachine(StateMachine* machine) {
 }
 
 bool MachineManager::Execute(
-    int machine_id, uint32_t group_id, uint64_t instance_id,
-    const std::string& value, MachineContext* context) {
-  auto it = machines_.find(machine_id);
+    uint64_t instance_id,
+    const PaxosValue& value, MachineContext* context) {
+  auto it = machines_.find(value.machine_id());
   if (it != machines_.end()) {
     assert(it->second != nullptr);
-    return it->second->Execute(group_id, instance_id, value, context);
+    return it->second->Execute(config_->GetGroupId(), instance_id,
+                               value.user_data(), context);
   }
   return true;
 }

@@ -3,13 +3,14 @@
 // found in the LICENSE file.
 
 #include "log/checkpoint_manager.h"
+#include "paxos/config.h"
+#include "skywalker/checkpoint.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {
 
 CheckpointManager::CheckpointManager(Config* config)
     : config_(config),
-      checkpoint_(config_->GetCheckpoint()),
       sender_(config, this),
       receiver_(config, this) {
 }
@@ -25,7 +26,7 @@ uint64_t CheckpointManager::GetCheckpointInstanceId() const {
       id = id - 1;
     }
   } else {
-    id = checkpoint_->GetCheckpointInstanceId(config_->GetGroupId());
+    id = config_->GetCheckpoint()->GetCheckpointInstanceId(config_->GetGroupId());
   }
   return id;
 }
@@ -50,7 +51,8 @@ bool CheckpointManager::ReceiveCheckpoint(const CheckpointMessage& msg) {
       sender_.OnComfirmReceive(msg);
       break;
     default:
-      LOG_ERROR("Invalid checkpoint message type.");
+      LOG_ERROR("Group %u - receive an invalid checkpoint message.",
+                config_->GetGroupId());
       break;
   }
   return res;

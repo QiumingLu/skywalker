@@ -42,9 +42,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
         reply_msg->set_pre_accepted_node_id(accepted_ballot_.GetNodeId());
         reply_msg->set_allocated_value(new PaxosValue(accepted_value_));
       }
-      if (!WriteToDB()) {
-        LOG_ERROR("write instance_id=%" PRIu64" to db failed.", instance_id_);
-      }
+      WriteToDB();
     } else {
       reply_msg->set_rejected_id(promised_ballot_.GetProposalId());
     }
@@ -74,9 +72,7 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
       promised_ballot_ = b;
       accepted_ballot_ = b;
       accepted_value_ = msg.value();
-      if (!WriteToDB()) {
-        LOG_ERROR("write instance_id=%" PRIu64" to db failed.", instance_id_);
-      }
+      WriteToDB();
     } else {
       reply_msg->set_rejected_id(promised_ballot_.GetProposalId());
     }
@@ -159,6 +155,8 @@ bool Acceptor::WriteToDB() {
   if (ret == 0) {
     return true;
   } else {
+    LOG_ERROR("Group %u - write instance_id=%llu to db failed.",
+              config_->GetGroupId(), (unsigned long long)instance_id_);
     return false;
   }
 }

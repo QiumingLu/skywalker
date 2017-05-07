@@ -4,6 +4,7 @@
 
 #include "paxos/learner.h"
 
+#include <memory>
 #include <string>
 
 #include "util/timeops.h"
@@ -14,15 +15,11 @@
 
 namespace skywalker {
 
-Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor,
-                 CheckpointManager* checkpoint_manager,
-                 LogManager* log_manager)
+Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
     : config_(config),
       messager_(config_->GetMessager()),
       instance_(instance),
       acceptor_(acceptor),
-      checkpoint_manager_(checkpoint_manager),
-      log_manager_(log_manager),
       instance_id_(0),
       max_instance_id_(0),
       max_instance_id_from_node_id_(0),
@@ -95,7 +92,7 @@ void Learner::SendNowInstanceId(const PaxosMessage& msg) {
   reply_msg->set_instance_id(msg.instance_id());
   reply_msg->set_now_instance_id(instance_id_);
   reply_msg->set_min_chosen_instance_id(
-      log_manager_->GetMinChosenInstanceId());
+      config_->GetLogManager()->GetMinChosenInstanceId());
   if (instance_id_ > msg.instance_id() + 50) {
     if (config_->GetMasterMachine()) {
       reply_msg->set_master_state(config_->GetMasterMachine()->GetString());
@@ -116,7 +113,8 @@ void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
     config_->GetMembershipMachine()->SetString(msg.membership());
     bool valid = config_->IsValidNodeId(config_->GetNodeId());
     if (!valid) {
-      LOG_INFO("now the node is not in the membership");
+      LOG_INFO("Group %u - now the node is not in the membership",
+               config_->GetGroupId());
       return;
     }
   }
@@ -169,8 +167,8 @@ void Learner::ASyncSend(uint64_t node_id, uint64_t from, uint64_t to) {
       SendLearnedValue(node_id, state);
       ++from;
     } else {
-      LOG_ERROR("Learner::OnComfirmAskForLearn - "
-                "no found data of instance %" PRIu64"", from);
+      LOG_ERROR("Group %u - no found data of instance %llu",
+                config_->GetGroupId(), (unsigned long long)from);
       break;
     }
   }
@@ -213,11 +211,11 @@ void Learner::OnAskForCheckpoint(const PaxosMessage& msg) {
 }
 
 void Learner::SendCheckpoint(uint64_t node_id) {
-  checkpoint_manager_->SendCheckpoint(node_id);
+  config_->GetCheckpointManager()->SendCheckpoint(node_id);
 }
 
 void Learner::OnSendCheckpoint(const CheckpointMessage& msg) {
-  bool success = checkpoint_manager_->ReceiveCheckpoint(msg);
+  bool success = config_->GetCheckpointManager()->ReceiveCheckpoint(msg);
   uint64_t timeout = success ? 120 * 1000 * 1000 : 1000;
   RemoveLearnTimer();
   AddLearnTimer(timeout);
@@ -256,8 +254,8 @@ bool Learner::WriteToDB(const PaxosMessage& msg) {
 void Learner::FinishLearnValue(const PaxosValue& value) {
   learned_value_ = value;
   has_learned_ = true;
-  LOG_INFO("Learner::FinishLearnValue - learn a new value=%s.",
-           learned_value_.user_data().c_str());
+  LOG_INFO("Group %u - learn a new value=%s.",
+           config_->GetGroupId(), learned_value_.user_data().c_str());
 }
 
 void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
@@ -272,6 +270,7 @@ void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
 }
 
 void Learner::NextInstance() {
+  config_->GetLogManager()->SetMaxChosenInstanceId(instance_id_);
   has_learned_ = false;
   learned_value_.Clear();
   ++instance_id_;

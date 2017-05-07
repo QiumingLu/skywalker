@@ -52,12 +52,10 @@ void Proposer::Prepare(bool need_new_proposal_id) {
     proposal_id_ += 1;
   }
 
-  LOG_DEBUG(
-      "start a new prepare, now "
-      "node_id=%" PRIu64", instance_id=%" PRIu64", "
-      "proposal_id=%" PRIu64", value=%s.\n",
-      config_->GetNodeId(), instance_id_,
-      proposal_id_, value_.user_data().c_str());
+  LOG_DEBUG("Group %u - start a new prepare, now "
+            "instance_id=%llu, proposal_id=%llu, value=%s.",
+            config_->GetGroupId(), (unsigned long long)instance_id_,
+            (unsigned long long)proposal_id_, value_.user_data().c_str());
 
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(PREPARE);
@@ -89,14 +87,15 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
     }
 
     if (counter_.IsPassedOnThisRound()) {
-      LOG_DEBUG("Prepare pass.");
+      LOG_DEBUG("Group %u - prepare pass.", config_->GetGroupId());
       preparing_ = false;
       skip_prepare_ = true;
       RemoveRetryTimer();
       Accept();
     } else if (counter_.IsRejectedOnThisRound() ||
                counter_.IsReceiveAllOnThisRound()) {
-      LOG_DEBUG("Prepare not pass, reprepare about 30ms later.");
+      LOG_DEBUG("Group %u - prepare not pass, reprepare about 30ms later.",
+                config_->GetGroupId());
       preparing_ = false;
       RemoveRetryTimer();
       AddRetryTimer((rand_.Uniform(15) + 15) * 1000);
@@ -108,12 +107,10 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
 void Proposer::Accept() {
   preparing_ = false;
   accepting_ = true;
-  LOG_DEBUG(
-        "start to accept, "
-        "now node_id=%" PRIu64", instance_id=%" PRIu64", "
-        "proposal_id=%" PRIu64", value=%s.",
-        config_->GetNodeId(), instance_id_, proposal_id_, 
-        value_.user_data().c_str());
+  LOG_DEBUG("Group %u -start to accept, "
+            "now instance_id=%llu, proposal_id=%llu, value=%s.",
+            config_->GetGroupId(), (unsigned long long)instance_id_,
+            (unsigned long long)proposal_id_, value_.user_data().c_str());
 
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(ACCEPT);
@@ -140,13 +137,14 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
     }
 
     if (counter_.IsPassedOnThisRound()) {
-      LOG_DEBUG("Accept pass.\n");
+      LOG_DEBUG("Group %u - accept pass.", config_->GetGroupId());
       accepting_ = false;
       RemoveRetryTimer();
       NewChosenValue();
     } else if (counter_.IsRejectedOnThisRound() ||
                counter_.IsReceiveAllOnThisRound()) {
-      LOG_DEBUG("Accept not pass, reprepare about 30ms later.");
+      LOG_DEBUG("Group %u - accept not pass, reprepare about 30ms later.",
+                config_->GetGroupId());
       accepting_ = false;
       RemoveRetryTimer();
       AddRetryTimer((rand_.Uniform(15) + 15) * 1000);

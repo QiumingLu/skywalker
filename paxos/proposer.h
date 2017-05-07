@@ -25,7 +25,7 @@ class Proposer {
   void SetInstanceId(uint64_t id) { instance_id_ = id; }
   void SetStartProposalId(uint64_t id) { proposal_id_ = id; }
   void SetNoSkipPrepare() { skip_prepare_ = false; }
-  
+
   void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
 
   void NewPropose(const PaxosValue& value);

@@ -1,16 +1,20 @@
+// Copyright (c) 2016 Mirants Lu. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 #ifndef SKYWALKER_LOG_CHECKPOINT_MANAGER_H_
 #define SKYWALKER_LOG_CHECKPOINT_MANAGER_H_
 
 #include "log/checkpoint_sender.h"
 #include "log/checkpoint_receiver.h"
-#include "paxos/config.h"
-#include "skywalker/checkpoint.h"
 
 namespace skywalker {
 
+class Config;
+
 class CheckpointManager {
  public:
-  CheckpointManager(Config* config);
+  explicit CheckpointManager(Config* config);
   ~CheckpointManager();
 
   uint64_t GetCheckpointInstanceId() const;
@@ -20,9 +24,6 @@ class CheckpointManager {
 
  private:
   Config* config_;
-  Checkpoint* checkpoint_;
-
-  std::set<uint64_t> nodes_;
 
   CheckpointSender sender_;
   CheckpointReceiver receiver_;

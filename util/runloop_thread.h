@@ -13,7 +13,7 @@ namespace skywalker {
 
 class RunLoopThread {
  public:
-  explicit RunLoopThread();
+  RunLoopThread();
   ~RunLoopThread();
 
   RunLoop* Loop();

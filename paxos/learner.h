@@ -9,8 +9,6 @@
 #include "proto/paxos.pb.h"
 #include "util/random.h"
 #include "util/runloop.h"
-#include "log/checkpoint_manager.h"
-#include "log/log_manager.h"
 
 namespace skywalker {
 
@@ -21,9 +19,7 @@ class Messager;
 
 class Learner {
  public:
-  Learner(Config* config, Instance* instance, Acceptor* acceptor,
-          CheckpointManager* checkpoint_manager,
-          LogManager* log_manager);
+  Learner(Config* config, Instance* instance, Acceptor* acceptor);
 
   void SetInstanceId(uint64_t instance_id) { instance_id_ = instance_id; }
 
@@ -69,8 +65,6 @@ class Learner {
   Messager* messager_;
   Instance* instance_;
   Acceptor* acceptor_;
-  CheckpointManager* checkpoint_manager_;
-  LogManager* log_manager_;
 
   RunLoop* io_loop_;
   RunLoop* learn_loop_;

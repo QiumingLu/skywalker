@@ -4,11 +4,10 @@
 
 #include "log/log_cleaner.h"
 
-#include <chrono>
-#include <thread>
 #include <random>
 
-#include "storage/db.h"
+#include "util/timeops.h"
+#include "paxos/config.h"
 #include "log/log_manager.h"
 
 namespace skywalker {
@@ -19,13 +18,9 @@ void* LogCleaner::StartGC(void* data) {
   return nullptr;
 }
 
-LogCleaner::LogCleaner(Config* config,
-                       CheckpointManager* checkpoint,
-                       LogManager* manager)
+LogCleaner::LogCleaner(Config* config, LogManager* manager)
     : config_(config),
-      checkpoint_(checkpoint),
-      manager_(manager),
-      keep_log_count_(config_->KeepLogCount()) {
+      manager_(manager) {
 }
 
 LogCleaner::~LogCleaner() {
@@ -43,19 +38,22 @@ void LogCleaner::Start() {
 void LogCleaner::GCLoop() {
   exit_ = false;
   std::default_random_engine generator;
-  std::uniform_int_distribution<int> distribution(0, 500);
+  std::uniform_int_distribution<int> distribution(0, 800);
 
   WriteOptions options;
   options.sync = false;
   WriteBatch batch;
 
+  int keep = config_->KeepLogCount();
+
   while (!exit_) {
     uint64_t min_chosen_id = manager_->GetMinChosenInstanceId();
     uint64_t max_chosen_id = manager_->GetMaxChosenInstanceId();
-    uint64_t checkpoint_id = checkpoint_->GetCheckpointInstanceId() + 1;
+    uint64_t checkpoint_id =
+        config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
 
-    while (min_chosen_id + keep_log_count_ < max_chosen_id &&
-           min_chosen_id + keep_log_count_ < checkpoint_id) {
+    while (min_chosen_id + keep < max_chosen_id &&
+           min_chosen_id + keep < checkpoint_id) {
       batch.Delete(min_chosen_id++);
     }
     int res = config_->GetDB()->Write(options, &batch);
@@ -64,8 +62,8 @@ void LogCleaner::GCLoop() {
       manager_->SetMinChosenInstanceId(min_chosen_id);
     }
 
-    int dice_roll =  distribution(generator) + 500;
-    std::this_thread::sleep_for(std::chrono::milliseconds(dice_roll));
+    int dice_roll =  distribution(generator) + 1000;
+    SleepForMicroseconds(dice_roll * 1000);
   }
 }
 

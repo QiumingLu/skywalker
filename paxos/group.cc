@@ -4,7 +4,7 @@
 
 #include "paxos/group.h"
 
-#include <unistd.h>
+#include <utility>
 
 #include "util/mutexlock.h"
 #include "util/timeops.h"
@@ -33,14 +33,10 @@ Group::Group(uint64_t node_id,
                            std::placeholders::_2,
                            std::placeholders::_3);
   instance_.SetProposeCompleteCallback(propose_cb_);
+
   config_.SetMembershipMachine(&membership_machine_);
-  instance_.AddMachine(&membership_machine_);
   if (options.use_master) {
     config_.SetMasterMachine(&master_machine_);
-    instance_.AddMachine(&master_machine_);
-  }
-  for (auto& machine : options.machines) {
-    instance_.AddMachine(machine);
   }
 }
 
@@ -83,7 +79,7 @@ void Group::SyncMembership() {
     } else {
       break;
     }
-    usleep(30*1000);
+    SleepForMicroseconds(30 * 1000);
   }
 }
 
@@ -124,7 +120,7 @@ void Group::TryBeMaster() {
       state = master_machine_.GetMasterState();
       if (state.node_id() == node_id_) {
         if (result_.ok()) {
-          next_time = state.lease_time() - 12* 1000;
+          next_time = state.lease_time() - 30 * 1000;
         } else if (result_.IsConflict()) {
           next_time = state.lease_time();
         }
@@ -324,7 +320,7 @@ void Group::ProposeComplete(MachineContext* context,
   result_ = result;
   propose_end_ = true;
   cond_.Signal();
-  LOG_DEBUG("Group::ProposeComplete - %s", result_.ToString().c_str());
+  LOG_DEBUG("Group %u - %s", config_.GetGroupId(), result_.ToString().c_str());
 }
 
 void Group::GetMembership(std::vector<IpPort>* result) const {
@@ -341,7 +337,7 @@ void Group::SetMasterLeaseTime(uint64_t micros) {
       }
     });
   } else {
-    LOG_WARN("Group::SetMasterLeaseTime - You don't use master.");
+    LOG_WARN("Group %u - You don't use master.", config_.GetGroupId());
   }
 }
 
@@ -359,7 +355,7 @@ void Group::RetireMaster() {
       retrie_master_ = true;
     });
   } else {
-    LOG_WARN("Group::RetireMaster - You don't use master.");
+    LOG_WARN("Group %u - You don't use master.", config_.GetGroupId());
   }
 }
 

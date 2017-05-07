@@ -7,8 +7,10 @@
 
 #include <pthread.h>
 #include <stdint.h>
+
 #include <string>
 #include <vector>
+
 #include "skywalker/status.h"
 #include "skywalker/slice.h"
 
@@ -20,7 +22,6 @@ class WritableFile;
 
 class FileManager {
  public:
-
   static FileManager* Instance();
 
   // The returned file will only be accessed by one thread at a time.

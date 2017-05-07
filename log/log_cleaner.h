@@ -6,18 +6,15 @@
 #define SKYWALKER_LOG_LOG_CLEANER_H_
 
 #include "util/thread.h"
-#include "paxos/config.h"
-#include "log/checkpoint_manager.h"
 
 namespace skywalker {
 
+class Config;
 class LogManager;
 
 class LogCleaner {
  public:
-  LogCleaner(Config* config,
-             CheckpointManager* checkpoint,
-             LogManager* manager);
+  LogCleaner(Config* config, LogManager* manager);
   ~LogCleaner();
 
   void Start();
@@ -27,10 +24,7 @@ class LogCleaner {
   void GCLoop();
 
   Config* config_;
-  CheckpointManager* checkpoint_;
   LogManager* manager_;
-
-  int keep_log_count_;
 
   bool exit_;
   Thread thread_;

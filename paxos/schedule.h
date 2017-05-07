@@ -5,8 +5,6 @@
 #ifndef SKYWALKER_PAXOS_SCHEDULE_H_
 #define SKYWALKER_PAXOS_SCHEDULE_H_
 
-#include <memory>
-
 #include "util/runloop.h"
 #include "util/runloop_thread.h"
 
@@ -14,7 +12,7 @@ namespace skywalker {
 
 class Schedule {
  public:
-  Schedule(bool use_master = true);
+  explicit Schedule(bool use_master = true);
 
   void Start();
 
