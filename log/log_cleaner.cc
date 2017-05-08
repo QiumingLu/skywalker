@@ -62,8 +62,7 @@ void LogCleaner::GCLoop() {
       manager_->SetMinChosenInstanceId(min_chosen_id);
     }
 
-    int dice_roll =  distribution(generator) + 1000;
-    SleepForMicroseconds(dice_roll * 1000);
+    SleepForMicroseconds((1200 + distribution(generator)) * 1000);
   }
 }
 

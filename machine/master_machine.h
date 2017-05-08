@@ -9,7 +9,6 @@
 #include "skywalker/state_machine.h"
 #include "skywalker/options.h"
 #include "proto/paxos.pb.h"
-#include "storage/db.h"
 #include "util/mutex.h"
 
 namespace skywalker {
@@ -37,7 +36,6 @@ class MasterMachine : public StateMachine {
 
  private:
   Config* config_;
-  DB* db_;
 
   mutable Mutex mutex_;
   MasterState state_;

@@ -30,8 +30,8 @@ message PaxosMessage {
   uint64 rejected_id = 8;
   uint64 now_instance_id = 9;
   uint64 min_chosen_instance_id = 10;
-  string membership = 11;
-  string master_state = 12;
+  bytes membership = 11;
+  bytes master_state = 12;
   PaxosValue value = 13;
 }
 

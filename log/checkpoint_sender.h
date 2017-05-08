@@ -24,7 +24,7 @@ class CheckpointSender {
   void OnComfirmReceive(const CheckpointMessage& msg);
 
  private:
-  static const int kBufferSize = 256 * 1024;
+  static const int kBufferSize = 65535;
 
   void BeginToSend(uint64_t instance_id);
   bool SendCheckpointFiles(uint64_t instance_id);
@@ -45,7 +45,7 @@ class CheckpointSender {
   Mutex mutex_;
   Condition cond_;
   int ack_sequence_id_;
-  bool error_;
+  bool flag_;
 
   // No copying allowed
   CheckpointSender(const CheckpointSender&);

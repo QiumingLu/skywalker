@@ -33,7 +33,8 @@ int Comparator::Compare(const leveldb::Slice& a,
 }
 
 DB::DB(Config* config)
-    : db_(nullptr) {
+    : config_(config),
+      db_(nullptr) {
 }
 
 DB::~DB() {

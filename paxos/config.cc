@@ -24,8 +24,8 @@ Config::Config(uint64_t node_id,
       machine_manager_(new MachineManager(this)),
       checkpoint_manager_(new CheckpointManager(this)),
       log_manager_(new LogManager(this)),
-      membership_machine_(nullptr),
-      master_machine_(nullptr) {
+      membership_machine_(new MembershipMachine(this)),
+      master_machine_(new MasterMachine(this)) {
   char name[8];
   if (log_storage_path_[log_storage_path_.size() - 1] != '/') {
     snprintf(name, sizeof(name), "/g%u", group_id_);
@@ -47,6 +47,8 @@ Config::Config(uint64_t node_id,
 }
 
 Config::~Config() {
+  delete master_machine_;
+  delete membership_machine_;
   delete log_manager_;
   delete checkpoint_manager_;
   delete machine_manager_;
@@ -63,6 +65,7 @@ bool Config::Init() {
               group_id_, checkpoint_path_.c_str());
     return false;
   }
+
   int res = db_->Open(log_path_);
   if (res != 0) {
     LOG_ERROR("Group %u - db open failed, which path is %s.",
@@ -74,9 +77,12 @@ bool Config::Init() {
     machine_manager_->AddMachine(machine);
   }
   machine_manager_->AddMachine(membership_machine_);
-  if (master_machine_) {
-    machine_manager_->AddMachine(master_machine_);
-  }
+  machine_manager_->AddMachine(master_machine_);
+
+  membership_machine_->Recover();
+  master_machine_->Recover();
+
+  LOG_INFO("Group %u - Config init successful!", group_id_);
 
   return true;
 }

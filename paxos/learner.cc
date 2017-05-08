@@ -21,8 +21,6 @@ Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
       instance_(instance),
       acceptor_(acceptor),
       instance_id_(0),
-      max_instance_id_(0),
-      max_instance_id_from_node_id_(0),
       rand_(static_cast<uint32_t>(NowMicros())),
       is_learning_(false),
       has_learned_(false),
@@ -43,10 +41,9 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
       }
     }
   }
-  SetMaxInstanceId(msg.instance_id(), msg.node_id());
 }
 
-void Learner::AskForLearn() {
+void Learner::AskForLearn(bool add_timer) {
   is_learning_ = false;
   is_receiving_checkponit_ = false;
   PaxosMessage* msg = new PaxosMessage();
@@ -55,12 +52,14 @@ void Learner::AskForLearn() {
   msg->set_instance_id(instance_id_);
   messager_->BroadcastMessage(messager_->PackMessage(msg));
 
-  AddLearnTimer((50 * 1000 + rand_.Uniform(10 * 1000)) * 1000);
+  if (add_timer) {
+    AddLearnTimer((30 * 1000 + rand_.Uniform(10 * 1000)) * 1000);
+  }
 }
 
 void Learner::AddLearnTimer(uint64_t timeout) {
   learn_timer_ = io_loop_->RunAfter(timeout, [this]() {
-    AskForLearn();
+    AskForLearn(true);
   });
 }
 
@@ -82,7 +81,6 @@ void Learner::OnAskForLearn(const PaxosMessage& msg) {
       SendNowInstanceId(msg);
     }
   }
-  SetMaxInstanceId(msg.instance_id(), msg.node_id());
 }
 
 void Learner::SendNowInstanceId(const PaxosMessage& msg) {
@@ -137,7 +135,6 @@ void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
       }
     }
   }
-  SetMaxInstanceId(msg.now_instance_id(), msg.node_id());
 }
 
 void Learner::ComfirmAskForLearn(const PaxosMessage& msg) {
@@ -221,14 +218,6 @@ void Learner::OnSendCheckpoint(const CheckpointMessage& msg) {
   AddLearnTimer(timeout);
 }
 
-void Learner::SetMaxInstanceId(uint64_t instance_id,
-                               uint64_t node_id) {
-  if (instance_id > max_instance_id_) {
-    max_instance_id_ = instance_id;
-    max_instance_id_from_node_id_ = node_id;
-  }
-}
-
 bool Learner::WriteToDB(const PaxosMessage& msg) {
   AcceptorState state;
   state.set_instance_id(msg.instance_id());
@@ -254,8 +243,7 @@ bool Learner::WriteToDB(const PaxosMessage& msg) {
 void Learner::FinishLearnValue(const PaxosValue& value) {
   learned_value_ = value;
   has_learned_ = true;
-  LOG_INFO("Group %u - learn a new value=%s.",
-           config_->GetGroupId(), learned_value_.user_data().c_str());
+  LOG_INFO("Group %u - learn a new value.", config_->GetGroupId());
 }
 
 void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {

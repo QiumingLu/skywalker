@@ -26,7 +26,7 @@ class Learner {
   void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
   void SetLearnLoop(RunLoop* loop) { learn_loop_ = loop; }
 
-  void AskForLearn();
+  void AskForLearn(bool add_timer);
 
   bool IsReceivingCheckpoint() const { return is_receiving_checkponit_; }
 
@@ -59,8 +59,6 @@ class Learner {
   void FinishLearnValue(const PaxosValue& value);
   void BroadcastMessageToFollower(const BallotNumber& ballot);
 
-  void SetMaxInstanceId(uint64_t instance_id, uint64_t node_id);
-
   Config* config_;
   Messager* messager_;
   Instance* instance_;
@@ -70,9 +68,6 @@ class Learner {
   RunLoop* learn_loop_;
 
   uint64_t instance_id_;
-  uint64_t max_instance_id_;
-  uint64_t max_instance_id_from_node_id_;
-
   TimerId learn_timer_;
 
   Random rand_;

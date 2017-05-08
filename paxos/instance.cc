@@ -59,9 +59,9 @@ void Instance::SetLearnLoop(RunLoop* loop) {
   learner_.SetLearnLoop(loop);
 }
 
-void Instance::SyncData() {
-  io_loop_->QueueInLoop([this]() {
-    learner_.AskForLearn();
+void Instance::SyncData(bool add_timer) {
+  io_loop_->QueueInLoop([this, add_timer]() {
+    learner_.AskForLearn(add_timer);
   });
 }
 

@@ -27,7 +27,7 @@ class Instance {
 
   bool Recover();
 
-  void SyncData();
+  void SyncData(bool add_timer);
 
   uint64_t GetInstanceId() const { return instance_id_; }
 

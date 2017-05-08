@@ -6,20 +6,18 @@
 #include "paxos/config.h"
 #include "paxos/node_util.h"
 #include "skywalker/logging.h"
-#include "util/timerlist.h"
 #include "util/timeops.h"
 #include "util/mutexlock.h"
 
 namespace skywalker {
 
 MasterMachine::MasterMachine(Config* config)
-    : config_(config),
-      db_(config->GetDB()) {
+    : config_(config) {
   set_machine_id(1);
 }
 
 void MasterMachine::Recover() {
-  int ret = db_->GetMasterState(&state_);
+  int ret = config_->GetDB()->GetMasterState(&state_);
   if (ret == 0) {
     if (state_.node_id() != config_->GetNodeId()) {
       state_.set_lease_time(NowMicros() + state_.lease_time());
@@ -38,7 +36,7 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
       return true;
     }
     state.set_version(instance_id);
-    int ret = db_->SetMasterState(state);
+    int ret = config_->GetDB()->SetMasterState(state);
     if (ret == 0) {
       if (state.node_id() == config_->GetNodeId()) {
         if (context != nullptr && context->user_data != nullptr) {

@@ -20,8 +20,6 @@ Group::Group(uint64_t node_id,
       instance_(&config_),
       lease_timeout_(10 * 1000 * 1000),
       retrie_master_(false),
-      membership_machine_(&config_),
-      master_machine_(&config_),
       mutex_(),
       cond_(&mutex_),
       propose_end_(false),
@@ -34,41 +32,34 @@ Group::Group(uint64_t node_id,
                            std::placeholders::_3);
   instance_.SetProposeCompleteCallback(propose_cb_);
 
-  config_.SetMembershipMachine(&membership_machine_);
-  if (options.use_master) {
-    config_.SetMasterMachine(&master_machine_);
-  }
+  membership_machine_ =  config_.GetMembershipMachine();
+  master_machine_ = config_.GetMasterMachine();
 }
 
 bool Group::Start() {
-  bool res = config_.Init();
-  if (res) {
-    membership_machine_.Recover();
-    master_machine_.Recover();
-    res = instance_.Recover();
-    if (res) {
-      schedule_->Start();
-      instance_.SetIOLoop(schedule_->IOLoop());
-      instance_.SetLearnLoop(schedule_->LearnLoop());
-      propose_queue_.SetIOLoop(schedule_->IOLoop());
-      propose_queue_.SetCallbackLoop(schedule_->CallbackLoop());
-    }
+  if (config_.Init() && instance_.Recover()) {
+    schedule_->Start();
+    instance_.SetIOLoop(schedule_->IOLoop());
+    instance_.SetLearnLoop(schedule_->LearnLoop());
+    propose_queue_.SetIOLoop(schedule_->IOLoop());
+    propose_queue_.SetCallbackLoop(schedule_->CallbackLoop());
+    return true;
   }
-  return res;
+  return false;
 }
 
 void Group::SyncMembership() {
-  instance_.SyncData();
+  instance_.SyncData(true);
   int i = 0;
   while (true) {
-    if (i++ > 3) {
-      instance_.SyncData();
+    if (++i > 3) {
+      instance_.SyncData(false);
     }
-    if (!membership_machine_.HasSyncMembership()) {
+    if (!membership_machine_->HasSyncMembership()) {
       MachineContext* context(
-          new MachineContext(membership_machine_.machine_id()));
-      ProposeHandler f(std::bind(&Group::SyncMembershipInLoop, this, context));
-      bool res = NewPropose(std::move(f));
+          new MachineContext(membership_machine_->machine_id()));
+      bool res = NewPropose(
+          std::bind(&Group::SyncMembershipInLoop, this, context));
       if (res) {
         if (result_.ok() || result_.IsConflict()) {
           break;
@@ -79,13 +70,13 @@ void Group::SyncMembership() {
     } else {
       break;
     }
-    SleepForMicroseconds(30 * 1000);
+    SleepForMicroseconds(500 * 1000);
   }
 }
 
 void Group::SyncMembershipInLoop(MachineContext* context) {
-  if (!membership_machine_.HasSyncMembership()) {
-    const Membership& m(membership_machine_.GetMembership());
+  if (!membership_machine_->HasSyncMembership()) {
+    const Membership& m(membership_machine_->GetMembership());
     std::string s;
     m.SerializeToString(&s);
     instance_.OnPropose(s, context);
@@ -104,20 +95,20 @@ void Group::SyncMaster() {
 }
 
 void Group::TryBeMaster() {
-  MasterState state(master_machine_.GetMasterState());
+  MasterState state(master_machine_->GetMasterState());
   uint64_t next_time = state.lease_time();
   uint64_t now = NowMicros();
   if (state.lease_time() <= now ||
       (state.node_id() == node_id_ && !retrie_master_)) {
     uint64_t lease_time = now + lease_timeout_;
     MachineContext* context(
-        new MachineContext(master_machine_.machine_id(),
+        new MachineContext(master_machine_->machine_id(),
                            reinterpret_cast<void*>(&lease_time)));
     ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, context));
     bool res = NewPropose(std::move(f));
     next_time = 0;
     if (res) {
-      state = master_machine_.GetMasterState();
+      state = master_machine_->GetMasterState();
       if (state.node_id() == node_id_) {
         if (result_.ok()) {
           next_time = state.lease_time() - 30 * 1000;
@@ -142,7 +133,7 @@ void Group::TryBeMaster() {
 }
 
 void Group::TryBeMasterInLoop(MachineContext* context) {
-  MasterState state(master_machine_.GetMasterState());
+  MasterState state(master_machine_->GetMasterState());
   if (state.lease_time() <= NowMicros() || state.node_id() == node_id_) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
@@ -150,7 +141,8 @@ void Group::TryBeMasterInLoop(MachineContext* context) {
     state.SerializeToString(&s);
     instance_.OnPropose(s, context);
   } else {
-    propose_cb_(context, Status::Conflict(Slice()), instance_.GetInstanceId());
+    propose_cb_(context, Status::Conflict(Slice()),
+                instance_.GetInstanceId());
   }
 }
 
@@ -179,7 +171,7 @@ bool Group::AddMember(const IpPort& ip,
                       const MembershipCompleteCallback& cb) {
   uint64_t node_id(MakeNodeId(ip));
   MachineContext* context(
-      new MachineContext(membership_machine_.machine_id()));
+      new MachineContext(membership_machine_->machine_id()));
   bool res = propose_queue_.Put(
       std::bind(&Group::AddMemberInLoop, this, node_id, context),
       [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
@@ -194,7 +186,7 @@ bool Group::AddMember(const IpPort& ip,
 
 void Group::AddMemberInLoop(uint64_t node_id, MachineContext* context) {
   bool res = false;
-  const Membership& temp(membership_machine_.GetMembership());
+  const Membership& temp(membership_machine_->GetMembership());
   for (int i = 0; i < temp.node_id_size(); ++i) {
     if (node_id == temp.node_id(i)) {
       res = true;
@@ -216,7 +208,7 @@ bool Group::RemoveMember(const IpPort& ip,
                          const MembershipCompleteCallback& cb) {
   uint64_t node_id(MakeNodeId(ip));
   MachineContext* context(
-      new MachineContext(membership_machine_.machine_id()));
+      new MachineContext(membership_machine_->machine_id()));
   bool res = propose_queue_.Put(
       std::bind(&Group::RemoveMemberInLoop, this, node_id, context),
       [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
@@ -231,7 +223,7 @@ bool Group::RemoveMember(const IpPort& ip,
 
 void Group::RemoveMemberInLoop(uint64_t node_id, MachineContext* context) {
   bool res = false;
-  const Membership& temp(membership_machine_.GetMembership());
+  const Membership& temp(membership_machine_->GetMembership());
   Membership m;
   for (int i = 0; i < temp.node_id_size(); ++i) {
     if (node_id == temp.node_id(i)) {
@@ -255,7 +247,7 @@ bool Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i,
   uint64_t i(MakeNodeId(new_i));
   uint64_t j(MakeNodeId(old_i));
   MachineContext* context(
-      new MachineContext(membership_machine_.machine_id()));
+      new MachineContext(membership_machine_->machine_id()));
   bool res = propose_queue_.Put(
       std::bind(&Group::ReplaceMemberInLoop, this, i, j, context),
       [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
@@ -272,7 +264,7 @@ void Group::ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
                                 MachineContext* context) {
   bool new_res = false;
   bool old_res = false;
-  const Membership& temp(membership_machine_.GetMembership());
+  const Membership& temp(membership_machine_->GetMembership());
   Membership m;
   for (int i = 0; i < temp.node_id_size(); ++i) {
     if (temp.node_id(i) == new_node_id) {
@@ -324,7 +316,7 @@ void Group::ProposeComplete(MachineContext* context,
 }
 
 void Group::GetMembership(std::vector<IpPort>* result) const {
-  membership_machine_.GetMembership(result);
+  membership_machine_->GetMembership(result);
 }
 
 void Group::SetMasterLeaseTime(uint64_t micros) {
@@ -342,11 +334,11 @@ void Group::SetMasterLeaseTime(uint64_t micros) {
 }
 
 bool Group::GetMaster(IpPort* i, uint64_t* version) const {
-  return master_machine_.GetMaster(i, version);
+  return master_machine_->GetMaster(i, version);
 }
 
 bool Group::IsMaster() const {
-  return master_machine_.IsMaster();
+  return master_machine_->IsMaster();
 }
 
 void Group::RetireMaster() {

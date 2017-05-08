@@ -52,10 +52,10 @@ void Proposer::Prepare(bool need_new_proposal_id) {
     proposal_id_ += 1;
   }
 
-  LOG_DEBUG("Group %u - start a new prepare, now "
-            "instance_id=%llu, proposal_id=%llu, value=%s.",
-            config_->GetGroupId(), (unsigned long long)instance_id_,
-            (unsigned long long)proposal_id_, value_.user_data().c_str());
+  LOG_DEBUG(
+      "Group %u - start to prepare, now instance_id=%llu, proposal_id=%llu",
+      config_->GetGroupId(),
+      (unsigned long long)instance_id_, (unsigned long long)proposal_id_);
 
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(PREPARE);
@@ -107,10 +107,10 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
 void Proposer::Accept() {
   preparing_ = false;
   accepting_ = true;
-  LOG_DEBUG("Group %u -start to accept, "
-            "now instance_id=%llu, proposal_id=%llu, value=%s.",
-            config_->GetGroupId(), (unsigned long long)instance_id_,
-            (unsigned long long)proposal_id_, value_.user_data().c_str());
+  LOG_DEBUG(
+      "Group %u - start to accept, the instance_id=%llu, proposal_id=%llu.",
+       config_->GetGroupId(),
+       (unsigned long long)instance_id_, (unsigned long long)proposal_id_);
 
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(ACCEPT);

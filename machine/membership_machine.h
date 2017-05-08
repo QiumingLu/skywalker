@@ -8,9 +8,9 @@
 #include <string>
 #include <vector>
 
+#include "proto/paxos.pb.h"
 #include "skywalker/state_machine.h"
 #include "skywalker/options.h"
-#include "storage/db.h"
 #include "util/mutex.h"
 
 namespace skywalker {
@@ -37,7 +37,6 @@ class MembershipMachine : public StateMachine {
 
  private:
   Config* config_;
-  DB* db_;
 
   mutable Mutex mutex_;
   bool has_sync_membership_;

@@ -22,7 +22,7 @@ CheckpointSender::CheckpointSender(Config* config, CheckpointManager* manager)
       mutex_(),
       cond_(&mutex_),
       ack_sequence_id_(0),
-      error_(false) {
+      flag_(true) {
 }
 
 CheckpointSender::~CheckpointSender() {
@@ -32,7 +32,7 @@ bool CheckpointSender::SendCheckpoint(uint64_t node_id) {
   receiver_node_id_ = node_id;
   sequence_id_ = 0;
   ack_sequence_id_ = 0;
-  error_ = false;
+  flag_ = true;
   bool res = config_->GetCheckpoint()->LockCheckpoint(config_->GetGroupId());
   if (res) {
     uint64_t instance_id = manager_->GetCheckpointInstanceId();
@@ -155,7 +155,7 @@ void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
   if (msg.node_id() == receiver_node_id_ &&
       msg.sequence_id() == ack_sequence_id_) {
     ++ack_sequence_id_;
-    error_ = msg.flag();
+    flag_ = msg.flag();
     cond_.Signal();
   } else {
     LOG_WARN("Group %u - receive a confirm message, "
@@ -170,7 +170,7 @@ void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
 bool CheckpointSender::CheckReceive() {
   bool res = true;
   MutexLock lock(&mutex_);
-  while (!error_ && (sequence_id_ > ack_sequence_id_ + 10)) {
+  while (flag_ && (sequence_id_ > ack_sequence_id_ + 10)) {
     res = cond_.Wait(25 * 1000 * 1000);
     if (!res) {
       LOG_ERROR("Group %u - receive comfirm message timeout!",
@@ -178,7 +178,8 @@ bool CheckpointSender::CheckReceive() {
       break;
     }
   }
-  if (error_) {
+  if (!flag_) {
+    LOG_ERROR("Group %u - error happen.", config_->GetGroupId());
     res = false;
   }
   return res;

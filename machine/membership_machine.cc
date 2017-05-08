@@ -13,14 +13,13 @@ namespace skywalker {
 
 MembershipMachine::MembershipMachine(Config* config)
     : config_(config),
-      db_(config->GetDB()),
       has_sync_membership_(false) {
   set_machine_id(0);
 }
 
 void MembershipMachine::Recover() {
   Membership m;
-  int ret = db_->GetMembership(&m);
+  int ret = config_->GetDB()->GetMembership(&m);
   if (ret == 0) {
     has_sync_membership_ = true;
     membership_ = m;
@@ -29,7 +28,6 @@ void MembershipMachine::Recover() {
     membership_ = config_->GetMembership();
   }
 }
-
 
 bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
                                 const std::string& value,
@@ -40,7 +38,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
       return true;
     }
     m.set_version(instance_id);
-    int ret = db_->SetMembership(m);
+    int ret = config_->GetDB()->SetMembership(m);
     if (ret == 0) {
       SetMembership(m);
       return true;

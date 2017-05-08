@@ -56,6 +56,8 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
 }
 
 bool CheckpointReceiver::ReceiveCheckpoint(const CheckpointMessage& msg) {
+  LOG_DEBUG("Group %u - sequence_id(%d==%d)",
+            config_->GetGroupId(), msg.sequence_id(), sequence_id_ + 1);
   bool res = ReceiveFiles(msg);
   return ComfirmReceive(msg, res);
 }

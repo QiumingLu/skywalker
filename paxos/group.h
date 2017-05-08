@@ -70,8 +70,8 @@ class Group {
 
   uint64_t lease_timeout_;
   bool retrie_master_;
-  MembershipMachine membership_machine_;
-  MasterMachine master_machine_;
+  MembershipMachine* membership_machine_;
+  MasterMachine* master_machine_;
   ProposeCompleteCallback propose_cb_;
 
   Mutex mutex_;
