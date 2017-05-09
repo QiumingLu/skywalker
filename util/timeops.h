@@ -9,9 +9,9 @@
 
 namespace skywalker {
 
-extern uint64_t NowMicros();
-
 extern uint64_t NowMillis();
+
+extern uint64_t NowMicros();
 
 extern void SleepForMicroseconds(int micros);
 
