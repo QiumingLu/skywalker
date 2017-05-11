@@ -53,7 +53,7 @@ void LogCleaner::GCLoop() {
         config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
 
     while (min_chosen_id + keep < max_chosen_id &&
-           min_chosen_id + keep < checkpoint_id) {
+           min_chosen_id < checkpoint_id) {
       batch.Delete(min_chosen_id++);
     }
     int res = config_->GetDB()->Write(options, &batch);
