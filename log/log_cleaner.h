@@ -5,6 +5,8 @@
 #ifndef SKYWALKER_LOG_LOG_CLEANER_H_
 #define SKYWALKER_LOG_LOG_CLEANER_H_
 
+#include <atomic>
+
 #include "util/thread.h"
 
 namespace skywalker {
@@ -19,6 +21,9 @@ class LogCleaner {
 
   void Start();
 
+  void StartGC();
+  void StopGC();
+
  private:
   static void* StartGC(void* data);
   void GCLoop();
@@ -27,6 +32,7 @@ class LogCleaner {
   LogManager* manager_;
 
   bool exit_;
+  std::atomic<bool> stop_;
   Thread thread_;
 
   // No copying allowed

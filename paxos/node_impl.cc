@@ -102,7 +102,8 @@ bool NodeImpl::ReplaceMember(uint32_t group_id,
 }
 
 void NodeImpl::GetMembership(uint32_t group_id,
-                             std::vector<Member>* result, uint64_t* version) const {
+                             std::vector<Member>* result,
+                             uint64_t* version) const {
   assert(groups_.find(group_id) != groups_.end());
   groups_.at(group_id)->GetMembership(result, version);
 }
@@ -132,6 +133,16 @@ bool NodeImpl::IsMaster(uint32_t group_id) const {
 void NodeImpl::RetireMaster(uint32_t group_id) {
   assert(groups_.find(group_id) != groups_.end());
   groups_[group_id]->RetireMaster();
+}
+
+void NodeImpl::StartGC(uint32_t group_id) {
+  assert(groups_.find(group_id) != groups_.end());
+  groups_[group_id]->StartGC();
+}
+
+void NodeImpl::StopGC(uint32_t group_id) {
+  assert(groups_.find(group_id) != groups_.end());
+  groups_[group_id]->StopGC();
 }
 
 bool Node::Start(const Options& options, Node** nodeptr) {

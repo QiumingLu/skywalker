@@ -54,6 +54,14 @@ bool LogManager::ReplayLog(uint64_t from, uint64_t to) {
   return true;
 }
 
+void LogManager::StartGC() {
+  cleaner_.StartGC();
+}
+
+void LogManager::StopGC() {
+  cleaner_.StopGC();
+}
+
 uint64_t LogManager::GetMinChosenInstanceId() const {
   return min_chosen_id_;
 }

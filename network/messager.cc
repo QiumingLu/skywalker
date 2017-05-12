@@ -39,7 +39,7 @@ void Messager::SendMessage(uint64_t node_id,
 void Messager::BroadcastMessage(
     const std::shared_ptr<Content>& content_ptr) {
   std::shared_ptr<Membership> temp = config_->GetMembership();
-  if (temp->members().size() > 1) {
+  if (temp->members().size() > 0) {
     network_->SendMessage(temp, content_ptr);
   }
 }
@@ -48,7 +48,7 @@ void Messager::BroadcastMessage(
 void Messager::BroadcastMessageToFollower(
     const std::shared_ptr<Content>& content_ptr) {
   std::shared_ptr<Membership> temp = config_->GetFollowers();
-  if (temp->members().size() > 1) {
+  if (temp->members().size() > 0) {
     network_->SendMessage(temp, content_ptr);
   }
 }

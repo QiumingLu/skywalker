@@ -67,8 +67,12 @@ class Config {
     return master_machine_;
   }
 
-  std::shared_ptr<Membership> GetMembership() const { return membership_machine_->GetMembership(); }
-  std::shared_ptr<Membership> GetFollowers() const { return followers_; }
+  std::shared_ptr<Membership> GetMembership() const {
+    return membership_machine_->GetMembership();
+  }
+  std::shared_ptr<Membership> GetFollowers() const {
+    return followers_;
+  }
 
   bool IsValidNodeId(uint64_t node_id) const;
 

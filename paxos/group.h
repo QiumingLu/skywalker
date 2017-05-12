@@ -52,6 +52,9 @@ class Group {
   bool IsMaster() const;
   void RetireMaster();
 
+  void StartGC();
+  void StopGC();
+
  private:
   void SyncMembershipInLoop(MachineContext* context);
   void TryBeMaster();

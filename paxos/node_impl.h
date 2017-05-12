@@ -45,7 +45,8 @@ class NodeImpl : public Node {
                              const Member& i, const Member& j,
                              const MembershipCompleteCallback& cb);
   virtual void GetMembership(uint32_t group_id,
-                             std::vector<Member>* result, uint64_t* version) const;
+                             std::vector<Member>* result,
+                             uint64_t* version) const;
 
   virtual void SetMasterLeaseTime(uint64_t micros);
   virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros);
@@ -53,6 +54,9 @@ class NodeImpl : public Node {
                          Member* i, uint64_t* version) const;
   virtual bool IsMaster(uint32_t group_id) const;
   virtual void RetireMaster(uint32_t group_id);
+
+  virtual void StartGC(uint32_t group_id);
+  virtual void StopGC(uint32_t group_id);
 
  private:
   void OnReceiveMessage(const Slice& s);

@@ -18,6 +18,9 @@ class LogManager {
 
   bool Recover(uint64_t instance_id);
 
+  void StartGC();
+  void StopGC();
+
   uint64_t GetMinChosenInstanceId() const;
   void SetMinChosenInstanceId(uint64_t id);
 

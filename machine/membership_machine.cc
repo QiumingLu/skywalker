@@ -10,7 +10,8 @@
 
 namespace skywalker {
 
-MembershipMachine::MembershipMachine(Config* config, const GroupOptions& options)
+MembershipMachine::MembershipMachine(Config* config,
+                                     const GroupOptions& options)
     : config_(config),
       has_sync_membership_(false),
       membership_(new Membership()) {

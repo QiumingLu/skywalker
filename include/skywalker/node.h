@@ -80,7 +80,8 @@ class Node {
 
   // Returns the membership.
   virtual void GetMembership(uint32_t group_id,
-                             std::vector<Member>* result, uint64_t* version) const = 0;
+                             std::vector<Member>* result,
+                             uint64_t* version) const = 0;
 
   // Set the master's lease time for all groups.
   // default micros = 10 * 1000 * 1000.
@@ -101,6 +102,12 @@ class Node {
 
   // Retire master.
   virtual void RetireMaster(uint32_t group_id) = 0;
+
+  // Start to clean the log.
+  virtual void StartGC(uint32_t group_id) = 0;
+
+  // Stop to clean the log.
+  virtual void StopGC(uint32_t group_id) = 0;
 
  private:
   // No copying allowed

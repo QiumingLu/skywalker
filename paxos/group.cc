@@ -216,7 +216,7 @@ bool Group::RemoveMember(const Member& i,
     cb(s, instance_id);
     delete c;
   });
-  if (res) {
+  if (!res) {
     delete context;
   }
   return res;
@@ -314,7 +314,9 @@ void Group::ProposeComplete(MachineContext* context,
   LOG_DEBUG("Group %u - %s", config_.GetGroupId(), result_.ToString().c_str());
 }
 
-void Group::GetMembership(std::vector<Member>* result, uint64_t* version) const {
+void Group::GetMembership(std::vector<Member>* result,
+                          uint64_t* version) const {
+  result->clear();
   std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
   *version = temp->version();
   Member m;
@@ -369,6 +371,14 @@ void Group::RetireMaster() {
   } else {
     LOG_WARN("Group %u - You don't use master.", config_.GetGroupId());
   }
+}
+
+void Group::StartGC() {
+  config_.GetLogManager()->StartGC();
+}
+
+void Group::StopGC() {
+  config_.GetLogManager()->StopGC();
 }
 
 }  // namespace skywalker

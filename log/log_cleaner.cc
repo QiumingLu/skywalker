@@ -20,7 +20,8 @@ void* LogCleaner::StartGC(void* data) {
 
 LogCleaner::LogCleaner(Config* config, LogManager* manager)
     : config_(config),
-      manager_(manager) {
+      manager_(manager),
+      stop_(false) {
 }
 
 LogCleaner::~LogCleaner() {
@@ -33,6 +34,14 @@ LogCleaner::~LogCleaner() {
 void LogCleaner::Start() {
   assert(!thread_.Started());
   thread_.Start(&LogCleaner::StartGC, this);
+}
+
+void LogCleaner::StartGC() {
+  stop_ = false;
+}
+
+void LogCleaner::StopGC() {
+  stop_ = true;
 }
 
 void LogCleaner::GCLoop() {
@@ -63,6 +72,9 @@ void LogCleaner::GCLoop() {
     }
 
     SleepForMicroseconds((1200 + distribution(generator)) * 1000);
+    while (stop_) {
+      SleepForMicroseconds(60 * 1000 * 1000);
+    }
   }
 }
 
