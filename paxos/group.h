@@ -41,14 +41,14 @@ class Group {
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
-  bool AddMember(const IpPort& ip, const MembershipCompleteCallback& cb);
-  bool RemoveMember(const IpPort& ip, const MembershipCompleteCallback& cb);
-  bool ReplaceMember(const IpPort& new_i, const IpPort& old_i,
+  bool AddMember(const Member& i, const MembershipCompleteCallback& cb);
+  bool RemoveMember(const Member& i, const MembershipCompleteCallback& cb);
+  bool ReplaceMember(const Member& i, const Member& j,
                      const MembershipCompleteCallback& cb);
-  void GetMembership(std::vector<IpPort>* result) const;
+  void GetMembership(std::vector<Member>* result, uint64_t* version) const;
 
   void SetMasterLeaseTime(uint64_t micros);
-  bool GetMaster(IpPort* i, uint64_t* version) const;
+  bool GetMaster(Member* i, uint64_t* version) const;
   bool IsMaster() const;
   void RetireMaster();
 
@@ -56,9 +56,9 @@ class Group {
   void SyncMembershipInLoop(MachineContext* context);
   void TryBeMaster();
   void TryBeMasterInLoop(MachineContext* context);
-  void AddMemberInLoop(uint64_t node_id, MachineContext* context);
-  void RemoveMemberInLoop(uint64_t node_id, MachineContext* context);
-  void ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
+  void AddMemberInLoop(const Member& i, MachineContext* context);
+  void RemoveMemberInLoop(const Member& i, MachineContext* context);
+  void ReplaceMemberInLoop(const Member& i, const Member& j,
                            MachineContext* context);
   bool NewPropose(ProposeHandler&& f);
   void ProposeComplete(MachineContext* context,

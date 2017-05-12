@@ -17,17 +17,11 @@
 
 namespace skywalker {
 
-struct IpPort {
+struct Member {
+  uint64_t id;
   std::string ip;
   uint16_t port;
-
-  IpPort()
-      : ip(), port(0) {
-  }
-
-  IpPort(const std::string& s, uint16_t n)
-      : ip(s), port(n) {
-  }
+  std::string context;
 };
 
 struct GroupOptions {
@@ -41,14 +35,14 @@ struct GroupOptions {
   Checkpoint* checkpoint;
 
   std::vector<StateMachine*> machines;
-  std::vector<IpPort> membership;
-  std::vector<IpPort> followers;
+  std::vector<Member> membership;
+  std::vector<Member> followers;
 
   GroupOptions();
 };
 
 struct Options {
-  IpPort ipport;
+  Member my;
   std::vector<GroupOptions> groups;
 
   Options();

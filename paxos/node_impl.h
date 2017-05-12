@@ -37,20 +37,20 @@ class NodeImpl : public Node {
                        MachineContext* context,
                        ProposeCompleteCallback&& cb);
 
-  virtual bool AddMember(uint32_t group_id, const IpPort& i,
+  virtual bool AddMember(uint32_t group_id, const Member& i,
                          const MembershipCompleteCallback& cb);
-  virtual bool RemoveMember(uint32_t group_id, const IpPort& i,
+  virtual bool RemoveMember(uint32_t group_id, const Member& i,
                             const MembershipCompleteCallback& cb);
   virtual bool ReplaceMember(uint32_t group_id,
-                             const IpPort& new_i, const IpPort& old_i,
+                             const Member& i, const Member& j,
                              const MembershipCompleteCallback& cb);
   virtual void GetMembership(uint32_t group_id,
-                             std::vector<IpPort>* result) const;
+                             std::vector<Member>* result, uint64_t* version) const;
 
   virtual void SetMasterLeaseTime(uint64_t micros);
   virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros);
   virtual bool GetMaster(uint32_t group_id,
-                         IpPort* i, uint64_t* version) const;
+                         Member* i, uint64_t* version) const;
   virtual bool IsMaster(uint32_t group_id) const;
   virtual void RetireMaster(uint32_t group_id);
 
@@ -59,7 +59,6 @@ class NodeImpl : public Node {
 
   bool stop_;
   Options options_;
-  uint64_t node_id_;
   Network network_;
   std::map<uint32_t, std::unique_ptr<Group> > groups_;
 

@@ -84,7 +84,7 @@ void DefaultLogHandler(LogLevel level, const char* filename, int line,
 }
 
 static LogHandler* log_handler_ = &DefaultLogHandler;
-static LogLevel log_level_ = LOGLEVEL_WARN;
+static LogLevel log_level_ = LOGLEVEL_DEBUG;
 
 void Log(LogLevel level, const char* filename, int line,
          const char* format, ...) {

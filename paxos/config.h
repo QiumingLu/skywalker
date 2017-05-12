@@ -54,30 +54,21 @@ class Config {
   uint64_t GetNodeId() const { return node_id_; }
 
   size_t GetNodeSize() const {
-    return membership_.node_id_size();
+    return membership_machine_->GetMembership()->members().size();
   }
-
   size_t GetMajoritySize() const {
-    return (membership_.node_id_size() / 2 + 1);
+    return (membership_machine_->GetMembership()->members().size() / 2 + 1);
   }
 
-  void SetMembershipMachine(MembershipMachine* m) {
-    membership_machine_ = m;
-  }
   MembershipMachine* GetMembershipMachine() const {
     return membership_machine_;
-  }
-
-  void SetMasterMachine(MasterMachine* m) {
-    master_machine_ = m;
   }
   MasterMachine* GetMasterMachine() const {
     return master_machine_;
   }
 
-  void SetMembership(const Membership& m) { membership_ = m; }
-  const Membership& GetMembership() const { return membership_; }
-  const Membership& GetFollowers() const { return followers_; }
+  std::shared_ptr<Membership> GetMembership() const { return membership_machine_->GetMembership(); }
+  std::shared_ptr<Membership> GetFollowers() const { return followers_; }
 
   bool IsValidNodeId(uint64_t node_id) const;
 
@@ -94,8 +85,7 @@ class Config {
 
   std::vector<StateMachine*> machines_;
 
-  Membership membership_;
-  Membership followers_;
+  std::shared_ptr<Membership> followers_;
 
   Checkpoint* checkpoint_;
   DB* db_;

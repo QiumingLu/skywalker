@@ -79,7 +79,7 @@ void JourneyServiceImpl::Propose(
       }
     }
   } else {
-    skywalker::IpPort master;
+    skywalker::Member master;
     uint64_t version;
     bool has_master = node_->GetMaster(group_id, &master, &version);
     response->set_result(PROPOSE_RESULT_NOT_MASTER);

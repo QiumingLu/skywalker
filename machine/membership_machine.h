@@ -19,13 +19,11 @@ class Config;
 
 class MembershipMachine : public StateMachine {
  public:
-  explicit MembershipMachine(Config* config);
+  MembershipMachine(Config* config, const GroupOptions& options);
 
   void Recover();
 
-  void SetMembership(const Membership& m);
-  const Membership& GetMembership() const;
-  void GetMembership(std::vector<IpPort>* result) const;
+  std::shared_ptr<Membership> GetMembership() const;
   bool HasSyncMembership() const;
 
   std::string GetString() const;
@@ -37,10 +35,10 @@ class MembershipMachine : public StateMachine {
 
  private:
   Config* config_;
+  bool has_sync_membership_;
 
   mutable Mutex mutex_;
-  bool has_sync_membership_;
-  Membership membership_;
+  std::shared_ptr<Membership> membership_;
 
   // No copying allowed
   MembershipMachine(const MembershipMachine&);

@@ -4,7 +4,6 @@
 
 #include "machine/master_machine.h"
 #include "paxos/config.h"
-#include "paxos/node_util.h"
 #include "skywalker/logging.h"
 #include "util/timeops.h"
 #include "util/mutexlock.h"
@@ -92,11 +91,11 @@ MasterState MasterMachine::GetMasterState() const {
   return state_;
 }
 
-bool MasterMachine::GetMaster(IpPort* i, uint64_t* version) const {
+bool MasterMachine::GetMaster(uint64_t* node_id, uint64_t* version) const {
   MutexLock lock(&mutex_);
   if (state_.lease_time() > NowMicros()) {
     *version = state_.version();
-    ParseNodeId(state_.node_id(), i);
+    *node_id = state_.node_id();
     return true;
   }
   return false;

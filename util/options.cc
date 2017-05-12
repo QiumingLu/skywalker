@@ -19,8 +19,7 @@ GroupOptions::GroupOptions()
       followers() {
 }
 
-Options::Options()
-    : ipport() {
+Options::Options() {
 }
 
 }  // namespace skywalker

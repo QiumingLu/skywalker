@@ -8,7 +8,6 @@
 
 #include "util/mutexlock.h"
 #include "util/timeops.h"
-#include "paxos/node_util.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {
@@ -76,9 +75,14 @@ void Group::SyncMembership() {
 
 void Group::SyncMembershipInLoop(MachineContext* context) {
   if (!membership_machine_->HasSyncMembership()) {
-    const Membership& m(membership_machine_->GetMembership());
     std::string s;
-    m.SerializeToString(&s);
+    std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
+    MemberChangeMessage message;
+    for (auto& i : temp->members()) {
+      *(message.add_member()) = i.second;
+      message.add_type(MEMBER_ADD);
+    }
+    message.SerializeToString(&s);
     instance_.OnPropose(s, context);
   } else {
     propose_cb_(context, Status::OK(), instance_.GetInstanceId());
@@ -167,13 +171,12 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
   });
 }
 
-bool Group::AddMember(const IpPort& ip,
+bool Group::AddMember(const Member& i,
                       const MembershipCompleteCallback& cb) {
-  uint64_t node_id(MakeNodeId(ip));
   MachineContext* context(
       new MachineContext(membership_machine_->machine_id()));
   bool res = propose_queue_.Put(
-      std::bind(&Group::AddMemberInLoop, this, node_id, context),
+      std::bind(&Group::AddMemberInLoop, this, i, context),
       [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
     cb(s, instance_id);
     delete c;
@@ -184,33 +187,31 @@ bool Group::AddMember(const IpPort& ip,
   return res;
 }
 
-void Group::AddMemberInLoop(uint64_t node_id, MachineContext* context) {
-  bool res = false;
-  const Membership& temp(membership_machine_->GetMembership());
-  for (int i = 0; i < temp.node_id_size(); ++i) {
-    if (node_id == temp.node_id(i)) {
-      res = true;
-      break;
-    }
-  }
-  if (res) {
-    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
-  } else {
-    Membership m(temp);
-    m.add_node_id(node_id);
+void Group::AddMemberInLoop(const Member& i, MachineContext* context) {
+  std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
+  if (temp->members().find(i.id) == temp->members().end()) {
+    MemberMessage msg;
+    msg.set_id(i.id);
+    msg.set_ip(i.ip);
+    msg.set_port(i.port);
+    msg.set_context(i.context);
+    MemberChangeMessage change;
+    *(change.add_member()) = msg;
+    change.add_type(MEMBER_ADD);
     std::string s;
-    m.SerializeToString(&s);
+    change.SerializeToString(&s);
     instance_.OnPropose(s, context);
+  } else {
+    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
   }
 }
 
-bool Group::RemoveMember(const IpPort& ip,
+bool Group::RemoveMember(const Member& i,
                          const MembershipCompleteCallback& cb) {
-  uint64_t node_id(MakeNodeId(ip));
   MachineContext* context(
       new MachineContext(membership_machine_->machine_id()));
   bool res = propose_queue_.Put(
-      std::bind(&Group::RemoveMemberInLoop, this, node_id, context),
+      std::bind(&Group::RemoveMemberInLoop, this, i, context),
       [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
     cb(s, instance_id);
     delete c;
@@ -221,31 +222,27 @@ bool Group::RemoveMember(const IpPort& ip,
   return res;
 }
 
-void Group::RemoveMemberInLoop(uint64_t node_id, MachineContext* context) {
-  bool res = false;
-  const Membership& temp(membership_machine_->GetMembership());
-  Membership m;
-  for (int i = 0; i < temp.node_id_size(); ++i) {
-    if (node_id == temp.node_id(i)) {
-     res = true;
-    } else {
-      m.add_node_id(temp.node_id(i));
-    }
-  }
-
-  if (!res) {
-    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
-  } else {
+void Group::RemoveMemberInLoop(const Member& i, MachineContext* context) {
+  std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
+  if (temp->members().find(i.id) != temp->members().end()) {
+    MemberMessage msg;
+    msg.set_id(i.id);
+    msg.set_ip(i.ip);
+    msg.set_port(i.port);
+    msg.set_context(i.context);
+    MemberChangeMessage change;
+    *(change.add_member()) = msg;
+    change.add_type(MEMBER_REMOVE);
     std::string s;
-    m.SerializeToString(&s);
+    change.SerializeToString(&s);
     instance_.OnPropose(s, context);
+  } else {
+    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
   }
 }
 
-bool Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i,
+bool Group::ReplaceMember(const Member& i, const Member& j,
                           const MembershipCompleteCallback& cb) {
-  uint64_t i(MakeNodeId(new_i));
-  uint64_t j(MakeNodeId(old_i));
   MachineContext* context(
       new MachineContext(membership_machine_->machine_id()));
   bool res = propose_queue_.Put(
@@ -260,32 +257,34 @@ bool Group::ReplaceMember(const IpPort& new_i, const IpPort& old_i,
   return res;
 }
 
-void Group::ReplaceMemberInLoop(uint64_t new_node_id, uint64_t old_node_id,
+void Group::ReplaceMemberInLoop(const Member& i, const Member& j,
                                 MachineContext* context) {
-  bool new_res = false;
-  bool old_res = false;
-  const Membership& temp(membership_machine_->GetMembership());
-  Membership m;
-  for (int i = 0; i < temp.node_id_size(); ++i) {
-    if (temp.node_id(i) == new_node_id) {
-      new_res = true;
-    }
-    if (temp.node_id(i) == old_node_id) {
-      old_res = true;
-    } else {
-      m.add_node_id(temp.node_id(i));
-    }
+  std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
+  MemberChangeMessage change;
+  if (temp->members().find(i.id) == temp->members().end()) {
+    MemberMessage msg;
+    msg.set_id(i.id);
+    msg.set_ip(i.ip);
+    msg.set_port(i.port);
+    msg.set_context(i.context);
+    *(change.add_member()) = msg;
+    change.add_type(MEMBER_ADD);
   }
-
-  if (new_res &&  (!old_res)) {
-    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
-  } else {
-    if (!new_res) {
-      m.add_node_id(new_node_id);
-    }
+  if (temp->members().find(j.id) != temp->members().end()) {
+    MemberMessage msg;
+    msg.set_id(j.id);
+    msg.set_ip(j.ip);
+    msg.set_port(j.port);
+    msg.set_context(j.context);
+    *(change.add_member()) = msg;
+    change.add_type(MEMBER_REMOVE);
+  }
+  if (change.member_size() > 0) {
     std::string s;
-    m.SerializeToString(&s);
+    change.SerializeToString(&s);
     instance_.OnPropose(s, context);
+  } else {
+    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
   }
 }
 
@@ -315,8 +314,17 @@ void Group::ProposeComplete(MachineContext* context,
   LOG_DEBUG("Group %u - %s", config_.GetGroupId(), result_.ToString().c_str());
 }
 
-void Group::GetMembership(std::vector<IpPort>* result) const {
-  membership_machine_->GetMembership(result);
+void Group::GetMembership(std::vector<Member>* result, uint64_t* version) const {
+  std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
+  *version = temp->version();
+  Member m;
+  for (auto& i : temp->members()) {
+    m.id = i.second.id();
+    m.ip = i.second.ip();
+    m.port = static_cast<uint16_t>(i.second.port());
+    m.context = i.second.context();
+    result->push_back(m);
+  }
 }
 
 void Group::SetMasterLeaseTime(uint64_t micros) {
@@ -333,8 +341,20 @@ void Group::SetMasterLeaseTime(uint64_t micros) {
   }
 }
 
-bool Group::GetMaster(IpPort* i, uint64_t* version) const {
-  return master_machine_->GetMaster(i, version);
+bool Group::GetMaster(Member* i, uint64_t* version) const {
+  uint64_t node_id;
+  if (master_machine_->GetMaster(&node_id, version)) {
+    std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
+    auto it = temp->members().find(node_id);
+    if (it != temp->members().end()) {
+      i->id = it->second.id();
+      i->ip = it->second.ip();
+      i->port = static_cast<uint16_t>(it->second.port());
+      i->context = it->second.context();
+      return true;
+    }
+  }
+  return false;
 }
 
 bool Group::IsMaster() const {

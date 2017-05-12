@@ -23,17 +23,19 @@
 
 namespace skywalker {
 
+class Config;
+
 class Network {
  public:
-  explicit Network(uint64_t node_id);
+  explicit Network(const Member& my);
   ~Network();
 
   void StartServer(const std::function<void (const Slice& s)>& cb);
 
-  void SendMessage(uint64_t node_id,
+  void SendMessage(uint64_t node_id, Config* config,
                    const std::shared_ptr<Content>& content_ptr);
 
-  void SendMessage(const Membership& m,
+  void SendMessage(const std::shared_ptr<Membership>& m,
                    const std::shared_ptr<Content>& content_ptr);
 
  private:
@@ -41,9 +43,9 @@ class Network {
 
   bool SerializeToString(const std::shared_ptr<Content>& content_ptr,
                          std::string* s);
-  void SendMessageInLoop(uint64_t node_id, const std::string& s);
+  void SendMessageInLoop(const MemberMessage& member, const std::string& s);
 
-  uint64_t my_node_id_;
+  Member my_;
   std::unique_ptr<voyager::TcpServer> server_;
   std::map<uint64_t, voyager::TcpConnectionPtr> connection_map_;
 

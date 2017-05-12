@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 
 #include "paxos/config.h"
-#include "paxos/node_util.h"
 #include "skywalker/logging.h"
 #include "skywalker/file.h"
 
@@ -18,13 +17,14 @@ Config::Config(uint64_t node_id,
       keep_log_count_(options.keep_log_count),
       log_storage_path_(options.log_storage_path),
       machines_(options.machines),
+      followers_(new Membership()),
       checkpoint_(options.checkpoint),
       db_(new DB(this)),
       messager_(new Messager(this, network)),
       machine_manager_(new MachineManager(this)),
       checkpoint_manager_(new CheckpointManager(this)),
       log_manager_(new LogManager(this)),
-      membership_machine_(new MembershipMachine(this)),
+      membership_machine_(new MembershipMachine(this, options)),
       master_machine_(new MasterMachine(this)) {
   char name[8];
   if (log_storage_path_[log_storage_path_.size() - 1] != '/') {
@@ -37,12 +37,13 @@ Config::Config(uint64_t node_id,
   checkpoint_path_ = log_storage_path_ + "/checkpoint";
   log_path_ = log_storage_path_ + "/log";
 
-  membership_.set_version(0);
-  for (auto& i : options.membership) {
-    membership_.add_node_id(MakeNodeId(i));
-  }
+  MemberMessage member;
   for (auto& i : options.followers) {
-    followers_.add_node_id(MakeNodeId(i));
+    member.set_id(i.id);
+    member.set_ip(i.ip);
+    member.set_port(i.port);
+    member.set_context(i.context);
+    (*(followers_->mutable_members()))[member.id()] = member;
   }
 }
 
@@ -88,10 +89,9 @@ bool Config::Init() {
 }
 
 bool Config::IsValidNodeId(uint64_t node_id) const {
-  for (int i = 0; i < membership_.node_id_size(); ++i) {
-    if (node_id == membership_.node_id(i)) {
-      return true;
-    }
+  std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
+  if (temp->members().find(node_id) != temp->members().end()) {
+    return true;
   }
   return false;
 }

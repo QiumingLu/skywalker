@@ -7,14 +7,13 @@
 #include <string.h>
 #include <utility>
 
+#include "paxos/config.h"
 #include "skywalker/logging.h"
-#include "paxos/node_util.h"
 
 namespace skywalker {
 
-Network::Network(uint64_t node_id)
-    : my_node_id_(node_id),
-      net_loop_() {
+Network::Network(const Member& my)
+    : my_(my) {
   loop_ = net_loop_.Loop();
 }
 
@@ -22,9 +21,7 @@ Network::~Network() {
 }
 
 void Network::StartServer(const std::function<void (const Slice&)>& cb) {
-  IpPort i;
-  ParseNodeId(my_node_id_, &i);
-  voyager::SockAddr addr(i.ip, i.port);
+  voyager::SockAddr addr(my_.ip, my_.port);
   server_.reset(new voyager::TcpServer(loop_, addr));
 
   server_->SetMessageCallback(
@@ -48,65 +45,73 @@ void Network::StartServer(const std::function<void (const Slice&)>& cb) {
   server_->Start();
 }
 
-void Network::SendMessage(uint64_t node_id,
+void Network::SendMessage(uint64_t node_id, Config* config,
                           const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([node_id, content_ptr, this] () {
+  loop_->QueueInLoop([node_id, config, content_ptr, this] () {
     std::string s;
     if (SerializeToString(content_ptr, &s)) {
-      SendMessageInLoop(node_id, s);
-    }
-  });
-}
-
-void Network::SendMessage(const Membership& m,
-                          const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([this, m, content_ptr] () {
-    std::string s;
-    if (SerializeToString(content_ptr, &s)) {
-      for (int i = 0; i < m.node_id_size(); ++i) {
-        if (m.node_id(i) != my_node_id_) {
-          SendMessageInLoop(m.node_id(i), s);
+      auto it = connection_map_.find(node_id);
+      if (it != connection_map_.end()) {
+        it->second->SendMessage(s);
+      } else {
+        std::shared_ptr<Membership> temp = config->GetMembership();
+        auto iter = temp->members().find(node_id);
+        if (iter != temp->members().end()) {
+          SendMessageInLoop(iter->second, s);
         }
       }
     }
   });
 }
 
-void Network::SendMessageInLoop(uint64_t node_id,
-                                const std::string& s) {
-  auto it = connection_map_.find(node_id);
-  if (it != connection_map_.end()) {
-    it->second->SendMessage(s);
-  } else {
-    IpPort i;
-    ParseNodeId(node_id, &i);
-    voyager::SockAddr addr(i.ip, i.port);
-    voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
-
-    client->SetConnectionCallback(
-        [node_id, s, this](const voyager::TcpConnectionPtr& p) {
-      auto iter = connection_map_.find(node_id);
-      if (iter == connection_map_.end()) {
-        connection_map_.insert(std::make_pair(node_id, p));
-        p->SendMessage(s);
-      } else {
-        p->ShutDown();
-        iter->second->SendMessage(s);
+void Network::SendMessage(const std::shared_ptr<Membership>& m,
+                          const std::shared_ptr<Content>& content_ptr) {
+  loop_->QueueInLoop([this, m, content_ptr] () {
+    std::string s;
+    if (SerializeToString(content_ptr, &s)) {
+      for (auto& i : m->members()) {
+        if (i.first != my_.id) {
+          auto it = connection_map_.find(i.first);
+          if (it != connection_map_.end()) {
+            it->second->SendMessage(s);
+          } else {
+            SendMessageInLoop(i.second, s);
+          }
+        }
       }
-    });
+    }
+  });
+}
 
-    client->SetConnectFailureCallback([client]() {
-      delete client;
-    });
+void Network::SendMessageInLoop(const MemberMessage& member,
+                                const std::string& s) {
+  uint64_t node_id = member.id();
+  voyager::SockAddr addr(member.ip(), static_cast<uint16_t>(member.port()));
+  voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
 
-    client->SetCloseCallback(
-        [node_id, client, this](const voyager::TcpConnectionPtr& p) {
-      connection_map_.erase(node_id);
-      delete client;
-    });
+  client->SetConnectionCallback(
+      [node_id, s, this](const voyager::TcpConnectionPtr& p) {
+    auto it = connection_map_.find(node_id);
+    if (it == connection_map_.end()) {
+      connection_map_.insert(std::make_pair(node_id, p));
+      p->SendMessage(s);
+    } else {
+      p->ShutDown();
+      it->second->SendMessage(s);
+    }
+  });
 
-    client->Connect(false);
-  }
+  client->SetConnectFailureCallback([client]() {
+    delete client;
+  });
+
+  client->SetCloseCallback(
+      [node_id, client, this](const voyager::TcpConnectionPtr& p) {
+    connection_map_.erase(node_id);
+    delete client;
+  });
+
+  client->Connect(false);
 }
 
 bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,

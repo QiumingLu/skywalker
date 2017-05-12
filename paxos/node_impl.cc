@@ -6,7 +6,6 @@
 
 #include <utility>
 
-#include "paxos/node_util.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/logging.h"
 
@@ -15,8 +14,7 @@ namespace skywalker {
 NodeImpl::NodeImpl(const Options& options)
     : stop_(false),
       options_(options),
-      node_id_(MakeNodeId(options.ipport)),
-      network_(node_id_) {
+      network_(options.my) {
 }
 
 NodeImpl::~NodeImpl() {
@@ -26,7 +24,7 @@ NodeImpl::~NodeImpl() {
 bool NodeImpl::StartWorking() {
   bool res = true;
   for (auto& g : options_.groups) {
-    std::unique_ptr<Group> group(new Group(node_id_, g, &network_));
+    std::unique_ptr<Group> group(new Group(options_.my.id, g, &network_));
     res = group->Start();
     if (res) {
       LOG_DEBUG("Group %u start successful!", g.group_id);
@@ -84,29 +82,29 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   }
 }
 
-bool NodeImpl::AddMember(uint32_t group_id, const IpPort& i,
+bool NodeImpl::AddMember(uint32_t group_id, const Member& i,
                          const MembershipCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
   return groups_[group_id]->AddMember(i, cb);
 }
 
-bool NodeImpl::RemoveMember(uint32_t group_id, const IpPort& i,
+bool NodeImpl::RemoveMember(uint32_t group_id, const Member& i,
                             const MembershipCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
   return groups_[group_id]->RemoveMember(i, cb);
 }
 
 bool NodeImpl::ReplaceMember(uint32_t group_id,
-                             const IpPort& new_i, const IpPort& old_i,
+                             const Member& i, const Member& j,
                              const MembershipCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->ReplaceMember(new_i, old_i, cb);
+  return groups_[group_id]->ReplaceMember(i, j, cb);
 }
 
 void NodeImpl::GetMembership(uint32_t group_id,
-                             std::vector<IpPort>* result) const {
+                             std::vector<Member>* result, uint64_t* version) const {
   assert(groups_.find(group_id) != groups_.end());
-  groups_.at(group_id)->GetMembership(result);
+  groups_.at(group_id)->GetMembership(result, version);
 }
 
 void NodeImpl::SetMasterLeaseTime(uint64_t micros) {
@@ -121,7 +119,7 @@ void NodeImpl::SetMasterLeaseTime(uint32_t group_id, uint64_t micros) {
 }
 
 bool NodeImpl::GetMaster(uint32_t group_id,
-                         IpPort* i, uint64_t* version) const {
+                         Member* i, uint64_t* version) const {
   assert(groups_.find(group_id) != groups_.end());
   return groups_.at(group_id)->GetMaster(i, version);
 }

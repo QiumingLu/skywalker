@@ -2,28 +2,26 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include "paxos/node_util.h"
+#include "skywalker/node_util.h"
 
 #include <assert.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <string>
 
 namespace skywalker {
 
-uint64_t MakeNodeId(const IpPort& i) {
-  uint64_t ip = static_cast<uint64_t>(::inet_addr(i.ip.c_str()));
-  assert(ip != (UINTMAX_MAX - 1));
-  uint64_t node_id = (ip << 32) | i.port;
-  return node_id;
+uint64_t MakeId(const std::string& ip, uint16_t port) {
+  uint64_t id = static_cast<uint64_t>(::inet_addr(ip.c_str()));
+  assert(id != (UINTMAX_MAX - 1));
+  return (id << 32) | port;
 }
 
-void ParseNodeId(uint64_t node_id, IpPort* i) {
-  i->port = static_cast<uint16_t>(node_id & (0xffffffff));
+void ParseId(uint64_t id, std::string* ip, uint16_t* port) {
+  *port = static_cast<uint16_t>(id & (0xffffffff));
   in_addr addr;
-  addr.s_addr = static_cast<in_addr_t>(node_id >> 32);
-  i->ip = std::string(inet_ntoa(addr));
+  addr.s_addr = static_cast<in_addr_t>(id >> 32);
+  *ip = std::string(inet_ntoa(addr));
 }
 
 }  // namespace skywalker

@@ -12,6 +12,7 @@
 #include <voyager/util/string_util.h>
 #include <voyager/rpc/rpc_server.h>
 #include <skywalker/node.h>
+#include <skywalker/node_util.h>
 #include "journey_service_impl.h"
 #include "checkpoint_impl.h"
 
@@ -41,18 +42,22 @@ int main(int argc, char** argv) {
 
   std::vector<std::string> my;
   voyager::SplitStringUsing(std::string(argv[1]), ":", &my);
-  options.ipport.ip = my[0];
-  options.ipport.port = atoi(&*(my[1].begin()));
+  options.my.ip = my[0];
+  options.my.port = atoi(&*(my[1].begin()));
+  options.my.id = skywalker::MakeId(options.my.ip, options.my.port);
 
   std::vector<std::string> others;
   voyager::SplitStringUsing(std::string(argv[2]), ",", &others);
+  skywalker::Member member;
   for (std::vector<std::string>::iterator it = others.begin();
        it != others.end(); ++it) {
     size_t found = it->find(":");
     if (found != std::string::npos) {
-      std::string ip = it->substr(0, found);
-      uint16_t port = atoi(it->substr(found + 1).c_str());
-      g_options.membership.push_back(skywalker::IpPort(ip, port));
+      member.ip = it->substr(0, found);
+      member.port = atoi(it->substr(found + 1).c_str());
+      member.id = skywalker::MakeId(member.ip, member.port);
+
+      g_options.membership.push_back(member);
     }
   }
 
@@ -65,11 +70,11 @@ int main(int argc, char** argv) {
   db_path += "/db";
   journey::JourneyServiceImpl service;
   bool res = service.Start(db_path, options);
-  std::cout << "ip:" << options.ipport.ip
-            << " port:" << (options.ipport.port + 1000) << std::endl;
+  std::cout << "ip:" << options.my.ip
+            << " port:" << (options.my.port + 1000) << std::endl;
   if (res) {
     voyager::EventLoop loop;
-    voyager::SockAddr addr(options.ipport.ip, options.ipport.port + 1000);
+    voyager::SockAddr addr(options.my.ip, options.my.port + 1000);
     voyager::RpcServer server(&loop, addr, options.groups.size());
     server.RegisterService(&service);
     server.Start();

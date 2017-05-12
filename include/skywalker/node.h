@@ -57,7 +57,7 @@ class Node {
   // The callback status like calling Node::Propose().
   // It is also callback Status::OK() if the node has already existed
   // in the membership.
-  virtual bool AddMember(uint32_t group_id, const IpPort& i,
+  virtual bool AddMember(uint32_t group_id, const Member& i,
                          const MembershipCompleteCallback& cb) = 0;
 
   // Remove a node from the paxos membership.
@@ -65,7 +65,7 @@ class Node {
   // The Callback status like calling Node::Propose().
   // It is also callback Status::OK() if the node
   // did not exist in the membership.
-  virtual bool RemoveMember(uint32_t group_id, const IpPort& i,
+  virtual bool RemoveMember(uint32_t group_id, const Member& i,
                             const MembershipCompleteCallback& cb) = 0;
 
   // Replace an old_node with new_node for the paxos membership.
@@ -74,13 +74,13 @@ class Node {
   // It is also callback Status::OK() if the new node has already existed
   // in the membership and the old node did not exist in the membership.
   virtual bool ReplaceMember(uint32_t group_id,
-                             const IpPort& new_i,
-                             const IpPort& old_i,
+                             const Member& i,
+                             const Member& j,
                              const MembershipCompleteCallback& cb) = 0;
 
   // Returns the membership.
   virtual void GetMembership(uint32_t group_id,
-                             std::vector<IpPort>* result) const = 0;
+                             std::vector<Member>* result, uint64_t* version) const = 0;
 
   // Set the master's lease time for all groups.
   // default micros = 10 * 1000 * 1000.
@@ -94,7 +94,7 @@ class Node {
   // If have master, store the result in *i and return true
   // else return false.
   virtual bool GetMaster(uint32_t group_id,
-                         IpPort* i, uint64_t* version) const = 0;
+                         Member* i, uint64_t* version) const = 0;
 
   // Check whether I'm master or not.
   virtual bool IsMaster(uint32_t group_id) const = 0;

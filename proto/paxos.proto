@@ -15,7 +15,7 @@ enum PaxosMessageType {
 }
 
 message PaxosValue {
-  int32 machine_id = 1;
+  uint32 machine_id = 1;
   bytes user_data = 2;
 }
 
@@ -46,8 +46,8 @@ message CheckpointMessage {
   CheckpointMessageType type = 1;
   uint64 node_id = 2;
   uint64 instance_id = 3;
-  int32 sequence_id = 4;
-  int32 machine_id = 5;
+  sint32 sequence_id = 4;
+  sint32 machine_id = 5;
   string file = 6;
   uint64 offset =7;
   bytes data = 8;
@@ -75,9 +75,26 @@ message AcceptorState {
   PaxosValue accepted_value = 6;
 }
 
+message MemberMessage {
+  uint64 id = 1;
+  bytes ip = 2;
+  uint32 port = 3;
+  bytes context = 4;
+}
+
+enum MemberChangeType {
+  MEMBER_ADD = 0;
+  MEMBER_REMOVE = 1;
+}
+
+message MemberChangeMessage {
+  repeated MemberMessage member = 2;
+  repeated MemberChangeType type = 3;
+}
+
 message Membership {
   uint64 version = 1;
-  repeated uint64 node_id = 2;
+  map<uint64, MemberMessage> members = 2;
 }
 
 message MasterState {

@@ -11,6 +11,7 @@
 #include <vector>
 #include <voyager/util/string_util.h>
 #include <skywalker/node.h>
+#include <skywalker/node_util.h>
 
 int main(int argc, char** argv) {
   if (argc != 3) {
@@ -37,18 +38,21 @@ int main(int argc, char** argv) {
 
   std::vector<std::string> my;
   voyager::SplitStringUsing(std::string(argv[1]), ":", &my);
-  options.ipport.ip = my[0];
-  options.ipport.port = atoi(&*(my[1].begin()));
+  options.my.ip = my[0];
+  options.my.port = atoi(&*(my[1].begin()));
+  options.my.id = skywalker::MakeId(options.my.ip, options.my.port);
 
   std::vector<std::string> others;
   voyager::SplitStringUsing(std::string(argv[2]), ",", &others);
+  skywalker::Member member;
   for (std::vector<std::string>::iterator it = others.begin();
        it != others.end(); ++it) {
     size_t found = it->find(":");
     if (found != std::string::npos) {
-      std::string ip = it->substr(0, found);
-      uint16_t port = atoi(it->substr(found + 1).c_str());
-      g_options.membership.push_back(skywalker::IpPort(ip, port));
+      member.ip = it->substr(0, found);
+      member.port = atoi(it->substr(found + 1).c_str());
+      member.id = skywalker::MakeId(member.ip, member.port);
+      g_options.membership.push_back(member);
     }
   }
 

@@ -24,7 +24,7 @@ class MasterMachine : public StateMachine {
   void SetMasterState(const MasterState& state);
   MasterState GetMasterState() const;
 
-  bool GetMaster(IpPort* i, uint64_t* version) const;
+  bool GetMaster(uint64_t* node_id, uint64_t* version) const;
   bool IsMaster() const;
 
   std::string GetString() const;
