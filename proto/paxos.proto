@@ -48,7 +48,7 @@ message CheckpointMessage {
   uint64 instance_id = 3;
   sint32 sequence_id = 4;
   sint32 machine_id = 5;
-  string file = 6;
+  bytes file = 6;
   uint64 offset =7;
   bytes data = 8;
   bool flag = 9;
