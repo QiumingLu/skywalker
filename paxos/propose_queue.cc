@@ -93,7 +93,7 @@ bool ProposeQueue::Put(ProposeHandler&& f,
 }
 
 void ProposeQueue::ProposeComplete(
-    MachineContext* context, const Status& s, uint64_t instance_id) {
+    void* context, const Status& s, uint64_t instance_id) {
   MutexLock lock(&mutex_);
   assert(!last_finished_);
   assert(!cb_queue_.empty());

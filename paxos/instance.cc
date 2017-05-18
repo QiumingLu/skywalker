@@ -66,7 +66,7 @@ void Instance::SyncData(bool add_timer) {
 }
 
 void Instance::OnPropose(const std::string& value,
-                         MachineContext* context) {
+                         int machine_id, void* context) {
   if (!config_->IsValidNodeId(config_->GetNodeId())) {
     Slice msg("this node is not in the membership, please add it firstly.");
     propose_cb_(context, Status::InvalidNode(msg), instance_id_);
@@ -78,11 +78,7 @@ void Instance::OnPropose(const std::string& value,
 
   assert(!context_);
   context_ = context;
-  if (context_ != nullptr) {
-    propose_value_.set_machine_id(context_->machine_id);
-  } else {
-    propose_value_.set_machine_id(-1);
-  }
+  propose_value_.set_machine_id(machine_id);
   propose_value_.set_user_data(value.data(), value.size());
 
   propose_timer_ = io_loop_->RunAfter(1000*1000, [this]() {
@@ -198,7 +194,7 @@ void Instance::CheckLearn() {
 }
 
 bool Instance::MachineExecute(const PaxosValue& value, bool my) {
-  MachineContext* context = nullptr;
+  void* context = nullptr;
   if (my) {
     context = context_;
   }

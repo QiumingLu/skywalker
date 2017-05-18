@@ -63,20 +63,13 @@ void JourneyServiceImpl::Propose(
     } else {
       std::string value;
       request->SerializeToString(&value);
-      skywalker::MachineContext* context = new skywalker::MachineContext();
-      context->machine_id = machine_->machine_id();
-      context->user_data = response;
       propose = node_->Propose(
-          group_id, value, context,
-          [done, this](skywalker::MachineContext* ctx, const skywalker::Status&, uint64_t) {
+          group_id, value, machine_->machine_id(), response,
+          [done, this](void* ctx, const skywalker::Status&, uint64_t) {
         if (done) {
           done->Run();
         }
-        delete ctx;
       });
-      if (!propose) {
-        delete context;
-      }
     }
   } else {
     skywalker::Member master;

@@ -22,7 +22,7 @@ class JourneyDBMachine : public skywalker::StateMachine {
   virtual bool Execute(uint32_t groud_id,
                        uint64_t instance_id,
                        const std::string& value,
-                       skywalker::MachineContext* context = nullptr);
+                       void* context = nullptr);
 
  private:
   JourneyDB db_;

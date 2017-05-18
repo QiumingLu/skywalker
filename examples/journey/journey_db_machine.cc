@@ -23,7 +23,7 @@ int JourneyDBMachine::Get(const std::string& key, std::string* value) {
 bool JourneyDBMachine::Execute(uint32_t groud_id,
                                uint64_t instance_id,
                                const std::string& value,
-                               skywalker::MachineContext* context) {
+                               void* context) {
   RequestMessage msg;
   bool res = msg.ParseFromString(value);
   if (res) {
@@ -37,9 +37,9 @@ bool JourneyDBMachine::Execute(uint32_t groud_id,
       return true;
     }
     if (op == 0) {
-      if (context != nullptr && context->user_data != nullptr) {
+      if (context != nullptr) {
         ResponseMessage* response =
-            reinterpret_cast<ResponseMessage*>(context->user_data);
+          reinterpret_cast<ResponseMessage*>(context);
         response->set_result(PROPOSE_RESULT_SUCCESS);
       }
       return true;

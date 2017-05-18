@@ -55,16 +55,11 @@ void Group::SyncMembership() {
       instance_.SyncData(false);
     }
     if (!membership_machine_->HasSyncMembership()) {
-      MachineContext* context(
-          new MachineContext(membership_machine_->machine_id()));
-      bool res = NewPropose(
-          std::bind(&Group::SyncMembershipInLoop, this, context));
+      bool res = NewPropose(std::bind(&Group::SyncMembershipInLoop, this));
       if (res) {
         if (result_.ok() || result_.IsConflict()) {
           break;
         }
-      } else {
-        delete context;
       }
     } else {
       break;
@@ -73,7 +68,7 @@ void Group::SyncMembership() {
   }
 }
 
-void Group::SyncMembershipInLoop(MachineContext* context) {
+void Group::SyncMembershipInLoop() {
   if (!membership_machine_->HasSyncMembership()) {
     std::string s;
     std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
@@ -83,9 +78,9 @@ void Group::SyncMembershipInLoop(MachineContext* context) {
       message.add_type(MEMBER_ADD);
     }
     message.SerializeToString(&s);
-    instance_.OnPropose(s, context);
+    instance_.OnPropose(s, membership_machine_->machine_id());
   } else {
-    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
+    propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
   }
 }
 
@@ -105,10 +100,7 @@ void Group::TryBeMaster() {
   if (state.lease_time() <= now ||
       (state.node_id() == node_id_ && !retrie_master_)) {
     uint64_t lease_time = now + lease_timeout_;
-    MachineContext* context(
-        new MachineContext(master_machine_->machine_id(),
-                           reinterpret_cast<void*>(&lease_time)));
-    ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, context));
+    ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, &lease_time));
     bool res = NewPropose(std::move(f));
     next_time = 0;
     if (res) {
@@ -120,8 +112,6 @@ void Group::TryBeMaster() {
           next_time = state.lease_time();
         }
       }
-    } else {
-      delete context;
     }
     if (next_time == 0) {
       next_time = NowMicros() + lease_timeout_;
@@ -136,14 +126,14 @@ void Group::TryBeMaster() {
   });
 }
 
-void Group::TryBeMasterInLoop(MachineContext* context) {
+void Group::TryBeMasterInLoop(void* context) {
   MasterState state(master_machine_->GetMasterState());
   if (state.lease_time() <= NowMicros() || state.node_id() == node_id_) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
     std::string s;
     state.SerializeToString(&s);
-    instance_.OnPropose(s, context);
+    instance_.OnPropose(s, master_machine_->machine_id(), context);
   } else {
     propose_cb_(context, Status::Conflict(Slice()),
                 instance_.GetInstanceId());
@@ -151,17 +141,18 @@ void Group::TryBeMasterInLoop(MachineContext* context) {
 }
 
 bool Group::OnPropose(const std::string& value,
-                      MachineContext* context,
+                      int machine_id, void* context,
                       const ProposeCompleteCallback& cb) {
   return propose_queue_.Put(
-      std::bind(&Instance::OnPropose, &instance_, value, context), cb);
+      std::bind(&Instance::OnPropose, &instance_, value, machine_id, context),
+      cb);
 }
 
 bool Group::OnPropose(const std::string& value,
-                      MachineContext* context,
+                      int machine_id, void* context,
                       ProposeCompleteCallback&& cb) {
   return propose_queue_.Put(
-      std::bind(&Instance::OnPropose, &instance_, value, context),
+      std::bind(&Instance::OnPropose, &instance_, value, machine_id, context),
       std::move(cb));
 }
 
@@ -173,21 +164,12 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
 
 bool Group::AddMember(const Member& i,
                       const MembershipCompleteCallback& cb) {
-  MachineContext* context(
-      new MachineContext(membership_machine_->machine_id()));
-  bool res = propose_queue_.Put(
-      std::bind(&Group::AddMemberInLoop, this, i, context),
-      [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
-    cb(s, instance_id);
-    delete c;
-  });
-  if (!res) {
-    delete context;
-  }
-  return res;
+  return propose_queue_.Put(
+      std::bind(&Group::AddMemberInLoop, this, i),
+      [cb](void* context, const Status& s, uint64_t id) { cb(s, id); });
 }
 
-void Group::AddMemberInLoop(const Member& i, MachineContext* context) {
+void Group::AddMemberInLoop(const Member& i) {
   std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
   if (temp->members().find(i.id) == temp->members().end()) {
     MemberMessage msg;
@@ -200,29 +182,20 @@ void Group::AddMemberInLoop(const Member& i, MachineContext* context) {
     change.add_type(MEMBER_ADD);
     std::string s;
     change.SerializeToString(&s);
-    instance_.OnPropose(s, context);
+    instance_.OnPropose(s, membership_machine_->machine_id());
   } else {
-    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
+    propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
   }
 }
 
 bool Group::RemoveMember(const Member& i,
                          const MembershipCompleteCallback& cb) {
-  MachineContext* context(
-      new MachineContext(membership_machine_->machine_id()));
-  bool res = propose_queue_.Put(
-      std::bind(&Group::RemoveMemberInLoop, this, i, context),
-      [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
-    cb(s, instance_id);
-    delete c;
-  });
-  if (!res) {
-    delete context;
-  }
-  return res;
+  return propose_queue_.Put(
+      std::bind(&Group::RemoveMemberInLoop, this, i),
+      [cb](void* context, const Status& s, uint64_t id) { cb(s, id); });
 }
 
-void Group::RemoveMemberInLoop(const Member& i, MachineContext* context) {
+void Group::RemoveMemberInLoop(const Member& i) {
   std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
   if (temp->members().find(i.id) != temp->members().end()) {
     MemberMessage msg;
@@ -235,30 +208,20 @@ void Group::RemoveMemberInLoop(const Member& i, MachineContext* context) {
     change.add_type(MEMBER_REMOVE);
     std::string s;
     change.SerializeToString(&s);
-    instance_.OnPropose(s, context);
+    instance_.OnPropose(s, membership_machine_->machine_id());
   } else {
-    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
+    propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
   }
 }
 
 bool Group::ReplaceMember(const Member& i, const Member& j,
                           const MembershipCompleteCallback& cb) {
-  MachineContext* context(
-      new MachineContext(membership_machine_->machine_id()));
-  bool res = propose_queue_.Put(
-      std::bind(&Group::ReplaceMemberInLoop, this, i, j, context),
-      [cb](MachineContext* c, const Status& s, uint64_t instance_id) {
-    cb(s, instance_id);
-    delete c;
-  });
-  if (!res) {
-    delete context;
-  }
-  return res;
+  return propose_queue_.Put(
+      std::bind(&Group::ReplaceMemberInLoop, this, i, j),
+      [cb](void* context, const Status& s, uint64_t id) { cb(s, id); });
 }
 
-void Group::ReplaceMemberInLoop(const Member& i, const Member& j,
-                                MachineContext* context) {
+void Group::ReplaceMemberInLoop(const Member& i, const Member& j) {
   std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
   MemberChangeMessage change;
   if (temp->members().find(i.id) == temp->members().end()) {
@@ -282,9 +245,9 @@ void Group::ReplaceMemberInLoop(const Member& i, const Member& j,
   if (change.member_size() > 0) {
     std::string s;
     change.SerializeToString(&s);
-    instance_.OnPropose(s, context);
+    instance_.OnPropose(s, membership_machine_->machine_id());
   } else {
-    propose_cb_(context, Status::OK(), instance_.GetInstanceId());
+    propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
   }
 }
 
@@ -303,11 +266,10 @@ bool Group::NewPropose(ProposeHandler&& f) {
   return res;
 }
 
-void Group::ProposeComplete(MachineContext* context,
+void Group::ProposeComplete(void* context,
                             const Status& result,
                             uint64_t instance_id) {
   MutexLock lock(&mutex_);
-  delete context;
   result_ = result;
   propose_end_ = true;
   cond_.Signal();

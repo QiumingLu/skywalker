@@ -22,7 +22,7 @@ class MachineManager {
   void RemoveMachine(StateMachine* machine);
 
   bool Execute(uint64_t instance_id,
-               const PaxosValue& value, MachineContext* context);
+               const PaxosValue& value, void* context);
 
  private:
   Config* config_;

@@ -38,7 +38,8 @@ class Instance {
   void SetIOLoop(RunLoop* loop);
   void SetLearnLoop(RunLoop* loop);
 
-  void OnPropose(const std::string& value, MachineContext* context);
+  void OnPropose(const std::string& value,
+                 int machine_id, void* context = nullptr);
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
   void OnPaxosMessage(const PaxosMessage& msg);
@@ -59,7 +60,7 @@ class Instance {
   uint64_t instance_id_;
 
   bool is_proposing_;
-  MachineContext* context_;
+  void* context_;
   PaxosValue propose_value_;
   ProposeCompleteCallback propose_cb_;
   TimerId propose_timer_;

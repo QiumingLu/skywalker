@@ -25,7 +25,7 @@ void MachineManager::RemoveMachine(StateMachine* machine) {
 
 bool MachineManager::Execute(
     uint64_t instance_id,
-    const PaxosValue& value, MachineContext* context) {
+    const PaxosValue& value, void* context) {
   auto it = machines_.find(value.machine_id());
   if (it != machines_.end()) {
     assert(it->second != nullptr);

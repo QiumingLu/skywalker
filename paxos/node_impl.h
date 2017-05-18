@@ -29,12 +29,14 @@ class NodeImpl : public Node {
 
   virtual bool Propose(uint32_t group_id,
                        const std::string& value,
-                       MachineContext* context,
+                       int machine_id,
+                       void* context,
                        const ProposeCompleteCallback& cb);
 
   virtual bool Propose(uint32_t group_id,
                        const std::string& value,
-                       MachineContext* context,
+                       int machine_id,
+                       void* context,
                        ProposeCompleteCallback&& cb);
 
   virtual bool AddMember(uint32_t group_id, const Member& i,

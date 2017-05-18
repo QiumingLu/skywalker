@@ -53,18 +53,21 @@ size_t NodeImpl::group_size() const {
 
 bool NodeImpl::Propose(uint32_t group_id,
                        const std::string& value,
-                       MachineContext* context,
+                       int machine_id,
+                       void* context,
                        const ProposeCompleteCallback& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnPropose(value, context, cb);
+  return groups_[group_id]->OnPropose(value, machine_id, context, cb);
 }
 
 bool NodeImpl::Propose(uint32_t group_id,
                        const std::string& value,
-                       MachineContext* context,
+                       int machine_id,
+                       void* context,
                        ProposeCompleteCallback&& cb) {
   assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnPropose(value, context, std::move(cb));
+  return groups_[group_id]->OnPropose(value, machine_id, context,
+                                      std::move(cb));
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {
@@ -77,7 +80,8 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
     if (it != groups_.end()) {
       it->second->OnReceiveContent(c);
     } else {
-      LOG_ERROR("Receive a message which group_id=%u is wrong!", c->group_id());
+      LOG_ERROR("Receive a message which group_id=%u is wrong!",
+                c->group_id());
     }
   }
 }

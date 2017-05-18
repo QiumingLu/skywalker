@@ -48,11 +48,11 @@ struct Options {
   Options();
 };
 
-typedef std::function<void (MachineContext*,
-                            const Status&,
+typedef std::function<void (void* context,
+                            const Status& s,
                             uint64_t instance_id)> ProposeCompleteCallback;
 
-typedef std::function<void (const Status&,
+typedef std::function<void (const Status& s,
                             uint64_t instance_id)> MembershipCompleteCallback;
 
 }  // namespace skywalker

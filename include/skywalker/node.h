@@ -44,12 +44,14 @@ class Node {
   // Callback Status::Timeout() if the proposal time is more than a second.
   virtual bool Propose(uint32_t group_id,
                        const std::string& value,
-                       MachineContext* context,
+                       int machine_id,
+                       void* context,
                        const ProposeCompleteCallback& cb) = 0;
 
   virtual bool Propose(uint32_t group_id,
                        const std::string& value,
-                       MachineContext* context,
+                       int machine_id,
+                       void* context,
                        ProposeCompleteCallback&& cb) = 0;
 
   // Add a new node to the paxos membership.
