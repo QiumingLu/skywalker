@@ -6,7 +6,7 @@
 #define SKYWALKER_INCLUDE_NODE_H_
 
 #include <stdint.h>
-
+#include <map>
 #include <string>
 #include <vector>
 
@@ -54,31 +54,12 @@ class Node {
                        void* context,
                        ProposeCompleteCallback&& cb) = 0;
 
-  // Add a new node to the paxos membership.
+  // Change the paxos members.
   // If propose success returns true, else returns false.
   // The callback status like calling Node::Propose().
-  // It is also callback Status::OK() if the node has already existed
-  // in the membership.
-  virtual bool AddMember(uint32_t group_id, const Member& i,
-                         const MembershipCompleteCallback& cb) = 0;
-
-  // Remove a node from the paxos membership.
-  // If propose success returns true, else returns false.
-  // The Callback status like calling Node::Propose().
-  // It is also callback Status::OK() if the node
-  // did not exist in the membership.
-  virtual bool RemoveMember(uint32_t group_id, const Member& i,
-                            const MembershipCompleteCallback& cb) = 0;
-
-  // Replace an old_node with new_node for the paxos membership.
-  // If propose success returns true, else returns false.
-  // The Callback status like calling Node::Propose().
-  // It is also callback Status::OK() if the new node has already existed
-  // in the membership and the old node did not exist in the membership.
-  virtual bool ReplaceMember(uint32_t group_id,
-                             const Member& i,
-                             const Member& j,
-                             const MembershipCompleteCallback& cb) = 0;
+  virtual bool ChangeMember(uint32_t group_id,
+                            const std::map<Member, bool>& value,
+                            const ChangeMemberCompleteCallback& cb) = 0;
 
   // Returns the membership.
   virtual void GetMembership(uint32_t group_id,

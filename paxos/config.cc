@@ -40,7 +40,7 @@ Config::Config(uint64_t node_id,
   MemberMessage member;
   for (auto& i : options.followers) {
     member.set_id(i.id);
-    member.set_ip(i.ip);
+    member.set_host(i.host);
     member.set_port(i.port);
     member.set_context(i.context);
     (*(followers_->mutable_members()))[member.id()] = member;

@@ -79,7 +79,7 @@ void Instance::OnPropose(const std::string& value,
   assert(!context_);
   context_ = context;
   propose_value_.set_machine_id(machine_id);
-  propose_value_.set_user_data(value.data(), value.size());
+  propose_value_.set_user_data(value);
 
   propose_timer_ = io_loop_->RunAfter(1000*1000, [this]() {
     proposer_.QuitPropose();
@@ -194,10 +194,7 @@ void Instance::CheckLearn() {
 }
 
 bool Instance::MachineExecute(const PaxosValue& value, bool my) {
-  void* context = nullptr;
-  if (my) {
-    context = context_;
-  }
+  void* context = my ? context_ : nullptr;
   return config_->GetMachineManager()->Execute(instance_id_, value, context);
 }
 

@@ -97,8 +97,7 @@ void ProposeQueue::ProposeComplete(
   MutexLock lock(&mutex_);
   assert(!last_finished_);
   assert(!cb_queue_.empty());
-  ProposeCompleteCallback cb;
-  cb = cb_queue_.front();
+  ProposeCompleteCallback cb = cb_queue_.front();
   cb_queue_.pop();
   callback_loop_->QueueInLoop([cb, context, s, instance_id]() {
     cb(context, s, instance_id);

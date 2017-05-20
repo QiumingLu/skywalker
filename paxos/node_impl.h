@@ -39,13 +39,10 @@ class NodeImpl : public Node {
                        void* context,
                        ProposeCompleteCallback&& cb);
 
-  virtual bool AddMember(uint32_t group_id, const Member& i,
-                         const MembershipCompleteCallback& cb);
-  virtual bool RemoveMember(uint32_t group_id, const Member& i,
-                            const MembershipCompleteCallback& cb);
-  virtual bool ReplaceMember(uint32_t group_id,
-                             const Member& i, const Member& j,
-                             const MembershipCompleteCallback& cb);
+  virtual bool ChangeMember(uint32_t group_id,
+                            const std::map<Member, bool>& value,
+                            const ChangeMemberCompleteCallback& cb);
+
   virtual void GetMembership(uint32_t group_id,
                              std::vector<Member>* result,
                              uint64_t* version) const;
@@ -61,6 +58,7 @@ class NodeImpl : public Node {
   virtual void StopGC(uint32_t group_id);
 
  private:
+  bool Valid(uint32_t group_id) const;
   void OnReceiveMessage(const Slice& s);
 
   bool stop_;

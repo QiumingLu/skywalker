@@ -30,7 +30,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     PaxosMessage* reply_msg = new PaxosMessage();
     reply_msg->set_type(PREPARE_REPLY);
     reply_msg->set_node_id(config_->GetNodeId());
-    reply_msg->set_instance_id(instance_id_);
+    reply_msg->set_instance_id(msg.instance_id());
     reply_msg->set_proposal_id(msg.proposal_id());
 
     BallotNumber b(msg.proposal_id(), msg.node_id());
@@ -64,7 +64,7 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
     PaxosMessage* reply_msg = new PaxosMessage();
     reply_msg->set_type(ACCEPT_REPLY);
     reply_msg->set_node_id(config_->GetNodeId());
-    reply_msg->set_instance_id(instance_id_);
+    reply_msg->set_instance_id(msg.instance_id());
     reply_msg->set_proposal_id(msg.proposal_id());
 
     BallotNumber b(msg.proposal_id(), msg.node_id());
@@ -116,7 +116,7 @@ bool Acceptor::ReadFromDB() {
 
   std::string s;
   res = config_->GetDB()->Get(instance_id_, &s);
-  if (res !=  0) {
+  if (res != 0) {
     return false;
   }
 

@@ -21,7 +21,7 @@ Network::~Network() {
 }
 
 void Network::StartServer(const std::function<void (const Slice&)>& cb) {
-  voyager::SockAddr addr(my_.ip, my_.port);
+  voyager::SockAddr addr(my_.host, my_.port);
   server_.reset(new voyager::TcpServer(loop_, addr));
 
   server_->SetMessageCallback(
@@ -33,12 +33,10 @@ void Network::StartServer(const std::function<void (const Slice&)>& cb) {
         if (buf->ReadableSize() >= static_cast<size_t>(size)) {
           cb(Slice(buf->Peek() + kHeaderSize, size - kHeaderSize));
           buf->Retrieve(size);
-        } else {
-          break;
+          continue;
         }
-      } else {
-        break;
       }
+      break;
     }
   });
 
@@ -86,7 +84,7 @@ void Network::SendMessage(const std::shared_ptr<Membership>& m,
 void Network::SendMessageInLoop(const MemberMessage& member,
                                 const std::string& s) {
   uint64_t node_id = member.id();
-  voyager::SockAddr addr(member.ip(), static_cast<uint16_t>(member.port()));
+  voyager::SockAddr addr(member.host(), static_cast<uint16_t>(member.port()));
   voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
 
   client->SetConnectionCallback(

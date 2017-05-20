@@ -32,6 +32,8 @@ class Counter {
   std::set<uint64_t> received_nodes_;
   std::set<uint64_t> rejectors_;
   std::set<uint64_t> promisors_or_acceptors_;
+
+  // Intentionally copyable
 };
 
 }  // namespace skywalker

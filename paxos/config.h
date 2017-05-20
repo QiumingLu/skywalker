@@ -36,6 +36,12 @@ class Config {
     return checkpoint_manager_;
   }
   LogManager* GetLogManager() const { return log_manager_; }
+  MembershipMachine* GetMembershipMachine() const {
+    return membership_machine_;
+  }
+  MasterMachine* GetMasterMachine() const {
+    return master_machine_;
+  }
 
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
@@ -58,13 +64,6 @@ class Config {
   }
   size_t GetMajoritySize() const {
     return (membership_machine_->GetMembership()->members().size() / 2 + 1);
-  }
-
-  MembershipMachine* GetMembershipMachine() const {
-    return membership_machine_;
-  }
-  MasterMachine* GetMasterMachine() const {
-    return master_machine_;
   }
 
   std::shared_ptr<Membership> GetMembership() const {
@@ -97,7 +96,6 @@ class Config {
   MachineManager* machine_manager_;
   CheckpointManager* checkpoint_manager_;
   LogManager* log_manager_;
-
   MembershipMachine* membership_machine_;
   MasterMachine* master_machine_;
 

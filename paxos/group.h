@@ -6,6 +6,7 @@
 #define SKYWALKER_PAXOS_GROUP_H_
 
 #include <stdint.h>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -41,10 +42,8 @@ class Group {
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
-  bool AddMember(const Member& i, const MembershipCompleteCallback& cb);
-  bool RemoveMember(const Member& i, const MembershipCompleteCallback& cb);
-  bool ReplaceMember(const Member& i, const Member& j,
-                     const MembershipCompleteCallback& cb);
+  bool ChangeMember(const std::map<Member, bool>& value,
+                    const ChangeMemberCompleteCallback& cb);
   void GetMembership(std::vector<Member>* result, uint64_t* version) const;
 
   void SetMasterLeaseTime(uint64_t micros);
@@ -58,10 +57,7 @@ class Group {
  private:
   void SyncMembershipInLoop();
   void TryBeMaster();
-  void TryBeMasterInLoop(void* context);
-  void AddMemberInLoop(const Member& i);
-  void RemoveMemberInLoop(const Member& i);
-  void ReplaceMemberInLoop(const Member& i, const Member& j);
+  void TryBeMasterInLoop();
   bool NewPropose(ProposeHandler&& f);
   void ProposeComplete(void* context,
                        const Status& result, uint64_t instance_id);

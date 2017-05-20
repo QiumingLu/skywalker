@@ -56,8 +56,10 @@ bool NodeImpl::Propose(uint32_t group_id,
                        int machine_id,
                        void* context,
                        const ProposeCompleteCallback& cb) {
-  assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnPropose(value, machine_id, context, cb);
+  if (!Valid(group_id)) {
+    return false;
+  }
+  return groups_.at(group_id)->OnPropose(value, machine_id, context, cb);
 }
 
 bool NodeImpl::Propose(uint32_t group_id,
@@ -65,9 +67,11 @@ bool NodeImpl::Propose(uint32_t group_id,
                        int machine_id,
                        void* context,
                        ProposeCompleteCallback&& cb) {
-  assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->OnPropose(value, machine_id, context,
-                                      std::move(cb));
+  if (!Valid(group_id)) {
+    return false;
+  }
+  return groups_.at(group_id)->OnPropose(value, machine_id, context,
+                                         std::move(cb));
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {
@@ -76,40 +80,27 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   if (!stop_) {
     std::shared_ptr<Content> c(new Content());
     c->ParseFromArray(s.data(), static_cast<int>(s.size()));
-    auto it = groups_.find(c->group_id());
-    if (it != groups_.end()) {
-      it->second->OnReceiveContent(c);
-    } else {
-      LOG_ERROR("Receive a message which group_id=%u is wrong!",
-                c->group_id());
+    if (Valid(c->group_id())) {
+      groups_.at(c->group_id())->OnReceiveContent(c);
     }
   }
 }
 
-bool NodeImpl::AddMember(uint32_t group_id, const Member& i,
-                         const MembershipCompleteCallback& cb) {
-  assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->AddMember(i, cb);
-}
-
-bool NodeImpl::RemoveMember(uint32_t group_id, const Member& i,
-                            const MembershipCompleteCallback& cb) {
-  assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->RemoveMember(i, cb);
-}
-
-bool NodeImpl::ReplaceMember(uint32_t group_id,
-                             const Member& i, const Member& j,
-                             const MembershipCompleteCallback& cb) {
-  assert(groups_.find(group_id) != groups_.end());
-  return groups_[group_id]->ReplaceMember(i, j, cb);
+bool NodeImpl::ChangeMember(uint32_t group_id,
+                            const std::map<Member, bool>& value,
+                            const ChangeMemberCompleteCallback& cb) {
+  if (!Valid(group_id)) {
+    return false;
+  }
+  return groups_.at(group_id)->ChangeMember(value, cb);
 }
 
 void NodeImpl::GetMembership(uint32_t group_id,
                              std::vector<Member>* result,
                              uint64_t* version) const {
-  assert(groups_.find(group_id) != groups_.end());
-  groups_.at(group_id)->GetMembership(result, version);
+  if (Valid(group_id)) {
+    groups_.at(group_id)->GetMembership(result, version);
+  }
 }
 
 void NodeImpl::SetMasterLeaseTime(uint64_t micros) {
@@ -119,34 +110,51 @@ void NodeImpl::SetMasterLeaseTime(uint64_t micros) {
 }
 
 void NodeImpl::SetMasterLeaseTime(uint32_t group_id, uint64_t micros) {
-  assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->SetMasterLeaseTime(micros);
+  if (Valid(group_id)) {
+    groups_.at(group_id)->SetMasterLeaseTime(micros);
+  }
 }
 
 bool NodeImpl::GetMaster(uint32_t group_id,
                          Member* i, uint64_t* version) const {
-  assert(groups_.find(group_id) != groups_.end());
+  if (!Valid(group_id)) {
+    return false;
+  }
   return groups_.at(group_id)->GetMaster(i, version);
 }
 
 bool NodeImpl::IsMaster(uint32_t group_id) const {
-  assert(groups_.find(group_id) != groups_.end());
+  if (!Valid(group_id)) {
+    return false;
+  }
   return groups_.at(group_id)->IsMaster();
 }
 
 void NodeImpl::RetireMaster(uint32_t group_id) {
-  assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->RetireMaster();
+  if (Valid(group_id)) {
+    groups_.at(group_id)->RetireMaster();
+  }
 }
 
 void NodeImpl::StartGC(uint32_t group_id) {
-  assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->StartGC();
+  if (Valid(group_id)) {
+    groups_.at(group_id)->StartGC();
+  }
 }
 
 void NodeImpl::StopGC(uint32_t group_id) {
+  if (Valid(group_id)) {
+    groups_.at(group_id)->StopGC();
+  }
+}
+
+bool NodeImpl::Valid(uint32_t group_id) const {
   assert(groups_.find(group_id) != groups_.end());
-  groups_[group_id]->StopGC();
+  if (groups_.find(group_id) == groups_.end()) {
+    LOG_WARN("Invalid groud id(%u)", group_id);
+    return false;
+  }
+  return true;
 }
 
 bool Node::Start(const Options& options, Node** nodeptr) {

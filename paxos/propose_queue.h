@@ -35,6 +35,7 @@ class ProposeQueue {
   friend class Group;
   bool CheckCapacity() const;
   void ProposeComplete(void* context, const Status& s, uint64_t instance_id);
+
   size_t capacity_;
   RunLoop* io_loop_;
   RunLoop* callback_loop_;

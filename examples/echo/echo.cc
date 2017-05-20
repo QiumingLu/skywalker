@@ -10,11 +10,8 @@
 #include <string>
 #include <vector>
 #include <voyager/util/string_util.h>
-#include <voyager/rpc/rpc_server.h>
 #include <skywalker/node.h>
 #include <skywalker/node_util.h>
-#include "journey_service_impl.h"
-#include "checkpoint_impl.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {
@@ -27,7 +24,6 @@ int main(int argc, char** argv) {
     printf("getcwd error\n");
     return -1;
   }
-  skywalker::Checkpoint* checkpoint = new journey::CheckpointImpl();
 
   skywalker::GroupOptions g_options;
   g_options.group_id = 0;
@@ -36,7 +32,7 @@ int main(int argc, char** argv) {
   g_options.sync_interval = 0;
   g_options.keep_log_count = 1000;
   g_options.log_storage_path = std::string(path);
-  g_options.checkpoint = checkpoint;
+  g_options.checkpoint = new skywalker::Checkpoint();
 
   skywalker::Options options;
 
@@ -56,32 +52,28 @@ int main(int argc, char** argv) {
       member.host = it->substr(0, found);
       member.port = atoi(it->substr(found + 1).c_str());
       member.id = skywalker::MakeId(member.host, member.port);
-
       g_options.membership.push_back(member);
     }
   }
 
-  for (int i = 0; i < 3; ++i) {
-    g_options.group_id = i;
-    options.groups.push_back(g_options);
+  options.groups.push_back(g_options);
+
+  skywalker::Node* node = nullptr;
+  bool res = skywalker::Node::Start(options, &node);
+
+  while (res) {
+    printf("please enter value:\n");
+    std::string value;
+    std::getline(std::cin, value);
+    node->Propose(
+        0, value, -1, nullptr,
+        [](void*, const skywalker::Status& s, uint64_t instance_id) {
+      printf("%s\n", s.ToString().c_str());
+    });
   }
 
-  std::string db_path(path);
-  db_path += "/db";
-  journey::JourneyServiceImpl service;
-  bool res = service.Start(db_path, options);
-  std::cout << "ip:" << options.my.host
-            << " port:" << (options.my.port + 1000) << std::endl;
-  if (res) {
-    voyager::EventLoop loop;
-    voyager::SockAddr addr(options.my.host, options.my.port + 1000);
-    voyager::RpcServer server(&loop, addr, options.groups.size());
-    server.RegisterService(&service);
-    server.Start();
-    loop.Loop();
-  }
-
-  delete checkpoint;
+  delete g_options.checkpoint;
+  delete node;
 
   return 0;
 }

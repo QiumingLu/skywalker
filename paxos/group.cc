@@ -51,18 +51,15 @@ void Group::SyncMembership() {
   instance_.SyncData(true);
   int i = 0;
   while (true) {
+    if (!membership_machine_->HasSyncMembership()) {
+      NewPropose(std::bind(&Group::SyncMembershipInLoop, this));
+    }
+    if (membership_machine_->HasSyncMembership()) {
+      break;
+    }
     if (++i > 3) {
       instance_.SyncData(false);
-    }
-    if (!membership_machine_->HasSyncMembership()) {
-      bool res = NewPropose(std::bind(&Group::SyncMembershipInLoop, this));
-      if (res) {
-        if (result_.ok() || result_.IsConflict()) {
-          break;
-        }
-      }
-    } else {
-      break;
+      i = 0;
     }
     SleepForMicroseconds(500 * 1000);
   }
@@ -70,72 +67,62 @@ void Group::SyncMembership() {
 
 void Group::SyncMembershipInLoop() {
   if (!membership_machine_->HasSyncMembership()) {
-    std::string s;
     std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
     MemberChangeMessage message;
     for (auto& i : temp->members()) {
       *(message.add_member()) = i.second;
       message.add_type(MEMBER_ADD);
     }
-    message.SerializeToString(&s);
-    instance_.OnPropose(s, membership_machine_->machine_id());
+    instance_.OnPropose(message.SerializeAsString(),
+                        membership_machine_->machine_id());
   } else {
     propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
   }
 }
 
 void Group::SyncMaster() {
-  if (schedule_->MasterLoop() == nullptr) {
-    return;
-  }
-  schedule_->MasterLoop()->QueueInLoop([this]() {
+  if (schedule_->MasterLoop() != nullptr) {
     TryBeMaster();
-  });
+  }
 }
 
 void Group::TryBeMaster() {
   MasterState state(master_machine_->GetMasterState());
-  uint64_t next_time = state.lease_time();
-  uint64_t now = NowMicros();
-  if (state.lease_time() <= now ||
+  uint64_t next = state.lease_time();
+  if (state.lease_time() <= NowMicros() ||
       (state.node_id() == node_id_ && !retrie_master_)) {
-    uint64_t lease_time = now + lease_timeout_;
-    ProposeHandler f(std::bind(&Group::TryBeMasterInLoop, this, &lease_time));
-    bool res = NewPropose(std::move(f));
-    next_time = 0;
-    if (res) {
+    bool b = NewPropose(std::bind(&Group::TryBeMasterInLoop, this));
+    next = 0;
+    if (b) {
       state = master_machine_->GetMasterState();
-      if (state.node_id() == node_id_) {
-        if (result_.ok()) {
-          next_time = state.lease_time() - 30 * 1000;
-        } else if (result_.IsConflict()) {
-          next_time = state.lease_time();
-        }
+      if (result_.ok()) {
+        next = state.lease_time() - 100 * 1000;
+      } else if (result_.IsConflict()) {
+        next = state.lease_time();
       }
     }
-    if (next_time == 0) {
-      next_time = NowMicros() + lease_timeout_;
+    if (next == 0) {
+      next = NowMicros() + lease_timeout_;
     }
   }
   if (retrie_master_) {
     retrie_master_ = false;
   }
 
-  schedule_->MasterLoop()->RunAt(next_time, [this]() {
+  schedule_->MasterLoop()->RunAt(next, [this]() {
     TryBeMaster();
   });
 }
 
-void Group::TryBeMasterInLoop(void* context) {
+void Group::TryBeMasterInLoop() {
   MasterState state(master_machine_->GetMasterState());
   if (state.lease_time() <= NowMicros() || state.node_id() == node_id_) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
-    std::string s;
-    state.SerializeToString(&s);
-    instance_.OnPropose(s, master_machine_->machine_id(), context);
+    instance_.OnPropose(state.SerializeAsString(),
+                        master_machine_->machine_id());
   } else {
-    propose_cb_(context, Status::Conflict(Slice()),
+    propose_cb_(nullptr, Status::Conflict("Already has master"),
                 instance_.GetInstanceId());
   }
 }
@@ -162,93 +149,27 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
   });
 }
 
-bool Group::AddMember(const Member& i,
-                      const MembershipCompleteCallback& cb) {
-  return propose_queue_.Put(
-      std::bind(&Group::AddMemberInLoop, this, i),
-      [cb](void* context, const Status& s, uint64_t id) { cb(s, id); });
-}
-
-void Group::AddMemberInLoop(const Member& i) {
-  std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
-  if (temp->members().find(i.id) == temp->members().end()) {
-    MemberMessage msg;
-    msg.set_id(i.id);
-    msg.set_ip(i.ip);
-    msg.set_port(i.port);
-    msg.set_context(i.context);
-    MemberChangeMessage change;
-    *(change.add_member()) = msg;
-    change.add_type(MEMBER_ADD);
-    std::string s;
-    change.SerializeToString(&s);
-    instance_.OnPropose(s, membership_machine_->machine_id());
-  } else {
-    propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
-  }
-}
-
-bool Group::RemoveMember(const Member& i,
-                         const MembershipCompleteCallback& cb) {
-  return propose_queue_.Put(
-      std::bind(&Group::RemoveMemberInLoop, this, i),
-      [cb](void* context, const Status& s, uint64_t id) { cb(s, id); });
-}
-
-void Group::RemoveMemberInLoop(const Member& i) {
-  std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
-  if (temp->members().find(i.id) != temp->members().end()) {
-    MemberMessage msg;
-    msg.set_id(i.id);
-    msg.set_ip(i.ip);
-    msg.set_port(i.port);
-    msg.set_context(i.context);
-    MemberChangeMessage change;
-    *(change.add_member()) = msg;
-    change.add_type(MEMBER_REMOVE);
-    std::string s;
-    change.SerializeToString(&s);
-    instance_.OnPropose(s, membership_machine_->machine_id());
-  } else {
-    propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
-  }
-}
-
-bool Group::ReplaceMember(const Member& i, const Member& j,
-                          const MembershipCompleteCallback& cb) {
-  return propose_queue_.Put(
-      std::bind(&Group::ReplaceMemberInLoop, this, i, j),
-      [cb](void* context, const Status& s, uint64_t id) { cb(s, id); });
-}
-
-void Group::ReplaceMemberInLoop(const Member& i, const Member& j) {
-  std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
+bool Group::ChangeMember(const std::map<Member, bool>& value,
+                         const ChangeMemberCompleteCallback& cb) {
+  MemberMessage member;
   MemberChangeMessage change;
-  if (temp->members().find(i.id) == temp->members().end()) {
-    MemberMessage msg;
-    msg.set_id(i.id);
-    msg.set_ip(i.ip);
-    msg.set_port(i.port);
-    msg.set_context(i.context);
-    *(change.add_member()) = msg;
-    change.add_type(MEMBER_ADD);
+  for (auto i : value) {
+    member.set_id(i.first.id);
+    member.set_host(i.first.host);
+    member.set_port(i.first.port);
+    member.set_context(i.first.context);
+    *(change.add_member()) = member;
+    if (i.second) {
+      change.add_type(MEMBER_ADD);
+    } else {
+      change.add_type(MEMBER_REMOVE);
+    }
   }
-  if (temp->members().find(j.id) != temp->members().end()) {
-    MemberMessage msg;
-    msg.set_id(j.id);
-    msg.set_ip(j.ip);
-    msg.set_port(j.port);
-    msg.set_context(j.context);
-    *(change.add_member()) = msg;
-    change.add_type(MEMBER_REMOVE);
-  }
-  if (change.member_size() > 0) {
-    std::string s;
-    change.SerializeToString(&s);
-    instance_.OnPropose(s, membership_machine_->machine_id());
-  } else {
-    propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
-  }
+  return OnPropose(
+      change.SerializeAsString(),
+      membership_machine_->machine_id(),
+      nullptr,
+      [cb](void*, const Status& s, uint64_t id) { cb(s, id); });
 }
 
 bool Group::NewPropose(ProposeHandler&& f) {
@@ -270,10 +191,10 @@ void Group::ProposeComplete(void* context,
                             const Status& result,
                             uint64_t instance_id) {
   MutexLock lock(&mutex_);
-  result_ = result;
   propose_end_ = true;
+  result_ = result;
   cond_.Signal();
-  LOG_DEBUG("Group %u - %s", config_.GetGroupId(), result_.ToString().c_str());
+  LOG_DEBUG("Group %u - %s", config_.GetGroupId(), result.ToString().c_str());
 }
 
 void Group::GetMembership(std::vector<Member>* result,
@@ -284,7 +205,7 @@ void Group::GetMembership(std::vector<Member>* result,
   Member m;
   for (auto& i : temp->members()) {
     m.id = i.second.id();
-    m.ip = i.second.ip();
+    m.host = i.second.host();
     m.port = static_cast<uint16_t>(i.second.port());
     m.context = i.second.context();
     result->push_back(m);
@@ -312,7 +233,7 @@ bool Group::GetMaster(Member* i, uint64_t* version) const {
     auto it = temp->members().find(node_id);
     if (it != temp->members().end()) {
       i->id = it->second.id();
-      i->ip = it->second.ip();
+      i->host = it->second.host();
       i->port = static_cast<uint16_t>(it->second.port());
       i->context = it->second.context();
       return true;

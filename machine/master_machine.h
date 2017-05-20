@@ -7,7 +7,6 @@
 
 #include <string>
 #include "skywalker/state_machine.h"
-#include "skywalker/options.h"
 #include "proto/paxos.pb.h"
 #include "util/mutex.h"
 
@@ -32,7 +31,7 @@ class MasterMachine : public StateMachine {
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value,
-                       void* context);
+                       void* /* context */);
 
  private:
   Config* config_;

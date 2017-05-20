@@ -38,9 +38,9 @@ int main(int argc, char** argv) {
 
   std::vector<std::string> my;
   voyager::SplitStringUsing(std::string(argv[1]), ":", &my);
-  options.my.ip = my[0];
+  options.my.host = my[0];
   options.my.port = atoi(&*(my[1].begin()));
-  options.my.id = skywalker::MakeId(options.my.ip, options.my.port);
+  options.my.id = skywalker::MakeId(options.my.host, options.my.port);
 
   std::vector<std::string> others;
   voyager::SplitStringUsing(std::string(argv[2]), ",", &others);
@@ -49,9 +49,9 @@ int main(int argc, char** argv) {
        it != others.end(); ++it) {
     size_t found = it->find(":");
     if (found != std::string::npos) {
-      member.ip = it->substr(0, found);
+      member.host = it->substr(0, found);
       member.port = atoi(it->substr(found + 1).c_str());
-      member.id = skywalker::MakeId(member.ip, member.port);
+      member.id = skywalker::MakeId(member.host, member.port);
       g_options.membership.push_back(member);
     }
   }

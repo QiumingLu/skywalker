@@ -77,7 +77,7 @@ void JourneyServiceImpl::Propose(
     bool has_master = node_->GetMaster(group_id, &master, &version);
     response->set_result(PROPOSE_RESULT_NOT_MASTER);
     response->set_has_master(has_master);
-    response->set_master_ip(master.ip);
+    response->set_master_ip(master.host);
     response->set_master_port(master.port);
     response->set_master_version(version);
   }

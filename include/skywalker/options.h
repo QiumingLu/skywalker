@@ -19,7 +19,7 @@ namespace skywalker {
 
 struct Member {
   uint64_t id;
-  std::string ip;
+  std::string host;
   uint16_t port;
   std::string context;
 };
@@ -53,7 +53,7 @@ typedef std::function<void (void* context,
                             uint64_t instance_id)> ProposeCompleteCallback;
 
 typedef std::function<void (const Status& s,
-                            uint64_t instance_id)> MembershipCompleteCallback;
+                            uint64_t instance_id)> ChangeMemberCompleteCallback;
 
 }  // namespace skywalker
 

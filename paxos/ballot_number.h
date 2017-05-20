@@ -31,6 +31,8 @@ class BallotNumber {
  private:
   uint64_t proposal_id_;
   uint64_t node_id_;
+
+  // Intentionally copyable
 };
 
 inline bool operator==(const BallotNumber& x, const BallotNumber& y) {

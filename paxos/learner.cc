@@ -92,9 +92,7 @@ void Learner::SendNowInstanceId(const PaxosMessage& msg) {
   reply_msg->set_min_chosen_instance_id(
       config_->GetLogManager()->GetMinChosenInstanceId());
   if (instance_id_ > msg.instance_id() + 50) {
-    if (config_->GetMasterMachine()) {
-      reply_msg->set_master_state(config_->GetMasterMachine()->GetString());
-    }
+    reply_msg->set_master_state(config_->GetMasterMachine()->GetString());
     reply_msg->set_membership(config_->GetMembershipMachine()->GetString());
   }
 
@@ -117,7 +115,7 @@ void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
     }
   }
 
-  if (!msg.master_state().empty() && config_->GetMasterMachine()) {
+  if (!msg.master_state().empty()) {
     config_->GetMasterMachine()->SetString(msg.master_state());
   }
 

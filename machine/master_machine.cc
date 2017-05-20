@@ -28,7 +28,7 @@ void MasterMachine::Recover() {
 
 bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             const std::string& value,
-                            void* context) {
+                            void* /* context */) {
   MasterState state;
   if (state.ParseFromString(value)) {
     if (instance_id < state_.version()) {
@@ -37,16 +37,7 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
     state.set_version(instance_id);
     int ret = config_->GetDB()->SetMasterState(state);
     if (ret == 0) {
-      if (state.node_id() == config_->GetNodeId()) {
-        if (context != nullptr) {
-          uint64_t* lease_time = reinterpret_cast<uint64_t*>(context);
-          state.set_lease_time(*lease_time);
-        } else {
-          state.set_lease_time(NowMicros() + state_.lease_time());
-        }
-      } else {
-        state.set_lease_time(NowMicros() + state.lease_time());
-      }
+      state.set_lease_time(NowMicros() + state.lease_time());
       SetMasterState(state);
       LOG_INFO("Group %u - now the master's version=%llu, "
                "node_id=%llu, lease_time=%llu.",

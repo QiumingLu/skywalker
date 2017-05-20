@@ -77,7 +77,7 @@ message AcceptorState {
 
 message MemberMessage {
   uint64 id = 1;
-  bytes ip = 2;
+  bytes host = 2;
   uint32 port = 3;
   bytes context = 4;
 }

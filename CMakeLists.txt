@@ -102,6 +102,7 @@ endif()
 install(DIRECTORY ${Skywalker_INCLUDE_DIR}/skywalker DESTINATION include)
 
 if (BUILD_EXAMPLES)
+  add_subdirectory(examples/echo)
   add_subdirectory(examples/journey)
   add_subdirectory(paxos/test)
 endif()
