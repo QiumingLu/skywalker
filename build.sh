@@ -15,5 +15,5 @@ mkdir -p $BUILD_DIR/$BUILD_TYPE \
            -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
            $SOURCE_DIR \
   && make \
-  && sudo make install
+#  && sudo make install
 
