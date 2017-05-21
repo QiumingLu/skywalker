@@ -73,9 +73,9 @@ void Learner::OnAskForLearn(const PaxosMessage& msg) {
       std::string s;
       int res = config_->GetDB()->Get(msg.instance_id(), &s);
       if (res == 0) {
-        AcceptorState state;
-        state.ParseFromString(s);
-        SendLearnedValue(msg.node_id(), state);
+        PaxosInstance temp;
+        temp.ParseFromString(s);
+        SendLearnedValue(msg.node_id(), temp);
       }
     } else {
       SendNowInstanceId(msg);
@@ -157,9 +157,9 @@ void Learner::ASyncSend(uint64_t node_id, uint64_t from, uint64_t to) {
     std::string s;
     int ret = config_->GetDB()->Get(from, &s);
     if (ret == 0) {
-      AcceptorState state;
-      state.ParseFromString(s);
-      SendLearnedValue(node_id, state);
+      PaxosInstance temp;
+      temp.ParseFromString(s);
+      SendLearnedValue(node_id, temp);
       ++from;
     } else {
       LOG_ERROR("Group %u - no found data of instance %llu",
@@ -169,14 +169,14 @@ void Learner::ASyncSend(uint64_t node_id, uint64_t from, uint64_t to) {
   }
 }
 
-void Learner::SendLearnedValue(uint64_t node_id, const AcceptorState& state) {
+void Learner::SendLearnedValue(uint64_t node_id, const PaxosInstance& p) {
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(SEND_LEARNED_VALUE);
   msg->set_node_id(config_->GetNodeId());
-  msg->set_instance_id(state.instance_id());
-  msg->set_proposal_id(state.accepted_id());
-  msg->set_proposal_node_id(state.accepted_node_id());
-  msg->set_allocated_value(new PaxosValue(state.accepted_value()));
+  msg->set_instance_id(p.instance_id());
+  msg->set_proposal_id(p.accepted_id());
+  msg->set_proposal_node_id(p.accepted_node_id());
+  msg->set_allocated_value(new PaxosValue(p.accepted_value()));
   messager_->SendMessage(node_id, messager_->PackMessage(msg));
 }
 
@@ -217,25 +217,20 @@ void Learner::OnSendCheckpoint(const CheckpointMessage& msg) {
 }
 
 bool Learner::WriteToDB(const PaxosMessage& msg) {
-  AcceptorState state;
-  state.set_instance_id(msg.instance_id());
-  state.set_promised_id(msg.proposal_id());
-  state.set_promised_node_id(msg.node_id());
-  state.set_accepted_id(msg.proposal_id());
-  state.set_accepted_node_id(msg.node_id());
-  state.set_allocated_accepted_value(new PaxosValue(msg.value()));
+  PaxosInstance temp;
+  temp.set_instance_id(msg.instance_id());
+  temp.set_promised_id(msg.proposal_id());
+  temp.set_promised_node_id(msg.node_id());
+  temp.set_accepted_id(msg.proposal_id());
+  temp.set_accepted_node_id(msg.node_id());
+  temp.set_allocated_accepted_value(new PaxosValue(msg.value()));
 
   WriteOptions options;
   options.sync = false;
 
-  std::string s;
-  state.SerializeToString(&s);
-  int res = config_->GetDB()->Put(options, msg.instance_id(), s);
-  if (res == 0) {
-    return true;
-  } else {
-    return false;
-  }
+  int res = config_->GetDB()->Put(options, msg.instance_id(),
+                                  temp.SerializeAsString());
+  return res == 0;
 }
 
 void Learner::FinishLearnValue(const PaxosValue& value) {

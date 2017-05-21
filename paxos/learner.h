@@ -50,7 +50,7 @@ class Learner {
   void SendNowInstanceId(const PaxosMessage& msg);
   void ComfirmAskForLearn(const PaxosMessage& msg);
   void ASyncSend(uint64_t node_id, uint64_t from, uint64_t to);
-  void SendLearnedValue(uint64_t node_id, const AcceptorState& state);
+  void SendLearnedValue(uint64_t node_id, const PaxosInstance& p);
 
   void AskForCheckpoint(const PaxosMessage& msg);
   void SendCheckpoint(uint64_t node_id);

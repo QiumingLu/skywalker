@@ -120,24 +120,24 @@ bool Acceptor::ReadFromDB() {
     return false;
   }
 
-  AcceptorState state;
-  state.ParseFromString(s);
-  promised_ballot_.SetProposalId(state.promised_id());
-  promised_ballot_.SetNodeId(state.promised_node_id());
-  accepted_ballot_.SetProposalId(state.accepted_id());
-  accepted_ballot_.SetNodeId(state.accepted_node_id());
-  accepted_value_ = state.accepted_value();
+  PaxosInstance temp;
+  temp.ParseFromString(s);
+  promised_ballot_.SetProposalId(temp.promised_id());
+  promised_ballot_.SetNodeId(temp.promised_node_id());
+  accepted_ballot_.SetProposalId(temp.accepted_id());
+  accepted_ballot_.SetNodeId(temp.accepted_node_id());
+  accepted_value_ = temp.accepted_value();
   return true;
 }
 
 bool Acceptor::WriteToDB() {
-  AcceptorState state;
-  state.set_instance_id(instance_id_);
-  state.set_promised_id(promised_ballot_.GetProposalId());
-  state.set_promised_node_id(promised_ballot_.GetNodeId());
-  state.set_accepted_id(accepted_ballot_.GetProposalId());
-  state.set_accepted_node_id(accepted_ballot_.GetNodeId());
-  state.set_allocated_accepted_value(new PaxosValue(accepted_value_));
+  PaxosInstance temp;
+  temp.set_instance_id(instance_id_);
+  temp.set_promised_id(promised_ballot_.GetProposalId());
+  temp.set_promised_node_id(promised_ballot_.GetNodeId());
+  temp.set_accepted_id(accepted_ballot_.GetProposalId());
+  temp.set_accepted_node_id(accepted_ballot_.GetNodeId());
+  temp.set_allocated_accepted_value(new PaxosValue(accepted_value_));
   WriteOptions options;
   options.sync = config_->LogSync();
   if (options.sync) {
@@ -149,9 +149,8 @@ bool Acceptor::WriteToDB() {
     }
   }
 
-  std::string s;
-  state.SerializeToString(&s);
-  int ret = config_->GetDB()->Put(options, instance_id_, s);
+  int ret = config_->GetDB()->Put(options, instance_id_,
+                                  temp.SerializeAsString());
   if (ret == 0) {
     return true;
   } else {

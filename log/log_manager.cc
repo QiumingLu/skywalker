@@ -46,9 +46,9 @@ bool LogManager::ReplayLog(uint64_t from, uint64_t to) {
                 config_->GetGroupId(), (unsigned long long)instance_id);
       return false;
     }
-    AcceptorState state;
-    state.ParseFromString(s);
-    const PaxosValue& value = state.accepted_value();
+    PaxosInstance temp;
+    temp.ParseFromString(s);
+    const PaxosValue& value = temp.accepted_value();
     config_->GetMachineManager()->Execute(instance_id, value, nullptr);
   }
   return true;
