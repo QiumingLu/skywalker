@@ -25,9 +25,8 @@ LogCleaner::LogCleaner(Config* config, LogManager* manager)
 }
 
 LogCleaner::~LogCleaner() {
-  if (!exit_) {
-    exit_ = true;
-  }
+  exit_ = true;
+  stop_ = false;
   thread_.Join();
 }
 
@@ -73,7 +72,7 @@ void LogCleaner::GCLoop() {
 
     SleepForMicroseconds((1200 + distribution(generator)) * 1000);
     while (stop_) {
-      SleepForMicroseconds(60 * 1000 * 1000);
+      SleepForMicroseconds(5 * 1000 * 1000);
     }
   }
 }
