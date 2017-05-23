@@ -13,7 +13,8 @@
 namespace skywalker {
 
 Network::Network(const Member& my)
-    : my_(my) {
+    : my_(my),
+      net_loop_(voyager::kPoll) {
   loop_ = net_loop_.Loop();
 }
 
