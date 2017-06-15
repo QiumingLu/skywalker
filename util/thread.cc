@@ -5,6 +5,7 @@
 #include "util/thread.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/syscall.h>

@@ -112,7 +112,7 @@ uint64_t TimerList::TimeoutMicros() const {
   if (timers_.empty()) {
     return -1;
   }
-  std::set<TimerId>::iterator it = timers_.begin();
+  std::set<TimerId>::const_iterator it = timers_.begin();
   uint64_t now = NowMicros();
   if (it->first <= now) {
     return 0;
