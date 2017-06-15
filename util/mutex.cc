@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include "util/timeops.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {
@@ -43,20 +44,15 @@ Condition::~Condition() {
 }
 
 void Condition::Wait() {
-  PthreadCall("pthread_cond_wait", pthread_cond_wait(&cond_, &mutex_->mutex_));
+  PthreadCall("pthread_cond_wait",
+              pthread_cond_wait(&cond_, &mutex_->mutex_));
 }
 
-bool Condition::Wait(uint64_t micros_second) {
-  struct timeval now;
+bool Condition::Wait(uint64_t micros) {
+  uint64_t now = (NowMicros() + micros) * 1000;
   struct timespec outtime;
-  gettimeofday(&now, nullptr);
-  outtime.tv_sec =
-    now.tv_sec + static_cast<time_t>(micros_second / (1000 * 1000));
-  outtime.tv_nsec =
-      now.tv_usec * 1000 +
-      static_cast<suseconds_t>((micros_second % (1000 * 1000)) * 1000);
-  outtime.tv_sec += outtime.tv_nsec / (1000 * 1000 * 1000);
-  outtime.tv_nsec %= (1000 * 1000 * 1000);
+  outtime.tv_sec = now / 1000000000;
+  outtime.tv_nsec = now % 1000000000;
   int res = pthread_cond_timedwait(&cond_, &mutex_->mutex_, &outtime);
   if (res != 0 && res != ETIMEDOUT) {
     PthreadCall("pthread_cond_timedwait", res);
