@@ -6,32 +6,29 @@
 
 #include <utility>
 
+#include "skywalker/logging.h"
 #include "util/mutexlock.h"
 #include "util/timeops.h"
-#include "skywalker/logging.h"
 
 namespace skywalker {
 
-Group::Group(uint64_t node_id,
-             const GroupOptions& options, Network* network)
+Group::Group(uint64_t node_id, const GroupOptions& options, Network* network)
     : node_id_(node_id),
       config_(node_id, options, network),
       instance_(&config_),
-      lease_timeout_(10 * 1000 * 1000),
+      lease_timeout_(options.master_lease_time),
       retrie_master_(false),
       mutex_(),
       cond_(&mutex_),
       propose_end_(false),
       propose_queue_(100),
       schedule_(new Schedule(options.use_master)) {
-  propose_cb_ =  std::bind(&ProposeQueue::ProposeComplete,
-                           &propose_queue_,
-                           std::placeholders::_1,
-                           std::placeholders::_2,
-                           std::placeholders::_3);
+  propose_cb_ = std::bind(&ProposeQueue::ProposeComplete, &propose_queue_,
+                          std::placeholders::_1, std::placeholders::_2,
+                          std::placeholders::_3);
   instance_.SetProposeCompleteCallback(propose_cb_);
 
-  membership_machine_ =  config_.GetMembershipMachine();
+  membership_machine_ = config_.GetMembershipMachine();
   master_machine_ = config_.GetMasterMachine();
 }
 
@@ -109,9 +106,7 @@ void Group::TryBeMaster() {
     retrie_master_ = false;
   }
 
-  schedule_->MasterLoop()->RunAt(next, [this]() {
-    TryBeMaster();
-  });
+  schedule_->MasterLoop()->RunAt(next, [this]() { TryBeMaster(); });
 }
 
 void Group::TryBeMasterInLoop() {
@@ -127,16 +122,14 @@ void Group::TryBeMasterInLoop() {
   }
 }
 
-bool Group::OnPropose(const std::string& value,
-                      int machine_id, void* context,
+bool Group::OnPropose(const std::string& value, int machine_id, void* context,
                       const ProposeCompleteCallback& cb) {
   return propose_queue_.Put(
       std::bind(&Instance::OnPropose, &instance_, value, machine_id, context),
       cb);
 }
 
-bool Group::OnPropose(const std::string& value,
-                      int machine_id, void* context,
+bool Group::OnPropose(const std::string& value, int machine_id, void* context,
                       ProposeCompleteCallback&& cb) {
   return propose_queue_.Put(
       std::bind(&Instance::OnPropose, &instance_, value, machine_id, context),
@@ -144,9 +137,8 @@ bool Group::OnPropose(const std::string& value,
 }
 
 void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
-  schedule_->IOLoop()->QueueInLoop([c, this]() {
-    instance_.OnReceiveContent(c);
-  });
+  schedule_->IOLoop()->QueueInLoop(
+      [c, this]() { instance_.OnReceiveContent(c); });
 }
 
 bool Group::ChangeMember(const std::map<Member, bool>& value,
@@ -165,11 +157,9 @@ bool Group::ChangeMember(const std::map<Member, bool>& value,
       change.add_type(MEMBER_REMOVE);
     }
   }
-  return OnPropose(
-      change.SerializeAsString(),
-      membership_machine_->machine_id(),
-      nullptr,
-      [cb](void*, const Status& s, uint64_t id) { cb(s, id); });
+  return OnPropose(change.SerializeAsString(),
+                   membership_machine_->machine_id(), nullptr,
+                   [cb](void*, const Status& s, uint64_t id) { cb(s, id); });
 }
 
 bool Group::NewPropose(ProposeHandler&& f) {
@@ -187,8 +177,7 @@ bool Group::NewPropose(ProposeHandler&& f) {
   return res;
 }
 
-void Group::ProposeComplete(void* context,
-                            const Status& result,
+void Group::ProposeComplete(void* context, const Status& result,
                             uint64_t instance_id) {
   MutexLock lock(&mutex_);
   propose_end_ = true;
@@ -212,20 +201,6 @@ void Group::GetMembership(std::vector<Member>* result,
   }
 }
 
-void Group::SetMasterLeaseTime(uint64_t micros) {
-  if (schedule_->MasterLoop()) {
-    schedule_->MasterLoop()->QueueInLoop([micros, this]() {
-      if (micros < (5 *1000 * 1000)) {
-        lease_timeout_ = 5 * 1000 * 1000;
-      } else {
-        lease_timeout_ = micros;
-      }
-    });
-  } else {
-    LOG_WARN("Group %u - You don't use master.", config_.GetGroupId());
-  }
-}
-
 bool Group::GetMaster(Member* i, uint64_t* version) const {
   uint64_t node_id;
   if (master_machine_->GetMaster(&node_id, version)) {
@@ -242,26 +217,18 @@ bool Group::GetMaster(Member* i, uint64_t* version) const {
   return false;
 }
 
-bool Group::IsMaster() const {
-  return master_machine_->IsMaster();
-}
+bool Group::IsMaster() const { return master_machine_->IsMaster(); }
 
 void Group::RetireMaster() {
   if (schedule_->MasterLoop()) {
-    schedule_->MasterLoop()->QueueInLoop([this]() {
-      retrie_master_ = true;
-    });
+    schedule_->MasterLoop()->QueueInLoop([this]() { retrie_master_ = true; });
   } else {
     LOG_WARN("Group %u - You don't use master.", config_.GetGroupId());
   }
 }
 
-void Group::StartGC() {
-  config_.GetLogManager()->StartGC();
-}
+void Group::StartGC() { config_.GetLogManager()->StartGC(); }
 
-void Group::StopGC() {
-  config_.GetLogManager()->StopGC();
-}
+void Group::StopGC() { config_.GetLogManager()->StopGC(); }
 
 }  // namespace skywalker

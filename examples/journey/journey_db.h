@@ -6,6 +6,7 @@
 #define JOURNEY_JOURNEY_DB_H_
 
 #include <string>
+
 #include <leveldb/db.h>
 
 namespace journey {
@@ -22,7 +23,7 @@ class JourneyDB {
   int Delete(const std::string& key);
 
  private:
-  leveldb::DB *db_;
+  leveldb::DB* db_;
 
   // No copying allowed
   JourneyDB(const JourneyDB&);

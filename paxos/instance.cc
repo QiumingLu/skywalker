@@ -7,8 +7,8 @@
 #include <utility>
 
 #include "paxos/config.h"
-#include "util/mutexlock.h"
 #include "skywalker/logging.h"
+#include "util/mutexlock.h"
 
 namespace skywalker {
 
@@ -19,17 +19,14 @@ Instance::Instance(Config* config)
       proposer_(config, this),
       instance_id_(0),
       is_proposing_(false),
-      context_(nullptr) {
-}
+      context_(nullptr) {}
 
-Instance::~Instance() {
-}
+Instance::~Instance() {}
 
 bool Instance::Recover() {
   bool res = acceptor_.Recover(&instance_id_);
   if (!res) {
-    LOG_ERROR("Group %u - Acceptor recover failed.",
-              config_->GetGroupId());
+    LOG_ERROR("Group %u - Acceptor recover failed.", config_->GetGroupId());
     return res;
   }
   res = config_->GetLogManager()->Recover(instance_id_);
@@ -41,8 +38,8 @@ bool Instance::Recover() {
   acceptor_.SetInstanceId(instance_id_);
   learner_.SetInstanceId(instance_id_);
   proposer_.SetInstanceId(instance_id_);
-  proposer_.SetStartProposalId(
-      acceptor_.GetPromisedBallot().GetProposalId() + 1);
+  proposer_.SetStartProposalId(acceptor_.GetPromisedBallot().GetProposalId() +
+                               1);
 
   LOG_INFO("Group %u - Instance recover successful, now instance_id=%llu.",
            config_->GetGroupId(), (unsigned long long)instance_id_);
@@ -55,18 +52,15 @@ void Instance::SetIOLoop(RunLoop* loop) {
   learner_.SetIOLoop(loop);
 }
 
-void Instance::SetLearnLoop(RunLoop* loop) {
-  learner_.SetLearnLoop(loop);
-}
+void Instance::SetLearnLoop(RunLoop* loop) { learner_.SetLearnLoop(loop); }
 
 void Instance::SyncData(bool add_timer) {
-  io_loop_->QueueInLoop([this, add_timer]() {
-    learner_.AskForLearn(add_timer);
-  });
+  io_loop_->QueueInLoop(
+      [this, add_timer]() { learner_.AskForLearn(add_timer); });
 }
 
-void Instance::OnPropose(const std::string& value,
-                         int machine_id, void* context) {
+void Instance::OnPropose(const std::string& value, int machine_id,
+                         void* context) {
   if (!config_->IsValidNodeId(config_->GetNodeId())) {
     Slice msg("this node is not in the membership, please add it firstly.");
     propose_cb_(context, Status::InvalidNode(msg), instance_id_);
@@ -81,7 +75,7 @@ void Instance::OnPropose(const std::string& value,
   propose_value_.set_machine_id(machine_id);
   propose_value_.set_user_data(value);
 
-  propose_timer_ = io_loop_->RunAfter(1000*1000, [this]() {
+  propose_timer_ = io_loop_->RunAfter(1000 * 1000, [this]() {
     proposer_.QuitPropose();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
@@ -171,7 +165,7 @@ void Instance::CheckLearn() {
 
     if (is_proposing_) {
       if (success) {
-       if (my) {
+        if (my) {
           propose_cb_(context_, Status::OK(), instance_id_);
         } else {
           Slice msg("another value has been chosen.");

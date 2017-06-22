@@ -11,15 +11,15 @@
 #include <string>
 #include <vector>
 
-#include "util/mutex.h"
+#include "machine/master_machine.h"
+#include "machine/membership_machine.h"
 #include "paxos/config.h"
 #include "paxos/instance.h"
-#include "paxos/schedule.h"
 #include "paxos/propose_queue.h"
+#include "paxos/schedule.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
-#include "machine/membership_machine.h"
-#include "machine/master_machine.h"
+#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -46,7 +46,6 @@ class Group {
                     const ChangeMemberCompleteCallback& cb);
   void GetMembership(std::vector<Member>* result, uint64_t* version) const;
 
-  void SetMasterLeaseTime(uint64_t micros);
   bool GetMaster(Member* i, uint64_t* version) const;
   bool IsMaster() const;
   void RetireMaster();
@@ -59,8 +58,8 @@ class Group {
   void TryBeMaster();
   void TryBeMasterInLoop();
   bool NewPropose(ProposeHandler&& f);
-  void ProposeComplete(void* context,
-                       const Status& result, uint64_t instance_id);
+  void ProposeComplete(void* context, const Status& result,
+                       uint64_t instance_id);
 
   const uint64_t node_id_;
   Config config_;

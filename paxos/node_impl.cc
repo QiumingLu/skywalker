@@ -12,14 +12,9 @@
 namespace skywalker {
 
 NodeImpl::NodeImpl(const Options& options)
-    : stop_(false),
-      options_(options),
-      network_(options.my) {
-}
+    : stop_(false), options_(options), network_(options.my) {}
 
-NodeImpl::~NodeImpl() {
-  stop_ = true;
-}
+NodeImpl::~NodeImpl() { stop_ = true; }
 
 bool NodeImpl::StartWorking() {
   bool res = true;
@@ -47,14 +42,10 @@ bool NodeImpl::StartWorking() {
   return res;
 }
 
-size_t NodeImpl::group_size() const {
-  return groups_.size();
-}
+size_t NodeImpl::group_size() const { return groups_.size(); }
 
-bool NodeImpl::Propose(uint32_t group_id,
-                       const std::string& value,
-                       int machine_id,
-                       void* context,
+bool NodeImpl::Propose(uint32_t group_id, const std::string& value,
+                       int machine_id, void* context,
                        const ProposeCompleteCallback& cb) {
   if (!Valid(group_id)) {
     return false;
@@ -62,10 +53,8 @@ bool NodeImpl::Propose(uint32_t group_id,
   return groups_.at(group_id)->OnPropose(value, machine_id, context, cb);
 }
 
-bool NodeImpl::Propose(uint32_t group_id,
-                       const std::string& value,
-                       int machine_id,
-                       void* context,
+bool NodeImpl::Propose(uint32_t group_id, const std::string& value,
+                       int machine_id, void* context,
                        ProposeCompleteCallback&& cb) {
   if (!Valid(group_id)) {
     return false;
@@ -95,28 +84,15 @@ bool NodeImpl::ChangeMember(uint32_t group_id,
   return groups_.at(group_id)->ChangeMember(value, cb);
 }
 
-void NodeImpl::GetMembership(uint32_t group_id,
-                             std::vector<Member>* result,
+void NodeImpl::GetMembership(uint32_t group_id, std::vector<Member>* result,
                              uint64_t* version) const {
   if (Valid(group_id)) {
     groups_.at(group_id)->GetMembership(result, version);
   }
 }
 
-void NodeImpl::SetMasterLeaseTime(uint64_t micros) {
-  for (auto& g : groups_) {
-    g.second->SetMasterLeaseTime(micros);
-  }
-}
-
-void NodeImpl::SetMasterLeaseTime(uint32_t group_id, uint64_t micros) {
-  if (Valid(group_id)) {
-    groups_.at(group_id)->SetMasterLeaseTime(micros);
-  }
-}
-
-bool NodeImpl::GetMaster(uint32_t group_id,
-                         Member* i, uint64_t* version) const {
+bool NodeImpl::GetMaster(uint32_t group_id, Member* i,
+                         uint64_t* version) const {
   if (!Valid(group_id)) {
     return false;
   }

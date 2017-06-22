@@ -14,8 +14,7 @@ Acceptor::Acceptor(Config* config, Instance* instance)
       instance_(instance),
       messager_(config->GetMessager()),
       instance_id_(0),
-      log_sync_count_(0) {
-}
+      log_sync_count_(0) {}
 
 bool Acceptor::Recover(uint64_t* instance_id) {
   if (ReadFromDB()) {
@@ -36,7 +35,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
     BallotNumber b(msg.proposal_id(), msg.node_id());
 
     if (b >= promised_ballot_) {
-      promised_ballot_ =  b;
+      promised_ballot_ = b;
       if (accepted_ballot_.GetProposalId() > 0) {
         reply_msg->set_pre_accepted_id(accepted_ballot_.GetProposalId());
         reply_msg->set_pre_accepted_node_id(accepted_ballot_.GetNodeId());
@@ -51,8 +50,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
       instance_->OnPaxosMessage(*reply_msg);
       delete reply_msg;
     } else {
-      messager_->SendMessage(msg.node_id(),
-                             messager_->PackMessage(reply_msg));
+      messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
     }
   } else if (msg.instance_id() == instance_id_ + 1) {
     NewChosenValue(msg);
@@ -81,8 +79,7 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
       instance_->OnPaxosMessage(*reply_msg);
       delete reply_msg;
     } else {
-      messager_->SendMessage(msg.node_id(),
-                             messager_->PackMessage(reply_msg));
+      messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
     }
   } else if (msg.instance_id() == instance_id_ + 1) {
     NewChosenValue(msg);
@@ -149,8 +146,8 @@ bool Acceptor::WriteToDB() {
     }
   }
 
-  int ret = config_->GetDB()->Put(options, instance_id_,
-                                  temp.SerializeAsString());
+  int ret =
+      config_->GetDB()->Put(options, instance_id_, temp.SerializeAsString());
   if (ret == 0) {
     return true;
   } else {

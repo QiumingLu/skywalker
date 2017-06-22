@@ -12,41 +12,38 @@
 
 namespace skywalker {
 
-Network::Network(const Member& my)
-    : my_(my),
-      net_loop_(voyager::kPoll) {
+Network::Network(const Member& my) : my_(my), net_loop_(voyager::kPoll) {
   loop_ = net_loop_.Loop();
 }
 
-Network::~Network() {
-}
+Network::~Network() {}
 
-void Network::StartServer(const std::function<void (const Slice&)>& cb) {
+void Network::StartServer(const std::function<void(const Slice&)>& cb) {
   voyager::SockAddr addr(my_.host, my_.port);
   server_.reset(new voyager::TcpServer(loop_, addr));
 
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
-    while (true) {
-      if (buf->ReadableSize() >= kHeaderSize) {
-        int size;
-        memcpy(&size, buf->Peek(), kHeaderSize);
-        if (buf->ReadableSize() >= static_cast<size_t>(size)) {
-          cb(Slice(buf->Peek() + kHeaderSize, size - kHeaderSize));
-          buf->Retrieve(size);
-          continue;
+        while (true) {
+          if (buf->ReadableSize() >= kHeaderSize) {
+            int size;
+            memcpy(&size, buf->Peek(), kHeaderSize);
+            if (buf->ReadableSize() >= static_cast<size_t>(size)) {
+              cb(Slice(buf->Peek() + kHeaderSize, size - kHeaderSize));
+              buf->Retrieve(size);
+              continue;
+            }
+          }
+          break;
         }
-      }
-      break;
-    }
-  });
+      });
 
   server_->Start();
 }
 
 void Network::SendMessage(uint64_t node_id, Config* config,
                           const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([node_id, config, content_ptr, this] () {
+  loop_->QueueInLoop([node_id, config, content_ptr, this]() {
     std::string s;
     if (SerializeToString(content_ptr, &s)) {
       auto it = connection_map_.find(node_id);
@@ -65,7 +62,7 @@ void Network::SendMessage(uint64_t node_id, Config* config,
 
 void Network::SendMessage(const std::shared_ptr<Membership>& m,
                           const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([this, m, content_ptr] () {
+  loop_->QueueInLoop([this, m, content_ptr]() {
     std::string s;
     if (SerializeToString(content_ptr, &s)) {
       for (auto& i : m->members()) {
@@ -90,25 +87,23 @@ void Network::SendMessageInLoop(const MemberMessage& member,
 
   client->SetConnectionCallback(
       [node_id, s, this](const voyager::TcpConnectionPtr& p) {
-    auto it = connection_map_.find(node_id);
-    if (it == connection_map_.end()) {
-      connection_map_.insert(std::make_pair(node_id, p));
-      p->SendMessage(s);
-    } else {
-      p->ShutDown();
-      it->second->SendMessage(s);
-    }
-  });
+        auto it = connection_map_.find(node_id);
+        if (it == connection_map_.end()) {
+          connection_map_.insert(std::make_pair(node_id, p));
+          p->SendMessage(s);
+        } else {
+          p->ShutDown();
+          it->second->SendMessage(s);
+        }
+      });
 
-  client->SetConnectFailureCallback([client]() {
-    delete client;
-  });
+  client->SetConnectFailureCallback([client]() { delete client; });
 
   client->SetCloseCallback(
       [node_id, client, this](const voyager::TcpConnectionPtr& p) {
-    connection_map_.erase(node_id);
-    delete client;
-  });
+        connection_map_.erase(node_id);
+        delete client;
+      });
 
   client->Connect(false);
 }

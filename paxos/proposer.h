@@ -8,9 +8,9 @@
 #include "paxos/ballot_number.h"
 #include "paxos/counter.h"
 #include "proto/paxos.pb.h"
-#include "util/timerlist.h"
 #include "util/random.h"
 #include "util/runloop.h"
+#include "util/timerlist.h"
 
 namespace skywalker {
 

@@ -16,12 +16,7 @@ void* RunLoopThread::StartRunLoop(void* data) {
   return nullptr;
 }
 
-
-RunLoopThread::RunLoopThread()
-    : loop_(nullptr),
-      mu_(),
-      cond_(&mu_) {
-}
+RunLoopThread::RunLoopThread() : loop_(nullptr), mu_(), cond_(&mu_) {}
 
 RunLoopThread::~RunLoopThread() {
   if (loop_ != nullptr) {

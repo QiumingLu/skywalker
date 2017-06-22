@@ -35,9 +35,7 @@ class Random {
 
   bool OneIn(int n) { return (Next() % n) == 0; }
 
-  uint32_t Skewed(int max_log) {
-    return Uniform(1 << Uniform(max_log + 1));
-  }
+  uint32_t Skewed(int max_log) { return Uniform(1 << Uniform(max_log + 1)); }
 };
 
 }  // namespace skywalker

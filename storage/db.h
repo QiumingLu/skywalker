@@ -6,9 +6,12 @@
 #define SKYWALKER_STORAGE_DB_H_
 
 #include <stdint.h>
+
 #include <string>
-#include <leveldb/db.h>
+
 #include <leveldb/comparator.h>
+#include <leveldb/db.h>
+
 #include "proto/paxos.pb.h"
 #include "storage/write_batch.h"
 
@@ -19,24 +22,19 @@ class Config;
 struct WriteOptions {
   bool sync;
 
-  WriteOptions()
-      : sync(true) {
-  }
+  WriteOptions() : sync(true) {}
 };
 
 class Comparator : public leveldb::Comparator {
  public:
-  virtual int Compare(const leveldb::Slice& a,
-                      const leveldb::Slice& b) const;
+  virtual int Compare(const leveldb::Slice& a, const leveldb::Slice& b) const;
 
   virtual const char* Name() const { return "SkyWalker Comparator"; }
 
   virtual void FindShortestSeparator(std::string* start,
-                                     const leveldb::Slice& limit) const {
-  }
+                                     const leveldb::Slice& limit) const {}
 
-  virtual void FindShortSuccessor(std::string* key) const {
-  }
+  virtual void FindShortSuccessor(std::string* key) const {}
 };
 
 class DB {
@@ -46,8 +44,7 @@ class DB {
 
   int Open(const std::string& name);
 
-  int Put(const WriteOptions& options,
-          uint64_t instance_id,
+  int Put(const WriteOptions& options, uint64_t instance_id,
           const std::string& value);
 
   int Delete(const WriteOptions& options, uint64_t instance_id);

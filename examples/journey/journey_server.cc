@@ -2,19 +2,22 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <inttypes.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
-#include <voyager/util/string_util.h>
-#include <voyager/rpc/rpc_server.h>
+
 #include <skywalker/node.h>
 #include <skywalker/node_util.h>
-#include "journey_service_impl.h"
+#include <voyager/rpc/rpc_server.h>
+#include <voyager/util/string_util.h>
+
 #include "checkpoint_impl.h"
+#include "journey_service_impl.h"
 
 int main(int argc, char** argv) {
   if (argc != 3) {
@@ -70,8 +73,8 @@ int main(int argc, char** argv) {
   db_path += "/db";
   journey::JourneyServiceImpl service;
   bool res = service.Start(db_path, options);
-  std::cout << "ip:" << options.my.host
-            << " port:" << (options.my.port + 1000) << std::endl;
+  std::cout << "ip:" << options.my.host << " port:" << (options.my.port + 1000)
+            << std::endl;
   if (res) {
     voyager::EventLoop loop;
     voyager::SockAddr addr(options.my.host, options.my.port + 1000);

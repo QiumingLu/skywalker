@@ -5,8 +5,8 @@
 #ifndef SKYWALKER_LOG_CHECKPOINT_MANAGER_H_
 #define SKYWALKER_LOG_CHECKPOINT_MANAGER_H_
 
-#include "log/checkpoint_sender.h"
 #include "log/checkpoint_receiver.h"
+#include "log/checkpoint_sender.h"
 
 namespace skywalker {
 

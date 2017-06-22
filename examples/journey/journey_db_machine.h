@@ -6,7 +6,9 @@
 #define JOURNEY_JOURNEY_DB_MACHINE_H_
 
 #include <string>
+
 #include <skywalker/state_machine.h>
+
 #include "journey_db.h"
 
 namespace journey {
@@ -19,10 +21,8 @@ class JourneyDBMachine : public skywalker::StateMachine {
 
   int Get(const std::string& key, std::string* value);
 
-  virtual bool Execute(uint32_t groud_id,
-                       uint64_t instance_id,
-                       const std::string& value,
-                       void* context = nullptr);
+  virtual bool Execute(uint32_t groud_id, uint64_t instance_id,
+                       const std::string& value, void* context = nullptr);
 
  private:
   JourneyDB db_;

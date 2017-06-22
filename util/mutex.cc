@@ -8,8 +8,8 @@
 #include <string.h>
 #include <sys/time.h>
 
-#include "util/timeops.h"
 #include "skywalker/logging.h"
+#include "util/timeops.h"
 
 namespace skywalker {
 
@@ -44,8 +44,7 @@ Condition::~Condition() {
 }
 
 void Condition::Wait() {
-  PthreadCall("pthread_cond_wait",
-              pthread_cond_wait(&cond_, &mutex_->mutex_));
+  PthreadCall("pthread_cond_wait", pthread_cond_wait(&cond_, &mutex_->mutex_));
 }
 
 bool Condition::Wait(uint64_t micros) {

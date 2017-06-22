@@ -11,8 +11,8 @@
 #include <string>
 #include <vector>
 
-#include "skywalker/status.h"
 #include "skywalker/slice.h"
+#include "skywalker/status.h"
 
 namespace skywalker {
 
@@ -25,20 +25,17 @@ class FileManager {
   static FileManager* Instance();
 
   // The returned file will only be accessed by one thread at a time.
-  Status NewSequentialFile(const std::string& fname,
-                           SequentialFile** result);
+  Status NewSequentialFile(const std::string& fname, SequentialFile** result);
 
   // The returned file may be concurrently accessed by multiple threads.
   Status NewRandomAccessFile(const std::string& fname,
                              RandomAccessFile** result);
 
   // The returned file will only be accessed by one thread at a time.
-  Status NewWritableFile(const std::string& fname,
-                         WritableFile** result);
+  Status NewWritableFile(const std::string& fname, WritableFile** result);
 
   // The returned file will only be accessed by one thread at a time.
-  Status NewAppendableFile(const std::string& fname,
-                           WritableFile** result);
+  Status NewAppendableFile(const std::string& fname, WritableFile** result);
 
   // Delete the named file.
   Status DeleteFile(const std::string& fname);
@@ -50,8 +47,7 @@ class FileManager {
   Status DeleteDir(const std::string& dirname);
 
   // Get the children of the specified directory.
-  Status GetChildren(const std::string& dir,
-                     std::vector<std::string>* result,
+  Status GetChildren(const std::string& dir, std::vector<std::string>* result,
                      bool only_file = false);
 
   // Rename file src to target
@@ -68,8 +64,8 @@ class FileManager {
   static FileManager* file_manager_;
   static void InitFileManager();
 
-  FileManager() { }
-  ~FileManager() { }
+  FileManager() {}
+  ~FileManager() {}
   FileManager(const FileManager&);
   void operator=(const FileManager&);
 };
@@ -77,7 +73,7 @@ class FileManager {
 // A file abstraction for reading sequentially through a file
 class SequentialFile {
  public:
-  SequentialFile() { }
+  SequentialFile() {}
   virtual ~SequentialFile();
 
   virtual Status Read(size_t n, Slice* result, char* scratch) = 0;
@@ -93,7 +89,7 @@ class SequentialFile {
 // A file abstraction for randomly reading the contents of a file.
 class RandomAccessFile {
  public:
-  RandomAccessFile() { }
+  RandomAccessFile() {}
   virtual ~RandomAccessFile();
 
   virtual Status Read(uint64_t offset, size_t n, Slice* result,
@@ -110,7 +106,7 @@ class RandomAccessFile {
 // at a time to the file.
 class WritableFile {
  public:
-  WritableFile() { }
+  WritableFile() {}
   virtual ~WritableFile();
 
   virtual Status Append(const Slice& data) = 0;
@@ -124,16 +120,13 @@ class WritableFile {
   void operator=(const WritableFile&);
 };
 
-extern Status ReadFileToString(FileManager* manager,
-                               const std::string& fname,
+extern Status ReadFileToString(FileManager* manager, const std::string& fname,
                                std::string* data);
 
-extern Status WriteStringToFile(FileManager* manager,
-                                const Slice& data,
+extern Status WriteStringToFile(FileManager* manager, const Slice& data,
                                 const std::string& fname);
 
-extern Status WriteStringToFileSync(FileManager* manager,
-                                    const Slice& data,
+extern Status WriteStringToFileSync(FileManager* manager, const Slice& data,
                                     const std::string& fname);
 
 }  // namespace skywalker

@@ -14,7 +14,7 @@ namespace {
 const uint64_t kMinChosenKey = UINTMAX_MAX;
 const uint64_t kMembership = (UINTMAX_MAX - 1);
 const uint64_t kMasterState = (UINTMAX_MAX - 2);
-}
+}  // namespace
 
 namespace skywalker {
 
@@ -32,14 +32,9 @@ int Comparator::Compare(const leveldb::Slice& a,
   return key > key2 ? 1 : -1;
 }
 
-DB::DB(Config* config)
-    : config_(config),
-      db_(nullptr) {
-}
+DB::DB(Config* config) : config_(config), db_(nullptr) {}
 
-DB::~DB() {
-  delete db_;
-}
+DB::~DB() { delete db_; }
 
 int DB::Open(const std::string& name) {
   leveldb::Options options;
@@ -54,8 +49,7 @@ int DB::Open(const std::string& name) {
   return 0;
 }
 
-int DB::Put(const WriteOptions& options,
-            uint64_t instance_id,
+int DB::Put(const WriteOptions& options, uint64_t instance_id,
             const std::string& value) {
   char key[sizeof(instance_id)];
   memcpy(key, &instance_id, sizeof(key));
@@ -98,8 +92,7 @@ int DB::Get(uint64_t instance_id, std::string* value) {
   char key[sizeof(instance_id)];
   memcpy(key, &instance_id, sizeof(key));
   leveldb::Status status =
-      db_->Get(leveldb::ReadOptions(),
-               leveldb::Slice(key, sizeof(key)), value);
+      db_->Get(leveldb::ReadOptions(), leveldb::Slice(key, sizeof(key)), value);
   int ret = 0;
   if (!status.ok()) {
     if (status.IsNotFound()) {

@@ -8,13 +8,13 @@
 #include <memory>
 #include <string>
 
-#include "util/mutex.h"
-#include "util/runloop.h"
 #include "paxos/acceptor.h"
 #include "paxos/learner.h"
 #include "paxos/proposer.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
+#include "util/mutex.h"
+#include "util/runloop.h"
 
 namespace skywalker {
 
@@ -38,8 +38,8 @@ class Instance {
   void SetIOLoop(RunLoop* loop);
   void SetLearnLoop(RunLoop* loop);
 
-  void OnPropose(const std::string& value,
-                 int machine_id, void* context = nullptr);
+  void OnPropose(const std::string& value, int machine_id,
+                 void* context = nullptr);
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
   void OnPaxosMessage(const PaxosMessage& msg);

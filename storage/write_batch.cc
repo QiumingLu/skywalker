@@ -6,13 +6,9 @@
 
 namespace skywalker {
 
-WriteBatch::WriteBatch()
-    : batch_(new leveldb::WriteBatch()) {
-}
+WriteBatch::WriteBatch() : batch_(new leveldb::WriteBatch()) {}
 
-WriteBatch::~WriteBatch() {
-  delete batch_;
-}
+WriteBatch::~WriteBatch() { delete batch_; }
 
 void WriteBatch::Put(uint64_t instance_id, const std::string& value) {
   char key[sizeof(instance_id)];
@@ -26,8 +22,6 @@ void WriteBatch::Delete(uint64_t instance_id) {
   batch_->Delete(leveldb::Slice(key, sizeof(key)));
 }
 
-void WriteBatch::Clear() {
-  batch_->Clear();
-}
+void WriteBatch::Clear() { batch_->Clear(); }
 
 }  // namespace skywalker

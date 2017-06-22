@@ -15,8 +15,7 @@ LogManager::LogManager(Config* config)
     : config_(config),
       min_chosen_id_(0),
       max_chosen_id_(0),
-      cleaner_(config, this) {
-}
+      cleaner_(config, this) {}
 
 bool LogManager::Recover(uint64_t instance_id) {
   uint64_t temp = 0;
@@ -54,17 +53,11 @@ bool LogManager::ReplayLog(uint64_t from, uint64_t to) {
   return true;
 }
 
-void LogManager::StartGC() {
-  cleaner_.StartGC();
-}
+void LogManager::StartGC() { cleaner_.StartGC(); }
 
-void LogManager::StopGC() {
-  cleaner_.StopGC();
-}
+void LogManager::StopGC() { cleaner_.StopGC(); }
 
-uint64_t LogManager::GetMinChosenInstanceId() const {
-  return min_chosen_id_;
-}
+uint64_t LogManager::GetMinChosenInstanceId() const { return min_chosen_id_; }
 
 void LogManager::SetMinChosenInstanceId(uint64_t id) {
   int res = config_->GetDB()->SetMinChosenInstanceId(id);
@@ -73,12 +66,8 @@ void LogManager::SetMinChosenInstanceId(uint64_t id) {
   }
 }
 
-uint64_t LogManager::GetMaxChosenInstanceId() const {
-  return max_chosen_id_;
-}
+uint64_t LogManager::GetMaxChosenInstanceId() const { return max_chosen_id_; }
 
-void LogManager::SetMaxChosenInstanceId(uint64_t id) {
-  max_chosen_id_ = id;
-}
+void LogManager::SetMaxChosenInstanceId(uint64_t id) { max_chosen_id_ = id; }
 
 }  // namespace skywalker

@@ -11,10 +11,10 @@
 #include <string>
 #include <vector>
 
-#include "paxos/group.h"
 #include "network/network.h"
-#include "skywalker/options.h"
+#include "paxos/group.h"
 #include "skywalker/node.h"
+#include "skywalker/options.h"
 
 namespace skywalker {
 
@@ -27,30 +27,22 @@ class NodeImpl : public Node {
 
   virtual size_t group_size() const;
 
-  virtual bool Propose(uint32_t group_id,
-                       const std::string& value,
-                       int machine_id,
-                       void* context,
+  virtual bool Propose(uint32_t group_id, const std::string& value,
+                       int machine_id, void* context,
                        const ProposeCompleteCallback& cb);
 
-  virtual bool Propose(uint32_t group_id,
-                       const std::string& value,
-                       int machine_id,
-                       void* context,
+  virtual bool Propose(uint32_t group_id, const std::string& value,
+                       int machine_id, void* context,
                        ProposeCompleteCallback&& cb);
 
   virtual bool ChangeMember(uint32_t group_id,
                             const std::map<Member, bool>& value,
                             const ChangeMemberCompleteCallback& cb);
 
-  virtual void GetMembership(uint32_t group_id,
-                             std::vector<Member>* result,
+  virtual void GetMembership(uint32_t group_id, std::vector<Member>* result,
                              uint64_t* version) const;
 
-  virtual void SetMasterLeaseTime(uint64_t micros);
-  virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros);
-  virtual bool GetMaster(uint32_t group_id,
-                         Member* i, uint64_t* version) const;
+  virtual bool GetMaster(uint32_t group_id, Member* i, uint64_t* version) const;
   virtual bool IsMaster(uint32_t group_id) const;
   virtual void RetireMaster(uint32_t group_id);
 

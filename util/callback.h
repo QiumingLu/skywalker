@@ -9,7 +9,7 @@
 
 namespace skywalker {
 
-typedef std::function<void ()> TimerProcCallback;
+typedef std::function<void()> TimerProcCallback;
 
 }  // namespace skywalker
 

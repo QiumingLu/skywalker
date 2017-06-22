@@ -6,8 +6,8 @@
 #define SKYWALKER_UTIL_RUNLOOP_THREAD_H_
 
 #include "util/mutex.h"
-#include "util/thread.h"
 #include "util/runloop.h"
+#include "util/thread.h"
 
 namespace skywalker {
 
@@ -23,7 +23,7 @@ class RunLoopThread {
 
   void ThreadFunc();
 
-  RunLoop *loop_;
+  RunLoop* loop_;
   Mutex mu_;
   Condition cond_;
   Thread thread_;

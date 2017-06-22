@@ -9,9 +9,7 @@
 namespace skywalker {
 
 Messager::Messager(Config* config, Network* network)
-    : config_(config),
-      network_(network) {
-}
+    : config_(config), network_(network) {}
 
 std::shared_ptr<Content> Messager::PackMessage(PaxosMessage* msg) {
   std::shared_ptr<Content> content_ptr(new Content());
@@ -36,14 +34,12 @@ void Messager::SendMessage(uint64_t node_id,
   network_->SendMessage(node_id, config_, content_ptr);
 }
 
-void Messager::BroadcastMessage(
-    const std::shared_ptr<Content>& content_ptr) {
+void Messager::BroadcastMessage(const std::shared_ptr<Content>& content_ptr) {
   std::shared_ptr<Membership> temp = config_->GetMembership();
   if (temp->members().size() > 0) {
     network_->SendMessage(temp, content_ptr);
   }
 }
-
 
 void Messager::BroadcastMessageToFollower(
     const std::shared_ptr<Content>& content_ptr) {

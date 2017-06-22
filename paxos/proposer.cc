@@ -26,8 +26,7 @@ Proposer::Proposer(Config* config, Instance* instance)
       accepting_(false),
       skip_prepare_(false),
       was_rejected_by_someone_(false),
-      rand_(0xdeadbeef) {
-}
+      rand_(0xdeadbeef) {}
 
 void Proposer::NewPropose(const PaxosValue& value) {
   value_ = value;
@@ -54,8 +53,8 @@ void Proposer::Prepare(bool need_new_proposal_id) {
 
   LOG_DEBUG(
       "Group %u - start to prepare, now instance_id=%llu, proposal_id=%llu",
-      config_->GetGroupId(),
-      (unsigned long long)instance_id_, (unsigned long long)proposal_id_);
+      config_->GetGroupId(), (unsigned long long)instance_id_,
+      (unsigned long long)proposal_id_);
 
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(PREPARE);
@@ -109,8 +108,8 @@ void Proposer::Accept() {
   accepting_ = true;
   LOG_DEBUG(
       "Group %u - start to accept, the instance_id=%llu, proposal_id=%llu.",
-       config_->GetGroupId(),
-       (unsigned long long)instance_id_, (unsigned long long)proposal_id_);
+      config_->GetGroupId(), (unsigned long long)instance_id_,
+      (unsigned long long)proposal_id_);
 
   PaxosMessage* msg = new PaxosMessage();
   msg->set_type(ACCEPT);
@@ -186,9 +185,7 @@ void Proposer::AddRetryTimer(uint64_t timeout) {
   });
 }
 
-void Proposer::RemoveRetryTimer() {
-  io_loop_->Remove(retry_timer_);
-}
+void Proposer::RemoveRetryTimer() { io_loop_->Remove(retry_timer_); }
 
 void Proposer::QuitPropose() {
   preparing_ = false;
@@ -196,8 +193,6 @@ void Proposer::QuitPropose() {
   RemoveRetryTimer();
 }
 
-void Proposer::NextInstance() {
-  ++instance_id_;
-}
+void Proposer::NextInstance() { ++instance_id_; }
 
 }  // namespace skywalker

@@ -11,11 +11,9 @@ namespace skywalker {
 
 class SequenceNumber {
  public:
-  SequenceNumber() : seq_(0) { }
+  SequenceNumber() : seq_(0) {}
 
-  int Next() {
-    return seq_++;
-  }
+  int Next() { return seq_++; }
 
  private:
   std::atomic<int> seq_;

@@ -7,13 +7,9 @@
 
 namespace journey {
 
-JourneyDB::JourneyDB()
-    : db_(nullptr) {
-}
+JourneyDB::JourneyDB() : db_(nullptr) {}
 
-JourneyDB::~JourneyDB() {
-  delete db_;
-}
+JourneyDB::~JourneyDB() { delete db_; }
 
 bool JourneyDB::Open(const std::string& path) {
   leveldb::Options options;

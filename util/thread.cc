@@ -7,8 +7,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 #ifdef __linux__
 #include <sys/prctl.h>
@@ -29,9 +29,7 @@ __thread uint64_t cached_tid = 0;
 namespace {
 
 #ifdef __linux__
-uint64_t GetTid() {
-  return static_cast<uint64_t>(::syscall(SYS_gettid));
-}
+uint64_t GetTid() { return static_cast<uint64_t>(::syscall(SYS_gettid)); }
 
 #elif __APPLE__
 uint64_t GetTid() {
@@ -74,13 +72,9 @@ uint64_t Tid() {
   return cached_tid;
 }
 
-}
+}  // namespace CurrentThread
 
-Thread::Thread()
-     : started_(false),
-       joined_(false),
-       thread_(0) {
-}
+Thread::Thread() : started_(false), joined_(false), thread_(0) {}
 
 Thread::~Thread() {
   if (started_ && !joined_) {

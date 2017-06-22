@@ -5,8 +5,8 @@
 #include "skywalker/logging.h"
 
 #include <assert.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -14,8 +14,8 @@ namespace skywalker {
 
 void DefaultLogHandler(LogLevel level, const char* filename, int line,
                        const char* format, va_list ap) {
-  static const char* loglevel_names[] = {
-     "DEBUG", "INFO", "WARN", "ERROR", "FATAL" };
+  static const char* loglevel_names[] = {"DEBUG", "INFO", "WARN", "ERROR",
+                                         "FATAL"};
 
   char buffer[500];
   for (int i = 0; i < 2; ++i) {
@@ -38,16 +38,9 @@ void DefaultLogHandler(LogLevel level, const char* filename, int line,
     localtime_r(&seconds, &t);
     p += snprintf(p, limit - p,
                   "[%04d/%02d/%02d-%02d:%02d:%02d.%06d][%s %s:%d] ",
-                  t.tm_year + 1900,
-                  t.tm_mon + 1,
-                  t.tm_mday,
-                  t.tm_hour,
-                  t.tm_min,
-                  t.tm_sec,
-                  static_cast<int>(now_tv.tv_usec),
-                  loglevel_names[level],
-                  filename,
-                  line);
+                  t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour,
+                  t.tm_min, t.tm_sec, static_cast<int>(now_tv.tv_usec),
+                  loglevel_names[level], filename, line);
 
     if (p < limit) {
       va_list backup_ap;
@@ -86,8 +79,8 @@ void DefaultLogHandler(LogLevel level, const char* filename, int line,
 static LogHandler* log_handler_ = &DefaultLogHandler;
 static LogLevel log_level_ = LOGLEVEL_WARN;
 
-void Log(LogLevel level, const char* filename, int line,
-         const char* format, ...) {
+void Log(LogLevel level, const char* filename, int line, const char* format,
+         ...) {
   if (log_handler_ != nullptr && level >= log_level_) {
     va_list ap;
     va_start(ap, format);

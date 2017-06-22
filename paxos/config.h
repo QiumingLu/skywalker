@@ -9,15 +9,15 @@
 #include <string>
 #include <vector>
 
-#include "skywalker/options.h"
-#include "proto/paxos.pb.h"
-#include "network/messager.h"
-#include "storage/db.h"
 #include "log/checkpoint_manager.h"
 #include "log/log_manager.h"
-#include "machine/membership_machine.h"
-#include "machine/master_machine.h"
 #include "machine/machine_manager.h"
+#include "machine/master_machine.h"
+#include "machine/membership_machine.h"
+#include "network/messager.h"
+#include "proto/paxos.pb.h"
+#include "skywalker/options.h"
+#include "storage/db.h"
 
 namespace skywalker {
 
@@ -39,9 +39,7 @@ class Config {
   MembershipMachine* GetMembershipMachine() const {
     return membership_machine_;
   }
-  MasterMachine* GetMasterMachine() const {
-    return master_machine_;
-  }
+  MasterMachine* GetMasterMachine() const { return master_machine_; }
 
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
@@ -69,9 +67,7 @@ class Config {
   std::shared_ptr<Membership> GetMembership() const {
     return membership_machine_->GetMembership();
   }
-  std::shared_ptr<Membership> GetFollowers() const {
-    return followers_;
-  }
+  std::shared_ptr<Membership> GetFollowers() const { return followers_; }
 
   bool IsValidNodeId(uint64_t node_id) const;
 
@@ -89,6 +85,8 @@ class Config {
   std::vector<StateMachine*> machines_;
 
   std::shared_ptr<Membership> followers_;
+
+  Checkpoint* default_checkpoint_;
 
   Checkpoint* checkpoint_;
   DB* db_;

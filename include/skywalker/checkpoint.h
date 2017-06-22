@@ -6,6 +6,7 @@
 #define SKYWALKER_INCLUDE_CHECKPOINT_H_
 
 #include <stdint.h>
+
 #include <string>
 #include <vector>
 
@@ -13,8 +14,8 @@ namespace skywalker {
 
 class Checkpoint {
  public:
-  Checkpoint() { }
-  virtual ~Checkpoint() { }
+  Checkpoint() {}
+  virtual ~Checkpoint() {}
 
   virtual uint64_t GetCheckpointInstanceId(uint32_t group_id);
 
@@ -22,13 +23,12 @@ class Checkpoint {
 
   virtual bool UnLockCheckpoint(uint32_t group_id);
 
-  virtual bool GetCheckpoint(
-      uint32_t group_id, int machine_id,
-      std::string* dir, std::vector<std::string>* files);
+  virtual bool GetCheckpoint(uint32_t group_id, int machine_id,
+                             std::string* dir, std::vector<std::string>* files);
 
-  virtual bool LoadCheckpoint(
-      uint32_t group_id, int machine_id,
-      const std::string& dir, const std::vector<std::string>& files);
+  virtual bool LoadCheckpoint(uint32_t group_id, int machine_id,
+                              const std::string& dir,
+                              const std::vector<std::string>& files);
 
  private:
   // No copying allowed

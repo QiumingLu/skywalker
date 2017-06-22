@@ -21,8 +21,7 @@ class MachineManager {
   void AddMachine(StateMachine* machine);
   void RemoveMachine(StateMachine* machine);
 
-  bool Execute(uint64_t instance_id,
-               const PaxosValue& value, void* context);
+  bool Execute(uint64_t instance_id, const PaxosValue& value, void* context);
 
  private:
   Config* config_;
@@ -30,7 +29,7 @@ class MachineManager {
 
   // No copying allowed
   MachineManager(const MachineManager&);
-  void operator =(const MachineManager&);
+  void operator=(const MachineManager&);
 };
 
 }  // namespace skywalker

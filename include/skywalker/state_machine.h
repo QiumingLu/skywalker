@@ -12,17 +12,15 @@ namespace skywalker {
 
 class StateMachine {
  public:
-  StateMachine() { }
-  virtual ~StateMachine() { }
+  StateMachine() {}
+  virtual ~StateMachine() {}
 
   // must set the id > 5
   void set_machine_id(int id) { id_ = id; }
   int machine_id() const { return id_; }
 
-  virtual bool Execute(uint32_t group_id,
-                       uint64_t instance_id,
-                       const std::string& value,
-                       void* context = nullptr) = 0;
+  virtual bool Execute(uint32_t group_id, uint64_t instance_id,
+                       const std::string& value, void* context = nullptr) = 0;
 
  private:
   int id_;

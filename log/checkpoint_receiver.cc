@@ -6,23 +6,20 @@
 
 #include <vector>
 
-#include "util/timeops.h"
-#include "paxos/config.h"
 #include "log/checkpoint_manager.h"
+#include "paxos/config.h"
 #include "skywalker/checkpoint.h"
-#include "skywalker/logging.h"
 #include "skywalker/file.h"
+#include "skywalker/logging.h"
+#include "util/timeops.h"
 
 namespace skywalker {
 
 CheckpointReceiver::CheckpointReceiver(Config* config,
                                        CheckpointManager* manager)
-    : config_(config),
-      manager_(manager) {
-}
+    : config_(config), manager_(manager) {}
 
-CheckpointReceiver::~CheckpointReceiver() {
-}
+CheckpointReceiver::~CheckpointReceiver() {}
 
 bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
   sender_node_id_ = msg.node_id();
@@ -43,8 +40,8 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
     for (auto& file : files) {
       Status del = FileManager::Instance()->DeleteFile(d + "/" + file);
       if (!del.ok()) {
-        LOG_ERROR("Group %u - %s.",
-                  config_->GetGroupId(), del.ToString().c_str());
+        LOG_ERROR("Group %u - %s.", config_->GetGroupId(),
+                  del.ToString().c_str());
         res = false;
         break;
       }
@@ -56,8 +53,8 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
 }
 
 bool CheckpointReceiver::ReceiveCheckpoint(const CheckpointMessage& msg) {
-  LOG_DEBUG("Group %u - sequence_id(%d==%d)",
-            config_->GetGroupId(), msg.sequence_id(), sequence_id_ + 1);
+  LOG_DEBUG("Group %u - sequence_id(%d==%d)", config_->GetGroupId(),
+            msg.sequence_id(), sequence_id_ + 1);
   bool res = ReceiveFiles(msg);
   return ComfirmReceive(msg, res);
 }
@@ -67,7 +64,7 @@ bool CheckpointReceiver::ReceiveFiles(const CheckpointMessage& msg) {
     return false;
   }
 
-  if (msg.sequence_id() ==  sequence_id_) {
+  if (msg.sequence_id() == sequence_id_) {
     return true;
   }
 
@@ -77,8 +74,8 @@ bool CheckpointReceiver::ReceiveFiles(const CheckpointMessage& msg) {
 
   if (dirs_.find(msg.machine_id()) == dirs_.end()) {
     char dir[512];
-    snprintf(dir, sizeof(dir), "%s/m%d",
-             config_->CheckpointPath().c_str(), msg.machine_id());
+    snprintf(dir, sizeof(dir), "%s/m%d", config_->CheckpointPath().c_str(),
+             msg.machine_id());
     FileManager::Instance()->CreateDir(dir);
     bool exits = FileManager::Instance()->FileExists(dir);
     if (!exits) {
@@ -133,8 +130,8 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
     if (files.empty()) {
       continue;
     }
-    res = config_->GetCheckpoint()->LoadCheckpoint(
-        config_->GetGroupId(), d.first, d.second, files);
+    res = config_->GetCheckpoint()->LoadCheckpoint(config_->GetGroupId(),
+                                                   d.first, d.second, files);
     if (!res) {
       LOG_ERROR("Group %u - load checkpoint failed, the machine_id=%d, dir=%s.",
                 config_->GetGroupId(), d.first, d.second.c_str());
@@ -151,8 +148,8 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
   return res;
 }
 
-bool CheckpointReceiver::ComfirmReceive(
-    const CheckpointMessage& msg, bool res) {
+bool CheckpointReceiver::ComfirmReceive(const CheckpointMessage& msg,
+                                        bool res) {
   CheckpointMessage* reply_msg = new CheckpointMessage();
   reply_msg->set_type(CHECKPOINT_COMFIRM);
   reply_msg->set_node_id(config_->GetNodeId());

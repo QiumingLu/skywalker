@@ -6,8 +6,8 @@
 #define SKYWALKER_UTIL_RUNLOOP_H_
 
 #include <stdint.h>
-#include <vector>
 #include <functional>
+#include <vector>
 
 #include "util/mutex.h"
 #include "util/timerlist.h"
@@ -16,7 +16,7 @@ namespace skywalker {
 
 class RunLoop {
  public:
-  typedef std::function<void ()> Func;
+  typedef std::function<void()> Func;
 
   RunLoop();
 

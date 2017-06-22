@@ -22,8 +22,7 @@ class Messager {
   void SendMessage(uint64_t node_id,
                    const std::shared_ptr<Content>& content_ptr);
   void BroadcastMessage(const std::shared_ptr<Content>& content_ptr);
-  void BroadcastMessageToFollower(
-      const std::shared_ptr<Content>& content_ptr);
+  void BroadcastMessageToFollower(const std::shared_ptr<Content>& content_ptr);
 
   std::shared_ptr<Content> PackMessage(PaxosMessage* msg);
   std::shared_ptr<Content> PackMessage(CheckpointMessage* msg);

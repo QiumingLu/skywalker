@@ -12,9 +12,7 @@
 namespace journey {
 
 JourneyServiceImpl::JourneyServiceImpl()
-    : group_size_(0),
-      machine_(new JourneyDBMachine()),
-      node_(nullptr) {
+    : group_size_(0), machine_(new JourneyDBMachine()), node_(nullptr) {
   machine_->set_machine_id(6);
 }
 
@@ -36,16 +34,15 @@ bool JourneyServiceImpl::Start(const std::string& db_path,
       std::cout << "Node::Start failed." << std::endl;
     }
   } else {
-    std::cout << "DB::Open failed."<< std::endl;
+    std::cout << "DB::Open failed." << std::endl;
   }
   return res;
 }
 
-void JourneyServiceImpl::Propose(
-    google::protobuf::RpcController* controller,
-    const journey::RequestMessage* request,
-    journey::ResponseMessage* response,
-    google::protobuf::Closure* done) {
+void JourneyServiceImpl::Propose(google::protobuf::RpcController* controller,
+                                 const journey::RequestMessage* request,
+                                 journey::ResponseMessage* response,
+                                 google::protobuf::Closure* done) {
   uint32_t group_id = Shard(request->key());
   response->set_result(PROPOSE_RESULT_FAIL);
   bool propose = false;
@@ -66,10 +63,10 @@ void JourneyServiceImpl::Propose(
       propose = node_->Propose(
           group_id, value, machine_->machine_id(), response,
           [done, this](void* ctx, const skywalker::Status&, uint64_t) {
-        if (done) {
-          done->Run();
-        }
-      });
+            if (done) {
+              done->Run();
+            }
+          });
     }
   } else {
     skywalker::Member master;

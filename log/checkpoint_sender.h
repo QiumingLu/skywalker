@@ -7,8 +7,8 @@
 
 #include <string>
 
-#include "util/mutex.h"
 #include "proto/paxos.pb.h"
+#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -28,8 +28,8 @@ class CheckpointSender {
 
   void BeginToSend(uint64_t instance_id);
   bool SendCheckpointFiles(uint64_t instance_id);
-  bool SendFile(uint64_t instance_id, int machine_id,
-                const std::string& dir, const std::string& file);
+  bool SendFile(uint64_t instance_id, int machine_id, const std::string& dir,
+                const std::string& file);
   void EndToSend(uint64_t instance_id);
 
   bool CheckReceive();

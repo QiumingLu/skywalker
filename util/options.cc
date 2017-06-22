@@ -10,16 +10,15 @@ GroupOptions::GroupOptions()
     : group_id(0),
       use_master(true),
       log_sync(true),
+      master_lease_time(10 * 1000 * 1000),
       sync_interval(5),
-      keep_log_count(500),
-      log_storage_path(),
+      keep_log_count(10000),
+      log_storage_path(""),
       checkpoint(nullptr),
       machines(),
       membership(),
-      followers() {
-}
+      followers() {}
 
-Options::Options() {
-}
+Options::Options() {}
 
 }  // namespace skywalker

@@ -11,15 +11,15 @@
 #include <string>
 
 #include <voyager/core/bg_eventloop.h>
+#include <voyager/core/buffer.h>
 #include <voyager/core/eventloop.h>
 #include <voyager/core/sockaddr.h>
 #include <voyager/core/tcp_client.h>
 #include <voyager/core/tcp_server.h>
-#include <voyager/core/buffer.h>
 
-#include "skywalker/slice.h"
-#include "skywalker/options.h"
 #include "proto/paxos.pb.h"
+#include "skywalker/options.h"
+#include "skywalker/slice.h"
 
 namespace skywalker {
 
@@ -30,7 +30,7 @@ class Network {
   explicit Network(const Member& my);
   ~Network();
 
-  void StartServer(const std::function<void (const Slice& s)>& cb);
+  void StartServer(const std::function<void(const Slice& s)>& cb);
 
   void SendMessage(uint64_t node_id, Config* config,
                    const std::shared_ptr<Content>& content_ptr);
@@ -59,4 +59,4 @@ class Network {
 
 }  // namespace skywalker
 
-#endif   // SKYWALKER_NETWORK_NETWORK_H_
+#endif  // SKYWALKER_NETWORK_NETWORK_H_

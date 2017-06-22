@@ -6,8 +6,8 @@
 #define SKYWALKER_MACHINE_MASTER_MACHINE_H_
 
 #include <string>
-#include "skywalker/state_machine.h"
 #include "proto/paxos.pb.h"
+#include "skywalker/state_machine.h"
 #include "util/mutex.h"
 
 namespace skywalker {
@@ -30,8 +30,7 @@ class MasterMachine : public StateMachine {
   void SetString(const std::string& s);
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
-                       const std::string& value,
-                       void* /* context */);
+                       const std::string& value, void* /* context */);
 
  private:
   Config* config_;

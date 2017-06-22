@@ -6,17 +6,17 @@
 #define SKYWALKER_PAXOS_PROPOSE_QUEUE_H_
 
 #include <queue>
-#include "util/runloop.h"
-#include "util/mutex.h"
-#include "skywalker/status.h"
-#include "skywalker/state_machine.h"
 #include "skywalker/options.h"
+#include "skywalker/state_machine.h"
+#include "skywalker/status.h"
+#include "util/mutex.h"
+#include "util/runloop.h"
 
 namespace skywalker {
 
 class Group;
 
-typedef std::function<void ()> ProposeHandler;
+typedef std::function<void()> ProposeHandler;
 
 class ProposeQueue {
  public:

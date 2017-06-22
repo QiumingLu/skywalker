@@ -7,11 +7,11 @@
 #include <memory>
 #include <string>
 
-#include "util/timeops.h"
 #include "paxos/acceptor.h"
 #include "paxos/config.h"
 #include "paxos/instance.h"
 #include "skywalker/logging.h"
+#include "util/timeops.h"
 
 namespace skywalker {
 
@@ -24,8 +24,7 @@ Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
       rand_(static_cast<uint32_t>(NowMicros())),
       is_learning_(false),
       has_learned_(false),
-      is_receiving_checkponit_(false) {
-}
+      is_receiving_checkponit_(false) {}
 
 void Learner::OnNewChosenValue(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_) {
@@ -58,14 +57,10 @@ void Learner::AskForLearn(bool add_timer) {
 }
 
 void Learner::AddLearnTimer(uint64_t timeout) {
-  learn_timer_ = io_loop_->RunAfter(timeout, [this]() {
-    AskForLearn(true);
-  });
+  learn_timer_ = io_loop_->RunAfter(timeout, [this]() { AskForLearn(true); });
 }
 
-void Learner::RemoveLearnTimer() {
-  io_loop_->Remove(learn_timer_);
-}
+void Learner::RemoveLearnTimer() { io_loop_->Remove(learn_timer_); }
 
 void Learner::OnAskForLearn(const PaxosMessage& msg) {
   if (msg.instance_id() < instance_id_) {
@@ -99,9 +94,8 @@ void Learner::SendNowInstanceId(const PaxosMessage& msg) {
   // in order to make it run in learn loop.
   uint64_t node_id = msg.node_id();
   std::shared_ptr<Content> out = messager_->PackMessage(reply_msg);
-  learn_loop_->QueueInLoop([this, node_id, out]() {
-    messager_->SendMessage(node_id, out);
-  });
+  learn_loop_->QueueInLoop(
+      [this, node_id, out]() { messager_->SendMessage(node_id, out); });
 }
 
 void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
@@ -122,10 +116,10 @@ void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_ &&
       msg.now_instance_id() > instance_id_) {
     if (msg.min_chosen_instance_id() > instance_id_) {
-       if (!is_receiving_checkponit_) {
-         AskForCheckpoint(msg);
-         is_receiving_checkponit_ = true;
-       }
+      if (!is_receiving_checkponit_) {
+        AskForCheckpoint(msg);
+        is_receiving_checkponit_ = true;
+      }
     } else {
       if (!is_receiving_checkponit_ && !is_learning_) {
         ComfirmAskForLearn(msg);
@@ -147,9 +141,8 @@ void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
   uint64_t node_id = msg.node_id();
   uint64_t from = msg.instance_id();
   uint64_t to = instance_id_;
-  learn_loop_->QueueInLoop([node_id, from, to, this] {
-    ASyncSend(node_id, from, to);
-  });
+  learn_loop_->QueueInLoop(
+      [node_id, from, to, this] { ASyncSend(node_id, from, to); });
 }
 
 void Learner::ASyncSend(uint64_t node_id, uint64_t from, uint64_t to) {
@@ -200,9 +193,7 @@ void Learner::AskForCheckpoint(const PaxosMessage& msg) {
 
 void Learner::OnAskForCheckpoint(const PaxosMessage& msg) {
   uint64_t node_id = msg.node_id();
-  learn_loop_->QueueInLoop([this, node_id] {
-    SendCheckpoint(node_id);
-  });
+  learn_loop_->QueueInLoop([this, node_id] { SendCheckpoint(node_id); });
 }
 
 void Learner::SendCheckpoint(uint64_t node_id) {

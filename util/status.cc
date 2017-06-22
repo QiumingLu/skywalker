@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 
 #include "skywalker/status.h"
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 namespace skywalker {
 
@@ -59,8 +59,8 @@ std::string Status::ToString() const {
         type = "IOError: ";
         break;
       default:
-        snprintf(tmp, sizeof(tmp), "Unknown code(%d): ",
-                 static_cast<int>(code()));
+        snprintf(tmp, sizeof(tmp),
+                 "Unknown code(%d): ", static_cast<int>(code()));
         type = tmp;
         break;
     }

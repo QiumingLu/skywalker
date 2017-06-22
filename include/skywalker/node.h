@@ -27,11 +27,10 @@ class Node {
   // true on success.
   // Stores nullptr in *nodeptr and returns false on error.
   // Caller should delete *nodeptr when it is no longer needed.
-  static bool Start(const Options& options,
-                    Node** nodeptr);
+  static bool Start(const Options& options, Node** nodeptr);
 
-  Node() { }
-  virtual ~Node() { }
+  Node() {}
+  virtual ~Node() {}
 
   virtual size_t group_size() const = 0;
 
@@ -42,16 +41,12 @@ class Node {
   // Callback Status::Conflict() if there is another value has been chosen.
   // Callback Status::MachineError() if the state machine executed failed.
   // Callback Status::Timeout() if the proposal time is more than a second.
-  virtual bool Propose(uint32_t group_id,
-                       const std::string& value,
-                       int machine_id,
-                       void* context,
+  virtual bool Propose(uint32_t group_id, const std::string& value,
+                       int machine_id, void* context,
                        const ProposeCompleteCallback& cb) = 0;
 
-  virtual bool Propose(uint32_t group_id,
-                       const std::string& value,
-                       int machine_id,
-                       void* context,
+  virtual bool Propose(uint32_t group_id, const std::string& value,
+                       int machine_id, void* context,
                        ProposeCompleteCallback&& cb) = 0;
 
   // Change the paxos members.
@@ -62,23 +57,14 @@ class Node {
                             const ChangeMemberCompleteCallback& cb) = 0;
 
   // Returns the membership.
-  virtual void GetMembership(uint32_t group_id,
-                             std::vector<Member>* result,
+  virtual void GetMembership(uint32_t group_id, std::vector<Member>* result,
                              uint64_t* version) const = 0;
-
-  // Set the master's lease time for all groups.
-  // default micros = 10 * 1000 * 1000.
-  virtual void SetMasterLeaseTime(uint64_t micros) = 0;
-
-  // Set the master's lease time for a specific group.
-  // default micros = 10 * 1000 * 1000.
-  virtual void SetMasterLeaseTime(uint32_t group_id, uint64_t micros) = 0;
 
   // Returns the master.
   // If have master, store the result in *i and return true
   // else return false.
-  virtual bool GetMaster(uint32_t group_id,
-                         Member* i, uint64_t* version) const = 0;
+  virtual bool GetMaster(uint32_t group_id, Member* i,
+                         uint64_t* version) const = 0;
 
   // Check whether I'm master or not.
   virtual bool IsMaster(uint32_t group_id) const = 0;

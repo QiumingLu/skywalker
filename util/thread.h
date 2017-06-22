@@ -12,7 +12,7 @@ namespace skywalker {
 
 namespace CurrentThread {
 
-extern __thread uint64_t  cached_tid;
+extern __thread uint64_t cached_tid;
 
 extern uint64_t Tid();
 

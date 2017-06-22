@@ -6,9 +6,9 @@
 
 #include <random>
 
-#include "util/timeops.h"
-#include "paxos/config.h"
 #include "log/log_manager.h"
+#include "paxos/config.h"
+#include "util/timeops.h"
 
 namespace skywalker {
 
@@ -19,10 +19,7 @@ void* LogCleaner::StartGC(void* data) {
 }
 
 LogCleaner::LogCleaner(Config* config, LogManager* manager)
-    : config_(config),
-      manager_(manager),
-      stop_(false) {
-}
+    : config_(config), manager_(manager), stop_(false) {}
 
 LogCleaner::~LogCleaner() {
   exit_ = true;
@@ -35,13 +32,9 @@ void LogCleaner::Start() {
   thread_.Start(&LogCleaner::StartGC, this);
 }
 
-void LogCleaner::StartGC() {
-  stop_ = false;
-}
+void LogCleaner::StartGC() { stop_ = false; }
 
-void LogCleaner::StopGC() {
-  stop_ = true;
-}
+void LogCleaner::StopGC() { stop_ = true; }
 
 void LogCleaner::GCLoop() {
   exit_ = false;

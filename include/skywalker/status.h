@@ -13,7 +13,7 @@ namespace skywalker {
 
 class Status {
  public:
-  Status() : state_(nullptr) { }
+  Status() : state_(nullptr) {}
   ~Status() { delete[] state_; }
 
   Status(const Status& s);
@@ -21,9 +21,7 @@ class Status {
   void operator=(const Status& s);
   void operator=(Status&& s);
 
-  static Status OK() {
-    return Status();
-  }
+  static Status OK() { return Status(); }
   static Status InvalidNode(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kInvalidNode, msg, msg2);
   }
@@ -42,7 +40,7 @@ class Status {
 
   bool ok() const { return state_ == nullptr; }
   bool IsInvalidNode() const { return code() == kInvalidNode; }
-  bool IsConflict() const {  return code() == kConflict; }
+  bool IsConflict() const { return code() == kConflict; }
   bool IsMachineError() const { return code() == kMachineError; }
   bool IsTimeout() const { return code() == kTimeout; }
   bool IsIOError() const { return code() == kIOError; }

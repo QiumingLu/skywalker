@@ -11,9 +11,7 @@
 
 namespace skywalker {
 
-MachineManager::MachineManager(Config* config)
-    : config_(config) {
-}
+MachineManager::MachineManager(Config* config) : config_(config) {}
 
 void MachineManager::AddMachine(StateMachine* machine) {
   machines_.insert(std::make_pair(machine->machine_id(), machine));
@@ -23,9 +21,8 @@ void MachineManager::RemoveMachine(StateMachine* machine) {
   machines_.erase(machine->machine_id());
 }
 
-bool MachineManager::Execute(
-    uint64_t instance_id,
-    const PaxosValue& value, void* context) {
+bool MachineManager::Execute(uint64_t instance_id, const PaxosValue& value,
+                             void* context) {
   auto it = machines_.find(value.machine_id());
   if (it != machines_.end()) {
     assert(it->second != nullptr);

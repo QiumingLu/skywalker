@@ -10,13 +10,9 @@
 namespace skywalker {
 
 CheckpointManager::CheckpointManager(Config* config)
-    : config_(config),
-      sender_(config, this),
-      receiver_(config, this) {
-}
+    : config_(config), sender_(config, this), receiver_(config, this) {}
 
-CheckpointManager::~CheckpointManager() {
-}
+CheckpointManager::~CheckpointManager() {}
 
 uint64_t CheckpointManager::GetCheckpointInstanceId() const {
   uint64_t id = -1;
@@ -26,7 +22,8 @@ uint64_t CheckpointManager::GetCheckpointInstanceId() const {
       id = id - 1;
     }
   } else {
-    id = config_->GetCheckpoint()->GetCheckpointInstanceId(config_->GetGroupId());
+    id = config_->GetCheckpoint()->GetCheckpointInstanceId(
+        config_->GetGroupId());
   }
   return id;
 }

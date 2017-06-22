@@ -5,13 +5,12 @@
 #include "machine/master_machine.h"
 #include "paxos/config.h"
 #include "skywalker/logging.h"
-#include "util/timeops.h"
 #include "util/mutexlock.h"
+#include "util/timeops.h"
 
 namespace skywalker {
 
-MasterMachine::MasterMachine(Config* config)
-    : config_(config) {
+MasterMachine::MasterMachine(Config* config) : config_(config) {
   set_machine_id(1);
 }
 
@@ -27,8 +26,7 @@ void MasterMachine::Recover() {
 }
 
 bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
-                            const std::string& value,
-                            void* /* context */) {
+                            const std::string& value, void* /* context */) {
   MasterState state;
   if (state.ParseFromString(value)) {
     if (instance_id < state_.version()) {
@@ -39,11 +37,12 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
     if (ret == 0) {
       state.set_lease_time(NowMicros() + state.lease_time());
       SetMasterState(state);
-      LOG_INFO("Group %u - now the master's version=%llu, "
-               "node_id=%llu, lease_time=%llu.",
-               config_->GetGroupId(), (unsigned long long)state.version(),
-               (unsigned long long)state.node_id(),
-               (unsigned long long)state.lease_time());
+      LOG_INFO(
+          "Group %u - now the master's version=%llu, "
+          "node_id=%llu, lease_time=%llu.",
+          config_->GetGroupId(), (unsigned long long)state.version(),
+          (unsigned long long)state.node_id(),
+          (unsigned long long)state.lease_time());
       return true;
     } else {
       LOG_ERROR("Group %u - update master state failed.",

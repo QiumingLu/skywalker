@@ -7,16 +7,13 @@
 
 namespace skywalker {
 
-Counter::Counter(const Config* config) : config_(config) {
-}
+Counter::Counter(const Config* config) : config_(config) {}
 
 void Counter::AddReceivedNode(uint64_t node_id) {
   received_nodes_.insert(node_id);
 }
 
-void Counter::AddRejector(uint64_t node_id) {
-  rejectors_.insert(node_id);
-}
+void Counter::AddRejector(uint64_t node_id) { rejectors_.insert(node_id); }
 
 void Counter::AddPromisorOrAcceptor(uint64_t node_id) {
   promisors_or_acceptors_.insert(node_id);

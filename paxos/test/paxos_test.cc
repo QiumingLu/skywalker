@@ -2,16 +2,18 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <inttypes.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
-#include <voyager/util/string_util.h>
+
 #include <skywalker/node.h>
 #include <skywalker/node_util.h>
+#include <voyager/util/string_util.h>
 
 int main(int argc, char** argv) {
   if (argc != 3) {
@@ -65,11 +67,10 @@ int main(int argc, char** argv) {
     printf("please enter value:\n");
     std::string value;
     std::getline(std::cin, value);
-    node->Propose(
-        0, value, -1, nullptr,
-        [](void*, const skywalker::Status& s, uint64_t instance_id) {
-      printf("%s\n", s.ToString().c_str());
-    });
+    node->Propose(0, value, -1, nullptr,
+                  [](void*, const skywalker::Status& s, uint64_t instance_id) {
+                    printf("%s\n", s.ToString().c_str());
+                  });
   }
 
   delete g_options.checkpoint;

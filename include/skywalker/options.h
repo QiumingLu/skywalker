@@ -11,8 +11,8 @@
 #include <string>
 #include <vector>
 
-#include "skywalker/state_machine.h"
 #include "skywalker/checkpoint.h"
+#include "skywalker/state_machine.h"
 #include "skywalker/status.h"
 
 namespace skywalker {
@@ -26,12 +26,26 @@ struct Member {
 
 struct GroupOptions {
   uint32_t group_id;
+
+  // Default: true
   bool use_master;
+
+  // Default: true
   bool log_sync;
+
+  // Default: 10 * 1000 * 1000 microseconds
+  uint64_t master_lease_time;
+
+  // Default: 5
   uint32_t sync_interval;
+
+  // Default: 10000
   uint32_t keep_log_count;
+
+  // Default: ""
   std::string log_storage_path;
 
+  // Default: nullptr
   Checkpoint* checkpoint;
 
   std::vector<StateMachine*> machines;
@@ -48,13 +62,13 @@ struct Options {
   Options();
 };
 
-typedef std::function<void (void* context,
-                            const Status& s,
-                            uint64_t instance_id)> ProposeCompleteCallback;
+typedef std::function<void(void* context, const Status& s,
+                           uint64_t instance_id)>
+    ProposeCompleteCallback;
 
-typedef std::function<void (const Status& s,
-                            uint64_t instance_id)> ChangeMemberCompleteCallback;
+typedef std::function<void(const Status& s, uint64_t instance_id)>
+    ChangeMemberCompleteCallback;
 
 }  // namespace skywalker
 
-#endif   // SKYWALKER_INCLUDE_OPTIONS_H_
+#endif  // SKYWALKER_INCLUDE_OPTIONS_H_

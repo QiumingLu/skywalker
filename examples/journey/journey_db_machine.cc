@@ -4,13 +4,12 @@
 
 #include <iostream>
 
-#include "journey_db_machine.h"
 #include "journey.pb.h"
+#include "journey_db_machine.h"
 
 namespace journey {
 
-JourneyDBMachine::JourneyDBMachine() {
-}
+JourneyDBMachine::JourneyDBMachine() {}
 
 bool JourneyDBMachine::OpenDB(const std::string& path) {
   return db_.Open(path);
@@ -20,10 +19,8 @@ int JourneyDBMachine::Get(const std::string& key, std::string* value) {
   return db_.Get(key, value);
 }
 
-bool JourneyDBMachine::Execute(uint32_t groud_id,
-                               uint64_t instance_id,
-                               const std::string& value,
-                               void* context) {
+bool JourneyDBMachine::Execute(uint32_t groud_id, uint64_t instance_id,
+                               const std::string& value, void* context) {
   RequestMessage msg;
   bool res = msg.ParseFromString(value);
   if (res) {
@@ -38,8 +35,7 @@ bool JourneyDBMachine::Execute(uint32_t groud_id,
     }
     if (op == 0) {
       if (context != nullptr) {
-        ResponseMessage* response =
-          reinterpret_cast<ResponseMessage*>(context);
+        ResponseMessage* response = reinterpret_cast<ResponseMessage*>(context);
         response->set_result(PROPOSE_RESULT_SUCCESS);
       }
       return true;

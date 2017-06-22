@@ -3,13 +3,12 @@
 // found in the LICENSE file.
 
 #include "paxos/config.h"
-#include "skywalker/logging.h"
 #include "skywalker/file.h"
+#include "skywalker/logging.h"
 
 namespace skywalker {
 
-Config::Config(uint64_t node_id,
-               const GroupOptions& options, Network* network)
+Config::Config(uint64_t node_id, const GroupOptions& options, Network* network)
     : node_id_(node_id),
       group_id_(options.group_id),
       log_sync_(options.log_sync),
@@ -18,6 +17,7 @@ Config::Config(uint64_t node_id,
       log_storage_path_(options.log_storage_path),
       machines_(options.machines),
       followers_(new Membership()),
+      default_checkpoint_(nullptr),
       checkpoint_(options.checkpoint),
       db_(new DB(this)),
       messager_(new Messager(this, network)),
@@ -37,6 +37,11 @@ Config::Config(uint64_t node_id,
   checkpoint_path_ = log_storage_path_ + "/checkpoint";
   log_path_ = log_storage_path_ + "/log";
 
+  if (!checkpoint_) {
+    default_checkpoint_ = new Checkpoint();
+    checkpoint_ = default_checkpoint_;
+  }
+
   MemberMessage member;
   for (auto& i : options.followers) {
     member.set_id(i.id);
@@ -55,6 +60,7 @@ Config::~Config() {
   delete machine_manager_;
   delete messager_;
   delete db_;
+  delete default_checkpoint_;
 }
 
 bool Config::Init() {
@@ -62,15 +68,15 @@ bool Config::Init() {
   FileManager::Instance()->CreateDir(checkpoint_path_);
   bool exists = FileManager::Instance()->FileExists(checkpoint_path_);
   if (!exists) {
-    LOG_ERROR("Group %u - checkpoint path(%s) access failed.",
-              group_id_, checkpoint_path_.c_str());
+    LOG_ERROR("Group %u - checkpoint path(%s) access failed.", group_id_,
+              checkpoint_path_.c_str());
     return false;
   }
 
   int res = db_->Open(log_path_);
   if (res != 0) {
-    LOG_ERROR("Group %u - db open failed, which path is %s.",
-              group_id_, log_storage_path_.c_str());
+    LOG_ERROR("Group %u - db open failed, which path is %s.", group_id_,
+              log_storage_path_.c_str());
     return false;
   }
 

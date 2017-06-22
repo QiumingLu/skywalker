@@ -7,10 +7,10 @@
 #include <vector>
 
 #include "log/checkpoint_manager.h"
-#include "util/mutexlock.h"
-#include "skywalker/logging.h"
-#include "skywalker/file.h"
 #include "paxos/config.h"
+#include "skywalker/file.h"
+#include "skywalker/logging.h"
+#include "util/mutexlock.h"
 
 namespace skywalker {
 
@@ -22,11 +22,9 @@ CheckpointSender::CheckpointSender(Config* config, CheckpointManager* manager)
       mutex_(),
       cond_(&mutex_),
       ack_sequence_id_(0),
-      flag_(true) {
-}
+      flag_(true) {}
 
-CheckpointSender::~CheckpointSender() {
-}
+CheckpointSender::~CheckpointSender() {}
 
 bool CheckpointSender::SendCheckpoint(uint64_t node_id) {
   receiver_node_id_ = node_id;
@@ -96,9 +94,9 @@ bool CheckpointSender::SendCheckpointFiles(uint64_t instance_id) {
   return res;
 }
 
-bool CheckpointSender::SendFile(
-    uint64_t instance_id, int machine_id,
-    const std::string& dir, const std::string& file) {
+bool CheckpointSender::SendFile(uint64_t instance_id, int machine_id,
+                                const std::string& dir,
+                                const std::string& file) {
   std::string fname = dir + file;
   SequentialFile* seq_file;
   Status s = FileManager::Instance()->NewSequentialFile(fname, &seq_file);
@@ -141,13 +139,13 @@ bool CheckpointSender::SendFile(
 }
 
 void CheckpointSender::EndToSend(uint64_t instance_id) {
-  CheckpointMessage* end =  new CheckpointMessage();
+  CheckpointMessage* end = new CheckpointMessage();
   end->set_type(CHECKPOINT_END);
   end->set_node_id(config_->GetNodeId());
   end->set_instance_id(instance_id);
   end->set_sequence_id(sequence_id_++);
-  config_->GetMessager()->SendMessage(
-      receiver_node_id_, config_->GetMessager()->PackMessage(end));
+  config_->GetMessager()->SendMessage(receiver_node_id_,
+                                      config_->GetMessager()->PackMessage(end));
 }
 
 void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
@@ -158,12 +156,13 @@ void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
     flag_ = msg.flag();
     cond_.Signal();
   } else {
-    LOG_WARN("Group %u - receive a confirm message, "
-             "which node_id = %llu, sequence_id=%d, "
-             "but my sender_node_id_=%llu, ack_sequence_id_=%d.",
-             config_->GetGroupId(), (unsigned long long)msg.node_id(),
-             msg.sequence_id(), (unsigned long long)receiver_node_id_,
-             ack_sequence_id_);
+    LOG_WARN(
+        "Group %u - receive a confirm message, "
+        "which node_id = %llu, sequence_id=%d, "
+        "but my sender_node_id_=%llu, ack_sequence_id_=%d.",
+        config_->GetGroupId(), (unsigned long long)msg.node_id(),
+        msg.sequence_id(), (unsigned long long)receiver_node_id_,
+        ack_sequence_id_);
   }
 }
 

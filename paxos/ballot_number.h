@@ -11,11 +11,10 @@ namespace skywalker {
 
 class BallotNumber {
  public:
-  BallotNumber() : proposal_id_(0), node_id_(0) { }
+  BallotNumber() : proposal_id_(0), node_id_(0) {}
 
   BallotNumber(uint64_t proposal_id, uint64_t node_id)
-      : proposal_id_(proposal_id), node_id_(node_id) {
-  }
+      : proposal_id_(proposal_id), node_id_(node_id) {}
 
   void SetProposalId(uint64_t id) { proposal_id_ = id; }
   uint64_t GetProposalId() const { return proposal_id_; }
@@ -43,7 +42,6 @@ inline bool operator==(const BallotNumber& x, const BallotNumber& y) {
 inline bool operator!=(const BallotNumber& x, const BallotNumber& y) {
   return !(x == y);
 }
-
 
 inline bool operator<(const BallotNumber& x, const BallotNumber& y) {
   if (x.GetProposalId() == y.GetProposalId()) {

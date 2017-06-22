@@ -4,14 +4,14 @@
 
 #include "skywalker/file.h"
 
-#include <errno.h>
-#include <stdio.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 namespace skywalker {
 
@@ -30,17 +30,13 @@ class PosixSequentialFile : public SequentialFile {
 
  public:
   PosixSequentialFile(const std::string& fname, FILE* f)
-      : filename_(fname),
-        file_(f) {
-  }
+      : filename_(fname), file_(f) {}
 
-  virtual ~PosixSequentialFile() {
-    fclose(file_);
-  }
+  virtual ~PosixSequentialFile() { fclose(file_); }
 
   virtual Status Read(size_t n, Slice* result, char* scratch) {
     Status s;
-    size_t r =  fread(scratch, 1, n, file_);
+    size_t r = fread(scratch, 1, n, file_);
     *result = Slice(scratch, r);
     if (r < n) {
       if (feof(file_)) {
@@ -68,12 +64,9 @@ class PosixRandomAccessFile : public RandomAccessFile {
 
  public:
   PosixRandomAccessFile(const std::string& fname, int fd)
-      : filename_(fname), fd_(fd) {
-  }
+      : filename_(fname), fd_(fd) {}
 
-  virtual ~PosixRandomAccessFile() {
-    close(fd_);
-  }
+  virtual ~PosixRandomAccessFile() { close(fd_); }
 
   virtual Status Read(uint64_t offset, size_t n, Slice* result,
                       char* scratch) const {
@@ -96,14 +89,9 @@ class PosixMmapReadableFile : public RandomAccessFile {
  public:
   // base[0, length-1] contains the mmapped contents of the file
   PosixMmapReadableFile(const std::string& fname, void* base, size_t length)
-      : filename_(fname),
-        mmaped_region_(base),
-        length_(length) {
-  }
+      : filename_(fname), mmaped_region_(base), length_(length) {}
 
-  virtual ~PosixMmapReadableFile() {
-    munmap(mmaped_region_, length_);
-  }
+  virtual ~PosixMmapReadableFile() { munmap(mmaped_region_, length_); }
 
   virtual Status Read(uint64_t offset, size_t n, Slice* result,
                       char* scratch) const {
@@ -125,7 +113,7 @@ class PosixWritableFile : public WritableFile {
 
  public:
   PosixWritableFile(const std::string& fname, FILE* f)
-      : filename_(fname), file_(f) { }
+      : filename_(fname), file_(f) {}
 
   virtual ~PosixWritableFile() {
     if (file_ != nullptr) {
@@ -165,14 +153,11 @@ class PosixWritableFile : public WritableFile {
   }
 };
 
-SequentialFile::~SequentialFile() {
-}
+SequentialFile::~SequentialFile() {}
 
-RandomAccessFile::~RandomAccessFile() {
-}
+RandomAccessFile::~RandomAccessFile() {}
 
-WritableFile::~WritableFile() {
-}
+WritableFile::~WritableFile() {}
 
 Status FileManager::NewSequentialFile(const std::string& fname,
                                       SequentialFile** result) {
@@ -309,8 +294,7 @@ bool FileManager::FileExists(const std::string& fname) {
   return access(fname.c_str(), F_OK) == 0;
 }
 
-Status ReadFileToString(FileManager* manager,
-                        const std::string& fname,
+Status ReadFileToString(FileManager* manager, const std::string& fname,
                         std::string* data) {
   data->clear();
   SequentialFile* file;
@@ -336,10 +320,8 @@ Status ReadFileToString(FileManager* manager,
   return s;
 }
 
-static Status DoWriteStringToFile(FileManager* manager,
-                                  const Slice& data,
-                                  const std::string& fname,
-                                  bool should_sync) {
+static Status DoWriteStringToFile(FileManager* manager, const Slice& data,
+                                  const std::string& fname, bool should_sync) {
   WritableFile* file;
   Status s = manager->NewWritableFile(fname, &file);
   if (!s.ok()) {
@@ -373,9 +355,7 @@ pthread_once_t FileManager::once_ = PTHREAD_ONCE_INIT;
 
 FileManager* FileManager::file_manager_ = nullptr;
 
-void FileManager::InitFileManager() {
-  file_manager_ =  new FileManager();
-}
+void FileManager::InitFileManager() { file_manager_ = new FileManager(); }
 
 FileManager* FileManager::Instance() {
   pthread_once(&once_, &FileManager::InitFileManager);

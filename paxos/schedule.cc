@@ -7,9 +7,7 @@
 namespace skywalker {
 
 Schedule::Schedule(bool use_master)
-    : use_master_(use_master),
-      master_loop_(nullptr) {
-}
+    : use_master_(use_master), master_loop_(nullptr) {}
 
 void Schedule::Start() {
   callback_loop_ = callback_thread_.Loop();
@@ -20,20 +18,12 @@ void Schedule::Start() {
   }
 }
 
-RunLoop* Schedule::MasterLoop() const {
-  return master_loop_;
-}
+RunLoop* Schedule::MasterLoop() const { return master_loop_; }
 
-RunLoop* Schedule::LearnLoop() const {
-  return learn_loop_;
-}
+RunLoop* Schedule::LearnLoop() const { return learn_loop_; }
 
-RunLoop* Schedule::IOLoop() const {
-  return io_loop_;
-}
+RunLoop* Schedule::IOLoop() const { return io_loop_; }
 
-RunLoop* Schedule::CallbackLoop() const {
-  return callback_loop_;
-}
+RunLoop* Schedule::CallbackLoop() const { return callback_loop_; }
 
 }  // namespace skywalker

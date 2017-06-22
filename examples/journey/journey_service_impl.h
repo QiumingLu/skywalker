@@ -6,6 +6,7 @@
 #define JOURNEY_JOURNEY_SERVICE_IMPL_H_
 
 #include <string>
+
 #include <skywalker/node.h>
 
 #include "journey.pb.h"

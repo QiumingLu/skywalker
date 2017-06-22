@@ -4,8 +4,8 @@
 
 #include "machine/membership_machine.h"
 #include "paxos/config.h"
-#include "skywalker/logging.h"
 #include "proto/paxos.pb.h"
+#include "skywalker/logging.h"
 #include "util/mutexlock.h"
 
 namespace skywalker {
@@ -38,8 +38,7 @@ void MembershipMachine::Recover() {
 }
 
 bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
-                                const std::string& value,
-                                void* /* context */) {
+                                const std::string& value, void* /* context */) {
   MemberChangeMessage temp;
   if (temp.ParseFromString(value)) {
     MutexLock lock(&mutex_);
@@ -55,7 +54,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
       membership_.reset(new Membership());
     }
     if (!has_sync_membership_) {
-      has_sync_membership_= true;
+      has_sync_membership_ = true;
     }
     assert(membership_.unique());
 
@@ -63,7 +62,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
       const MemberMessage& member = temp.member(i);
       if (temp.type(i) == MEMBER_ADD) {
         (*(membership_->mutable_members()))[member.id()] = member;
-      } else if (temp.type(i) == MEMBER_REMOVE){
+      } else if (temp.type(i) == MEMBER_REMOVE) {
         membership_->mutable_members()->erase(member.id());
       }
     }

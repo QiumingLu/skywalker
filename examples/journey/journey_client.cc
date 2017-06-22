@@ -3,14 +3,17 @@
 // found in the LICENSE file.
 
 #include <stdio.h>
+
 #include <iostream>
-#include <vector>
 #include <map>
-#include <voyager/util/string_util.h>
-#include <voyager/core/tcp_client.h>
-#include <voyager/core/sockaddr.h>
+#include <vector>
+
 #include <voyager/core/eventloop.h>
+#include <voyager/core/sockaddr.h>
+#include <voyager/core/tcp_client.h>
 #include <voyager/rpc/rpc_channel.h>
+#include <voyager/util/string_util.h>
+
 #include "journey.pb.h"
 
 namespace journey {
@@ -43,9 +46,7 @@ class JourneyClient {
 
 JourneyClient::JourneyClient(voyager::EventLoop* loop,
                              const std::string& server)
-    : loop_(loop),
-      server_(server) {
-}
+    : loop_(loop), server_(server) {}
 
 JourneyClient::~JourneyClient() {
   for (auto& it : channels_) {
@@ -110,8 +111,10 @@ void JourneyClient::CreateNewChannel(const RequestMessage& request) {
   std::vector<std::string> ipport;
   voyager::SplitStringUsing(server_, ":", &ipport);
   if (ipport.size() != 2) {
-    printf("%s, invalid server_ip:server_port, "
-           "please enter new server_ip:server_port\n", server_.c_str());
+    printf(
+        "%s, invalid server_ip:server_port, "
+        "please enter new server_ip:server_port\n",
+        server_.c_str());
     if (GetLine(true)) {
       Propose(v_);
     }
@@ -121,17 +124,17 @@ void JourneyClient::CreateNewChannel(const RequestMessage& request) {
   voyager::SockAddr addr(ipport[0], std::stoi(ipport[1]));
   voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
 
-  client->SetConnectionCallback(
-      [request, this](const voyager::TcpConnectionPtr& p) {
+  client->SetConnectionCallback([request,
+                                 this](const voyager::TcpConnectionPtr& p) {
     voyager::RpcChannel* channel = new voyager::RpcChannel(loop_);
     channels_[server_] = channel;
     ResponseMessage* response = new ResponseMessage();
     channel->SetTcpConnectionPtr(p);
     channel->SetErrorCallback(
         std::bind(&JourneyClient::HandleError, this, std::placeholders::_1));
-    p->SetMessageCallback(
-        std::bind(&voyager::RpcChannel::OnMessage, channel,
-                  std::placeholders::_1, std::placeholders::_2));
+    p->SetMessageCallback(std::bind(&voyager::RpcChannel::OnMessage, channel,
+                                    std::placeholders::_1,
+                                    std::placeholders::_2));
     JourneyService_Stub stub(channel);
     stub.Propose(
         nullptr, &request, response,
@@ -146,8 +149,7 @@ void JourneyClient::CreateNewChannel(const RequestMessage& request) {
     }
   });
 
-  client->SetCloseCallback(
-      [client, this](const voyager::TcpConnectionPtr& p) {
+  client->SetCloseCallback([client, this](const voyager::TcpConnectionPtr& p) {
     auto it = channels_.find(server_);
     channels_.erase(it);
     delete it->second;
@@ -212,8 +214,8 @@ void JourneyClient::Done(ResponseMessage* response) {
     printf(", value:%s", response->value().c_str());
   }
 
-  if (response->result() == PROPOSE_RESULT_NOT_MASTER
-      && response->has_master()) {
+  if (response->result() == PROPOSE_RESULT_NOT_MASTER &&
+      response->has_master()) {
     server_ = response->master_ip();
     server_ += ":";
     server_ += std::to_string(response->master_port() + 1000);
