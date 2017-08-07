@@ -4,26 +4,39 @@
 
 #include "paxos/schedule.h"
 
+#include <assert.h>
+
 namespace skywalker {
 
-Schedule::Schedule(bool use_master)
-    : use_master_(use_master), master_loop_(nullptr) {}
+Schedule::Schedule()
+    : started_(false),
+      callback_loop_(nullptr),
+      learn_loop_(nullptr),
+      master_loop_(nullptr) {}
 
-void Schedule::Start() {
+void Schedule::Start(bool use_master) {
+  assert(!started_);
+  started_ = true;
   callback_loop_ = callback_thread_.Loop();
-  io_loop_ = io_thread_.Loop();
   learn_loop_ = learn_thread_.Loop();
-  if (use_master_) {
+  if (use_master) {
     master_loop_ = master_thread_.Loop();
   }
 }
 
-RunLoop* Schedule::MasterLoop() const { return master_loop_; }
+RunLoop* Schedule::MasterLoop() const {
+  assert(started_);
+  return master_loop_;
+}
 
-RunLoop* Schedule::LearnLoop() const { return learn_loop_; }
+RunLoop* Schedule::LearnLoop() const {
+  assert(started_);
+  return learn_loop_;
+}
 
-RunLoop* Schedule::IOLoop() const { return io_loop_; }
-
-RunLoop* Schedule::CallbackLoop() const { return callback_loop_; }
+RunLoop* Schedule::CallbackLoop() const {
+  assert(started_);
+  return callback_loop_;
+}
 
 }  // namespace skywalker

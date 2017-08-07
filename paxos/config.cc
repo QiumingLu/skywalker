@@ -63,7 +63,7 @@ Config::~Config() {
   delete default_checkpoint_;
 }
 
-bool Config::Init() {
+bool Config::Recover() {
   FileManager::Instance()->CreateDir(log_storage_path_);
   FileManager::Instance()->CreateDir(checkpoint_path_);
   bool exists = FileManager::Instance()->FileExists(checkpoint_path_);
@@ -89,7 +89,7 @@ bool Config::Init() {
   membership_machine_->Recover();
   master_machine_->Recover();
 
-  LOG_INFO("Group %u - Config init successful!", group_id_);
+  LOG_INFO("Group %u - Config recover successful!", group_id_);
 
   return true;
 }

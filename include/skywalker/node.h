@@ -53,8 +53,8 @@ class Node {
   // If propose success returns true, else returns false.
   // The callback status like calling Node::Propose().
   virtual bool ChangeMember(uint32_t group_id,
-                            const std::map<Member, bool>& value,
-                            const ChangeMemberCompleteCallback& cb) = 0;
+                            const std::map<Member, bool>& value, void* context,
+                            const ProposeCompleteCallback& cb) = 0;
 
   // Returns the membership.
   virtual void GetMembership(uint32_t group_id, std::vector<Member>* result,

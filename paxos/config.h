@@ -26,7 +26,7 @@ class Config {
   Config(uint64_t node_id, const GroupOptions& options, Network* network);
   ~Config();
 
-  bool Init();
+  bool Recover();
 
   Checkpoint* GetCheckpoint() const { return checkpoint_; }
   DB* GetDB() const { return db_; }

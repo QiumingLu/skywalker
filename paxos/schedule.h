@@ -12,32 +12,32 @@ namespace skywalker {
 
 class Schedule {
  public:
-  explicit Schedule(bool use_master = true);
+  static Schedule* Instance() {
+    static Schedule schedule;
+    return &schedule;
+  }
 
-  void Start();
+  void Start(bool use_master = true);
 
   RunLoop* MasterLoop() const;
 
   RunLoop* LearnLoop() const;
 
-  RunLoop* IOLoop() const;
-
   RunLoop* CallbackLoop() const;
 
  private:
-  bool use_master_;
+  bool started_;
 
   RunLoop* callback_loop_;
-  RunLoop* io_loop_;
   RunLoop* learn_loop_;
   RunLoop* master_loop_;
 
   RunLoopThread callback_thread_;
-  RunLoopThread io_thread_;
   RunLoopThread learn_thread_;
   RunLoopThread master_thread_;
 
-  // No copying allowed
+  Schedule();
+  ~Schedule() {}
   Schedule(const Schedule&);
   void operator=(const Schedule&);
 };

@@ -6,6 +6,7 @@
 
 #include <utility>
 
+#include "paxos/schedule.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/logging.h"
 
@@ -18,16 +19,25 @@ NodeImpl::~NodeImpl() { stop_ = true; }
 
 bool NodeImpl::StartWorking() {
   bool res = true;
+  bool use_master = true;
   for (auto& g : options_.groups) {
+    if (g.use_master) {
+      use_master = true;
+    }
     std::unique_ptr<Group> group(new Group(options_.my.id, g, &network_));
-    res = group->Start();
+    res = group->Recover();
     if (res) {
-      LOG_DEBUG("Group %u start successful!", g.group_id);
+      LOG_DEBUG("Group %u recover successful!", g.group_id);
       groups_.insert(std::make_pair(g.group_id, std::move(group)));
     } else {
-      LOG_DEBUG("Group %u start failed!", g.group_id);
+      LOG_DEBUG("Group %u recover failed!", g.group_id);
       return res;
     }
+  }
+
+  Schedule::Instance()->Start(use_master);
+  for (auto& g : groups_) {
+    g.second->Start();
   }
 
   network_.StartServer(
@@ -76,12 +86,12 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
 }
 
 bool NodeImpl::ChangeMember(uint32_t group_id,
-                            const std::map<Member, bool>& value,
-                            const ChangeMemberCompleteCallback& cb) {
+                            const std::map<Member, bool>& value, void* context,
+                            const ProposeCompleteCallback& cb) {
   if (!Valid(group_id)) {
     return false;
   }
-  return groups_.at(group_id)->ChangeMember(value, cb);
+  return groups_.at(group_id)->ChangeMember(value, context, cb);
 }
 
 void NodeImpl::GetMembership(uint32_t group_id, std::vector<Member>* result,

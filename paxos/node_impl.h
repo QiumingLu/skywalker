@@ -36,8 +36,8 @@ class NodeImpl : public Node {
                        ProposeCompleteCallback&& cb);
 
   virtual bool ChangeMember(uint32_t group_id,
-                            const std::map<Member, bool>& value,
-                            const ChangeMemberCompleteCallback& cb);
+                            const std::map<Member, bool>& value, void* context,
+                            const ProposeCompleteCallback& cb);
 
   virtual void GetMembership(uint32_t group_id, std::vector<Member>* result,
                              uint64_t* version) const;

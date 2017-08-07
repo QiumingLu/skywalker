@@ -16,13 +16,13 @@ Group::Group(uint64_t node_id, const GroupOptions& options, Network* network)
     : node_id_(node_id),
       config_(node_id, options, network),
       instance_(&config_),
+      use_master_(options.use_master),
       lease_timeout_(options.master_lease_time),
       retrie_master_(false),
       mutex_(),
       cond_(&mutex_),
       propose_end_(false),
-      propose_queue_(100),
-      schedule_(new Schedule(options.use_master)) {
+      propose_queue_(100) {
   propose_cb_ = std::bind(&ProposeQueue::ProposeComplete, &propose_queue_,
                           std::placeholders::_1, std::placeholders::_2,
                           std::placeholders::_3);
@@ -32,16 +32,19 @@ Group::Group(uint64_t node_id, const GroupOptions& options, Network* network)
   master_machine_ = config_.GetMasterMachine();
 }
 
-bool Group::Start() {
-  if (config_.Init() && instance_.Recover()) {
-    schedule_->Start();
-    instance_.SetIOLoop(schedule_->IOLoop());
-    instance_.SetLearnLoop(schedule_->LearnLoop());
-    propose_queue_.SetIOLoop(schedule_->IOLoop());
-    propose_queue_.SetCallbackLoop(schedule_->CallbackLoop());
+bool Group::Recover() {
+  if (config_.Recover() && instance_.Recover()) {
     return true;
   }
   return false;
+}
+
+void Group::Start() {
+  io_loop_ = io_thread_.Loop();
+  instance_.SetIOLoop(io_loop_);
+  propose_queue_.SetIOLoop(io_loop_);
+  instance_.SetLearnLoop(Schedule::Instance()->LearnLoop());
+  propose_queue_.SetCallbackLoop(Schedule::Instance()->CallbackLoop());
 }
 
 void Group::SyncMembership() {
@@ -78,7 +81,7 @@ void Group::SyncMembershipInLoop() {
 }
 
 void Group::SyncMaster() {
-  if (schedule_->MasterLoop() != nullptr) {
+  if (use_master_) {
     TryBeMaster();
   }
 }
@@ -106,7 +109,7 @@ void Group::TryBeMaster() {
     retrie_master_ = false;
   }
 
-  schedule_->MasterLoop()->RunAt(next, [this]() { TryBeMaster(); });
+  Schedule::Instance()->MasterLoop()->RunAt(next, [this]() { TryBeMaster(); });
 }
 
 void Group::TryBeMasterInLoop() {
@@ -137,12 +140,11 @@ bool Group::OnPropose(const std::string& value, int machine_id, void* context,
 }
 
 void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
-  schedule_->IOLoop()->QueueInLoop(
-      [c, this]() { instance_.OnReceiveContent(c); });
+  io_loop_->QueueInLoop([c, this]() { instance_.OnReceiveContent(c); });
 }
 
-bool Group::ChangeMember(const std::map<Member, bool>& value,
-                         const ChangeMemberCompleteCallback& cb) {
+bool Group::ChangeMember(const std::map<Member, bool>& value, void* context,
+                         const ProposeCompleteCallback& cb) {
   MemberMessage member;
   MemberChangeMessage change;
   for (auto i : value) {
@@ -158,8 +160,7 @@ bool Group::ChangeMember(const std::map<Member, bool>& value,
     }
   }
   return OnPropose(change.SerializeAsString(),
-                   membership_machine_->machine_id(), nullptr,
-                   [cb](void*, const Status& s, uint64_t id) { cb(s, id); });
+                   membership_machine_->machine_id(), context, cb);
 }
 
 bool Group::NewPropose(ProposeHandler&& f) {
@@ -220,8 +221,9 @@ bool Group::GetMaster(Member* i, uint64_t* version) const {
 bool Group::IsMaster() const { return master_machine_->IsMaster(); }
 
 void Group::RetireMaster() {
-  if (schedule_->MasterLoop()) {
-    schedule_->MasterLoop()->QueueInLoop([this]() { retrie_master_ = true; });
+  if (use_master_) {
+    Schedule::Instance()->MasterLoop()->QueueInLoop(
+        [this]() { retrie_master_ = true; });
   } else {
     LOG_WARN("Group %u - You don't use master.", config_.GetGroupId());
   }

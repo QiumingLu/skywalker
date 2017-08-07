@@ -29,7 +29,8 @@ class Group {
  public:
   Group(uint64_t node_id, const GroupOptions& options, Network* network);
 
-  bool Start();
+  bool Recover();
+  void Start();
 
   void SyncMembership();
   void SyncMaster();
@@ -42,8 +43,8 @@ class Group {
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
-  bool ChangeMember(const std::map<Member, bool>& value,
-                    const ChangeMemberCompleteCallback& cb);
+  bool ChangeMember(const std::map<Member, bool>& value, void* context,
+                    const ProposeCompleteCallback& cb);
   void GetMembership(std::vector<Member>* result, uint64_t* version) const;
 
   bool GetMaster(Member* i, uint64_t* version) const;
@@ -65,6 +66,7 @@ class Group {
   Config config_;
   Instance instance_;
 
+  bool use_master_;
   uint64_t lease_timeout_;
   bool retrie_master_;
   MembershipMachine* membership_machine_;
@@ -77,7 +79,8 @@ class Group {
   Status result_;
 
   ProposeQueue propose_queue_;
-  std::unique_ptr<Schedule> schedule_;
+  RunLoop* io_loop_;
+  RunLoopThread io_thread_;
 
   // No copying allowed
   Group(const Group&);

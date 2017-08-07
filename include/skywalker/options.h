@@ -39,7 +39,7 @@ struct GroupOptions {
   // Default: 5
   uint32_t sync_interval;
 
-  // Default: 10000
+  // Default: 100000
   uint32_t keep_log_count;
 
   // Default: ""
@@ -65,9 +65,6 @@ struct Options {
 typedef std::function<void(void* context, const Status& s,
                            uint64_t instance_id)>
     ProposeCompleteCallback;
-
-typedef std::function<void(const Status& s, uint64_t instance_id)>
-    ChangeMemberCompleteCallback;
 
 }  // namespace skywalker
 
