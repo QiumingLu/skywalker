@@ -61,8 +61,8 @@ void JourneyServiceImpl::Propose(google::protobuf::RpcController* controller,
       std::string value;
       request->SerializeToString(&value);
       propose = node_->Propose(
-          group_id, value, machine_->machine_id(), response,
-          [done, this](void* ctx, const skywalker::Status&, uint64_t) {
+          group_id, machine_->machine_id(), value, response,
+          [done, this](uint64_t, const skywalker::Status&, void* ctx) {
             if (done) {
               done->Run();
             }

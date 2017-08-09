@@ -37,7 +37,7 @@ class Schedule {
   RunLoopThread master_thread_;
 
   Schedule();
-  ~Schedule() {}
+  ~Schedule();
   Schedule(const Schedule&);
   void operator=(const Schedule&);
 };

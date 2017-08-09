@@ -14,6 +14,8 @@ Schedule::Schedule()
       learn_loop_(nullptr),
       master_loop_(nullptr) {}
 
+Schedule::~Schedule() {}
+
 void Schedule::Start(bool use_master) {
   assert(!started_);
   started_ = true;

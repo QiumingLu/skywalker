@@ -22,7 +22,10 @@ class WritableFile;
 
 class FileManager {
  public:
-  static FileManager* Instance();
+  static FileManager* Instance() {
+    static FileManager manager;
+    return &manager;
+  }
 
   // The returned file will only be accessed by one thread at a time.
   Status NewSequentialFile(const std::string& fname, SequentialFile** result);
@@ -60,10 +63,6 @@ class FileManager {
   bool FileExists(const std::string& fname);
 
  private:
-  static pthread_once_t once_;
-  static FileManager* file_manager_;
-  static void InitFileManager();
-
   FileManager() {}
   ~FileManager() {}
   FileManager(const FileManager&);

@@ -25,7 +25,7 @@ class MachineManager {
 
  private:
   Config* config_;
-  std::map<int, StateMachine*> machines_;
+  std::map<uint32_t, StateMachine*> machines_;
 
   // No copying allowed
   MachineManager(const MachineManager&);

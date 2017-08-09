@@ -15,6 +15,8 @@
 
 namespace skywalker {
 
+std::atomic<bool> Learner::is_sending_checkpoint_(false);
+
 Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
     : config_(config),
       messager_(config_->GetMessager()),
@@ -72,7 +74,7 @@ void Learner::OnAskForLearn(const PaxosMessage& msg) {
         temp.ParseFromString(s);
         SendLearnedValue(msg.node_id(), temp);
       }
-    } else {
+    } else if (!is_sending_checkpoint_) {
       SendNowInstanceId(msg);
     }
   }
@@ -169,7 +171,7 @@ void Learner::SendLearnedValue(uint64_t node_id, const PaxosInstance& p) {
   msg->set_instance_id(p.instance_id());
   msg->set_proposal_id(p.accepted_id());
   msg->set_proposal_node_id(p.accepted_node_id());
-  msg->set_allocated_value(new PaxosValue(p.accepted_value()));
+  *(msg->mutable_value()) = p.accepted_value();
   messager_->SendMessage(node_id, messager_->PackMessage(msg));
 }
 
@@ -193,7 +195,11 @@ void Learner::AskForCheckpoint(const PaxosMessage& msg) {
 
 void Learner::OnAskForCheckpoint(const PaxosMessage& msg) {
   uint64_t node_id = msg.node_id();
-  learn_loop_->QueueInLoop([this, node_id] { SendCheckpoint(node_id); });
+  learn_loop_->QueueInLoop([this, node_id] {
+    is_sending_checkpoint_ = true;
+    SendCheckpoint(node_id);
+    is_sending_checkpoint_ = false;
+  });
 }
 
 void Learner::SendCheckpoint(uint64_t node_id) {
@@ -214,7 +220,7 @@ bool Learner::WriteToDB(const PaxosMessage& msg) {
   temp.set_promised_node_id(msg.node_id());
   temp.set_accepted_id(msg.proposal_id());
   temp.set_accepted_node_id(msg.node_id());
-  temp.set_allocated_accepted_value(new PaxosValue(msg.value()));
+  *(temp.mutable_accepted_value()) = msg.value();
 
   WriteOptions options;
   options.sync = false;
@@ -231,14 +237,16 @@ void Learner::FinishLearnValue(const PaxosValue& value) {
 }
 
 void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
-  PaxosMessage* msg = new PaxosMessage();
-  msg->set_type(SEND_LEARNED_VALUE);
-  msg->set_node_id(config_->GetNodeId());
-  msg->set_instance_id(instance_id_);
-  msg->set_proposal_id(ballot.GetProposalId());
-  msg->set_proposal_node_id(ballot.GetNodeId());
-  msg->set_allocated_value(new PaxosValue(learned_value_));
-  messager_->BroadcastMessageToFollower(messager_->PackMessage(msg));
+  if (config_->GetFollowers()->members().size() > 0) {
+    PaxosMessage* msg = new PaxosMessage();
+    msg->set_type(SEND_LEARNED_VALUE);
+    msg->set_node_id(config_->GetNodeId());
+    msg->set_instance_id(instance_id_);
+    msg->set_proposal_id(ballot.GetProposalId());
+    msg->set_proposal_node_id(ballot.GetNodeId());
+    *(msg->mutable_value()) = learned_value_;
+    messager_->BroadcastMessageToFollower(messager_->PackMessage(msg));
+  }
 }
 
 void Learner::NextInstance() {

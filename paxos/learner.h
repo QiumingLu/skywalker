@@ -77,6 +77,8 @@ class Learner {
 
   bool is_receiving_checkponit_;
 
+  static std::atomic<bool> is_sending_checkpoint_;
+
   // No copying allowed
   Learner(const Learner&);
   void operator=(const Learner&);

@@ -143,7 +143,7 @@ void CheckpointSender::EndToSend(uint64_t instance_id) {
   end->set_type(CHECKPOINT_END);
   end->set_node_id(config_->GetNodeId());
   end->set_instance_id(instance_id);
-  end->set_sequence_id(sequence_id_++);
+  end->set_sequence_id(sequence_id_);
   config_->GetMessager()->SendMessage(receiver_node_id_,
                                       config_->GetMessager()->PackMessage(end));
 }
@@ -169,7 +169,7 @@ void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
 bool CheckpointSender::CheckReceive() {
   bool res = true;
   MutexLock lock(&mutex_);
-  while (flag_ && (sequence_id_ > ack_sequence_id_ + 10)) {
+  while (flag_ && (sequence_id_ > ack_sequence_id_ + 64)) {
     res = cond_.Wait(25 * 1000 * 1000);
     if (!res) {
       LOG_ERROR("Group %u - receive comfirm message timeout!",

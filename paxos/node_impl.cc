@@ -19,7 +19,7 @@ NodeImpl::~NodeImpl() { stop_ = true; }
 
 bool NodeImpl::StartWorking() {
   bool res = true;
-  bool use_master = true;
+  bool use_master = false;
   for (auto& g : options_.groups) {
     if (g.use_master) {
       use_master = true;
@@ -54,22 +54,22 @@ bool NodeImpl::StartWorking() {
 
 size_t NodeImpl::group_size() const { return groups_.size(); }
 
-bool NodeImpl::Propose(uint32_t group_id, const std::string& value,
-                       int machine_id, void* context,
+bool NodeImpl::Propose(uint32_t group_id, uint32_t machine_id,
+                       const std::string& value, void* context,
                        const ProposeCompleteCallback& cb) {
   if (!Valid(group_id)) {
     return false;
   }
-  return groups_.at(group_id)->OnPropose(value, machine_id, context, cb);
+  return groups_.at(group_id)->OnPropose(machine_id, value, context, cb);
 }
 
-bool NodeImpl::Propose(uint32_t group_id, const std::string& value,
-                       int machine_id, void* context,
+bool NodeImpl::Propose(uint32_t group_id, uint32_t machine_id,
+                       const std::string& value, void* context,
                        ProposeCompleteCallback&& cb) {
   if (!Valid(group_id)) {
     return false;
   }
-  return groups_.at(group_id)->OnPropose(value, machine_id, context,
+  return groups_.at(group_id)->OnPropose(machine_id, value, context,
                                          std::move(cb));
 }
 
@@ -86,8 +86,8 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
 }
 
 bool NodeImpl::ChangeMember(uint32_t group_id,
-                            const std::map<Member, bool>& value, void* context,
-                            const ProposeCompleteCallback& cb) {
+                            const std::vector<std::pair<Member, bool>>& value,
+                            void* context, const ProposeCompleteCallback& cb) {
   if (!Valid(group_id)) {
     return false;
   }

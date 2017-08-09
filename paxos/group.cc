@@ -73,10 +73,10 @@ void Group::SyncMembershipInLoop() {
       *(message.add_member()) = i.second;
       message.add_type(MEMBER_ADD);
     }
-    instance_.OnPropose(message.SerializeAsString(),
-                        membership_machine_->machine_id());
+    instance_.OnPropose(membership_machine_->machine_id(),
+                        message.SerializeAsString());
   } else {
-    propose_cb_(nullptr, Status::OK(), instance_.GetInstanceId());
+    propose_cb_(instance_.GetInstanceId(), Status::OK(), nullptr);
   }
 }
 
@@ -117,25 +117,25 @@ void Group::TryBeMasterInLoop() {
   if (state.lease_time() <= NowMicros() || state.node_id() == node_id_) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
-    instance_.OnPropose(state.SerializeAsString(),
-                        master_machine_->machine_id());
+    instance_.OnPropose(master_machine_->machine_id(),
+                        state.SerializeAsString());
   } else {
-    propose_cb_(nullptr, Status::Conflict("Already has master"),
-                instance_.GetInstanceId());
+    propose_cb_(instance_.GetInstanceId(),
+                Status::Conflict("Already has master"), nullptr);
   }
 }
 
-bool Group::OnPropose(const std::string& value, int machine_id, void* context,
-                      const ProposeCompleteCallback& cb) {
+bool Group::OnPropose(uint32_t machine_id, const std::string& value,
+                      void* context, const ProposeCompleteCallback& cb) {
   return propose_queue_.Put(
-      std::bind(&Instance::OnPropose, &instance_, value, machine_id, context),
+      std::bind(&Instance::OnPropose, &instance_, machine_id, value, context),
       cb);
 }
 
-bool Group::OnPropose(const std::string& value, int machine_id, void* context,
-                      ProposeCompleteCallback&& cb) {
+bool Group::OnPropose(uint32_t machine_id, const std::string& value,
+                      void* context, ProposeCompleteCallback&& cb) {
   return propose_queue_.Put(
-      std::bind(&Instance::OnPropose, &instance_, value, machine_id, context),
+      std::bind(&Instance::OnPropose, &instance_, machine_id, value, context),
       std::move(cb));
 }
 
@@ -143,11 +143,11 @@ void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
   io_loop_->QueueInLoop([c, this]() { instance_.OnReceiveContent(c); });
 }
 
-bool Group::ChangeMember(const std::map<Member, bool>& value, void* context,
-                         const ProposeCompleteCallback& cb) {
+bool Group::ChangeMember(const std::vector<std::pair<Member, bool>>& value,
+                         void* context, const ProposeCompleteCallback& cb) {
   MemberMessage member;
   MemberChangeMessage change;
-  for (auto i : value) {
+  for (auto& i : value) {
     member.set_id(i.first.id);
     member.set_host(i.first.host);
     member.set_port(i.first.port);
@@ -159,8 +159,8 @@ bool Group::ChangeMember(const std::map<Member, bool>& value, void* context,
       change.add_type(MEMBER_REMOVE);
     }
   }
-  return OnPropose(change.SerializeAsString(),
-                   membership_machine_->machine_id(), context, cb);
+  return OnPropose(membership_machine_->machine_id(),
+                   change.SerializeAsString(), context, cb);
 }
 
 bool Group::NewPropose(ProposeHandler&& f) {
@@ -178,8 +178,8 @@ bool Group::NewPropose(ProposeHandler&& f) {
   return res;
 }
 
-void Group::ProposeComplete(void* context, const Status& result,
-                            uint64_t instance_id) {
+void Group::ProposeComplete(uint64_t instance_id, const Status& result,
+                            void* context) {
   MutexLock lock(&mutex_);
   propose_end_ = true;
   result_ = result;

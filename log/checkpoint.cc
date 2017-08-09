@@ -12,13 +12,13 @@ bool Checkpoint::LockCheckpoint(uint32_t group_id) { return true; }
 
 bool Checkpoint::UnLockCheckpoint(uint32_t group_id) { return true; }
 
-bool Checkpoint::GetCheckpoint(uint32_t group_id, int machine_id,
+bool Checkpoint::GetCheckpoint(uint32_t group_id, uint32_t machine_id,
                                std::string* dir,
                                std::vector<std::string>* files) {
   return true;
 }
 
-bool Checkpoint::LoadCheckpoint(uint32_t group_id, int machine_id,
+bool Checkpoint::LoadCheckpoint(uint32_t group_id, uint32_t machine_id,
                                 const std::string& dir,
                                 const std::vector<std::string>& files) {
   return true;

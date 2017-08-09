@@ -27,17 +27,17 @@ class NodeImpl : public Node {
 
   virtual size_t group_size() const;
 
-  virtual bool Propose(uint32_t group_id, const std::string& value,
-                       int machine_id, void* context,
+  virtual bool Propose(uint32_t group_id, uint32_t machine_id,
+                       const std::string& value, void* context,
                        const ProposeCompleteCallback& cb);
 
-  virtual bool Propose(uint32_t group_id, const std::string& value,
-                       int machine_id, void* context,
+  virtual bool Propose(uint32_t group_id, uint32_t machine_id,
+                       const std::string& value, void* context,
                        ProposeCompleteCallback&& cb);
 
   virtual bool ChangeMember(uint32_t group_id,
-                            const std::map<Member, bool>& value, void* context,
-                            const ProposeCompleteCallback& cb);
+                            const std::vector<std::pair<Member, bool>>& value,
+                            void* context, const ProposeCompleteCallback& cb);
 
   virtual void GetMembership(uint32_t group_id, std::vector<Member>* result,
                              uint64_t* version) const;
@@ -56,7 +56,7 @@ class NodeImpl : public Node {
   bool stop_;
   Options options_;
   Network network_;
-  std::map<uint32_t, std::unique_ptr<Group> > groups_;
+  std::map<uint32_t, std::unique_ptr<Group>> groups_;
 
   // No copying allowed
   NodeImpl(const NodeImpl&);

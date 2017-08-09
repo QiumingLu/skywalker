@@ -6,7 +6,6 @@
 #define SKYWALKER_INCLUDE_NODE_H_
 
 #include <stdint.h>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -41,19 +40,20 @@ class Node {
   // Callback Status::Conflict() if there is another value has been chosen.
   // Callback Status::MachineError() if the state machine executed failed.
   // Callback Status::Timeout() if the proposal time is more than a second.
-  virtual bool Propose(uint32_t group_id, const std::string& value,
-                       int machine_id, void* context,
+  virtual bool Propose(uint32_t group_id, uint32_t machine_id,
+                       const std::string& value, void* context,
                        const ProposeCompleteCallback& cb) = 0;
 
-  virtual bool Propose(uint32_t group_id, const std::string& value,
-                       int machine_id, void* context,
+  virtual bool Propose(uint32_t group_id, uint32_t machine_id,
+                       const std::string& value, void* context,
                        ProposeCompleteCallback&& cb) = 0;
 
   // Change the paxos members.
   // If propose success returns true, else returns false.
   // The callback status like calling Node::Propose().
   virtual bool ChangeMember(uint32_t group_id,
-                            const std::map<Member, bool>& value, void* context,
+                            const std::vector<std::pair<Member, bool>>& value,
+                            void* context,
                             const ProposeCompleteCallback& cb) = 0;
 
   // Returns the membership.

@@ -85,15 +85,15 @@ bool ProposeQueue::Put(ProposeHandler&& f, ProposeCompleteCallback&& cb) {
   return true;
 }
 
-void ProposeQueue::ProposeComplete(void* context, const Status& s,
-                                   uint64_t instance_id) {
+void ProposeQueue::ProposeComplete(uint64_t instance_id, const Status& s,
+                                   void* context) {
   MutexLock lock(&mutex_);
   assert(!last_finished_);
   assert(!cb_queue_.empty());
   ProposeCompleteCallback cb = cb_queue_.front();
   cb_queue_.pop();
   callback_loop_->QueueInLoop(
-      [cb, context, s, instance_id]() { cb(context, s, instance_id); });
+      [cb, context, s, instance_id]() { cb(instance_id, s, context); });
 
   if (!propose_queue_.empty()) {
     io_loop_->QueueInLoop(propose_queue_.front());

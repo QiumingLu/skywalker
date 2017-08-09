@@ -62,8 +62,8 @@ struct Options {
   Options();
 };
 
-typedef std::function<void(void* context, const Status& s,
-                           uint64_t instance_id)>
+typedef std::function<void(uint64_t instance_id, const Status& s,
+                           void* context)>
     ProposeCompleteCallback;
 
 }  // namespace skywalker

@@ -38,7 +38,7 @@ class Instance {
   void SetIOLoop(RunLoop* loop);
   void SetLearnLoop(RunLoop* loop);
 
-  void OnPropose(const std::string& value, int machine_id,
+  void OnPropose(uint32_t machine_id, const std::string& value,
                  void* context = nullptr);
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 

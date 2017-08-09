@@ -59,11 +59,11 @@ void Instance::SyncData(bool add_timer) {
       [this, add_timer]() { learner_.AskForLearn(add_timer); });
 }
 
-void Instance::OnPropose(const std::string& value, int machine_id,
+void Instance::OnPropose(uint32_t machine_id, const std::string& value,
                          void* context) {
   if (!config_->IsValidNodeId(config_->GetNodeId())) {
     Slice msg("this node is not in the membership, please add it firstly.");
-    propose_cb_(context, Status::InvalidNode(msg), instance_id_);
+    propose_cb_(instance_id_, Status::InvalidNode(msg), context);
     return;
   }
 
@@ -79,7 +79,7 @@ void Instance::OnPropose(const std::string& value, int machine_id,
     proposer_.QuitPropose();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
-    propose_cb_(context_, Status::Timeout(msg), instance_id_);
+    propose_cb_(instance_id_, Status::Timeout(msg), context_);
     context_ = nullptr;
   });
 
@@ -164,17 +164,15 @@ void Instance::CheckLearn() {
     bool success = MachineExecute(learned_value, my);
 
     if (is_proposing_) {
+      Status status;
       if (success) {
-        if (my) {
-          propose_cb_(context_, Status::OK(), instance_id_);
-        } else {
-          Slice msg("another value has been chosen.");
-          propose_cb_(context_, Status::Conflict(msg), instance_id_);
+        if (!my) {
+          status = Status::Conflict("another value has been chosen.");
         }
       } else {
-        Slice msg("machine execute failed.");
-        propose_cb_(context_, Status::MachineError(msg), instance_id_);
+        status = Status::MachineError("machine execute failed.");
       }
+      propose_cb_(instance_id_, status, context_);
       is_proposing_ = false;
       context_ = nullptr;
     }

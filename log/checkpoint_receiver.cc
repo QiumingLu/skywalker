@@ -28,11 +28,11 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
 
   bool res = true;
   std::vector<std::string> dirs;
+  std::vector<std::string> files;
   FileManager::Instance()->GetChildren(config_->CheckpointPath(), &dirs);
 
   for (auto& dir : dirs) {
     std::string d = config_->CheckpointPath() + "/" + dir;
-    std::vector<std::string> files;
     FileManager::Instance()->GetChildren(d, &files, true);
     if (files.empty()) {
       continue;

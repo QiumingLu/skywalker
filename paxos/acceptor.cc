@@ -39,7 +39,7 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
       if (accepted_ballot_.GetProposalId() > 0) {
         reply_msg->set_pre_accepted_id(accepted_ballot_.GetProposalId());
         reply_msg->set_pre_accepted_node_id(accepted_ballot_.GetNodeId());
-        reply_msg->set_allocated_value(new PaxosValue(accepted_value_));
+        *(reply_msg->mutable_value()) = accepted_value_;
       }
       WriteToDB();
     } else {
@@ -134,7 +134,7 @@ bool Acceptor::WriteToDB() {
   temp.set_promised_node_id(promised_ballot_.GetNodeId());
   temp.set_accepted_id(accepted_ballot_.GetProposalId());
   temp.set_accepted_node_id(accepted_ballot_.GetNodeId());
-  temp.set_allocated_accepted_value(new PaxosValue(accepted_value_));
+  *(temp.mutable_accepted_value()) = accepted_value_;
   WriteOptions options;
   options.sync = config_->LogSync();
   if (options.sync) {

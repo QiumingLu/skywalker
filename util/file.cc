@@ -351,15 +351,4 @@ Status WriteStringToFileSync(FileManager* manager, const Slice& data,
   return DoWriteStringToFile(manager, data, fname, true);
 }
 
-pthread_once_t FileManager::once_ = PTHREAD_ONCE_INIT;
-
-FileManager* FileManager::file_manager_ = nullptr;
-
-void FileManager::InitFileManager() { file_manager_ = new FileManager(); }
-
-FileManager* FileManager::Instance() {
-  pthread_once(&once_, &FileManager::InitFileManager);
-  return file_manager_;
-}
-
 }  // namespace skywalker

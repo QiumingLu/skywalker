@@ -35,16 +35,16 @@ class Group {
   void SyncMembership();
   void SyncMaster();
 
-  bool OnPropose(const std::string& value, int machine_id, void* context,
+  bool OnPropose(uint32_t machine_id, const std::string& value, void* context,
                  const ProposeCompleteCallback& cb);
 
-  bool OnPropose(const std::string& value, int machine_id, void* context,
+  bool OnPropose(uint32_t machine_id, const std::string& value, void* context,
                  ProposeCompleteCallback&& cb);
 
   void OnReceiveContent(const std::shared_ptr<Content>& c);
 
-  bool ChangeMember(const std::map<Member, bool>& value, void* context,
-                    const ProposeCompleteCallback& cb);
+  bool ChangeMember(const std::vector<std::pair<Member, bool>>& value,
+                    void* context, const ProposeCompleteCallback& cb);
   void GetMembership(std::vector<Member>* result, uint64_t* version) const;
 
   bool GetMaster(Member* i, uint64_t* version) const;
@@ -59,8 +59,8 @@ class Group {
   void TryBeMaster();
   void TryBeMasterInLoop();
   bool NewPropose(ProposeHandler&& f);
-  void ProposeComplete(void* context, const Status& result,
-                       uint64_t instance_id);
+  void ProposeComplete(uint64_t instance_id, const Status& result,
+                       void* context);
 
   const uint64_t node_id_;
   Config config_;
