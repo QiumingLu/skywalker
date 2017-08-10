@@ -5,8 +5,6 @@
 #ifndef SKYWALKER_PAXOS_LEARNER_H_
 #define SKYWALKER_PAXOS_LEARNER_H_
 
-#include <atomic>
-
 #include "paxos/ballot_number.h"
 #include "proto/paxos.pb.h"
 #include "util/random.h"
@@ -20,54 +18,54 @@ class Instance;
 class Messager;
 
 class Learner {
-public:
-  Learner(Config *config, Instance *instance, Acceptor *acceptor);
+ public:
+  Learner(Config* config, Instance* instance, Acceptor* acceptor);
 
   void SetInstanceId(uint64_t instance_id) { instance_id_ = instance_id; }
 
-  void SetIOLoop(RunLoop *loop) { io_loop_ = loop; }
-  void SetLearnLoop(RunLoop *loop) { learn_loop_ = loop; }
+  void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
+  void SetLearnLoop(RunLoop* loop) { learn_loop_ = loop; }
 
   void AskForLearn(bool add_timer);
 
   bool IsReceivingCheckpoint() const { return is_receiving_checkponit_; }
 
-  void OnNewChosenValue(const PaxosMessage &msg);
-  void OnAskForLearn(const PaxosMessage &msg);
-  void OnSendNowInstanceId(const PaxosMessage &msg);
-  void OnComfirmAskForLearn(const PaxosMessage &msg);
-  void OnSendLearnedValue(const PaxosMessage &msg);
-  void OnAskForCheckpoint(const PaxosMessage &msg);
-  void OnSendCheckpoint(const CheckpointMessage &msg);
+  void OnNewChosenValue(const PaxosMessage& msg);
+  void OnAskForLearn(const PaxosMessage& msg);
+  void OnSendNowInstanceId(const PaxosMessage& msg);
+  void OnComfirmAskForLearn(const PaxosMessage& msg);
+  void OnSendLearnedValue(const PaxosMessage& msg);
+  void OnAskForCheckpoint(const PaxosMessage& msg);
+  void OnSendCheckpoint(const CheckpointMessage& msg);
 
   bool HasLearned() const { return has_learned_; }
-  const PaxosValue &GetLearnedValue() const { return learned_value_; }
+  const PaxosValue& GetLearnedValue() const { return learned_value_; }
 
   void NextInstance();
 
-private:
+ private:
   void AddLearnTimer(uint64_t timeout);
   void RemoveLearnTimer();
 
-  void SendNowInstanceId(const PaxosMessage &msg);
-  void ComfirmAskForLearn(const PaxosMessage &msg);
+  void SendNowInstanceId(const PaxosMessage& msg);
+  void ComfirmAskForLearn(const PaxosMessage& msg);
   void ASyncSend(uint64_t node_id, uint64_t from, uint64_t to);
-  void SendLearnedValue(uint64_t node_id, const PaxosInstance &p);
+  void SendLearnedValue(uint64_t node_id, const PaxosInstance& p);
 
-  void AskForCheckpoint(const PaxosMessage &msg);
+  void AskForCheckpoint(const PaxosMessage& msg);
   void SendCheckpoint(uint64_t node_id);
 
-  bool WriteToDB(const PaxosMessage &msg);
-  void FinishLearnValue(const PaxosValue &value);
-  void BroadcastMessageToFollower(const BallotNumber &ballot);
+  bool WriteToDB(const PaxosMessage& msg);
+  void FinishLearnValue(const PaxosValue& value);
+  void BroadcastMessageToFollower(const BallotNumber& ballot);
 
-  Config *config_;
-  Messager *messager_;
-  Instance *instance_;
-  Acceptor *acceptor_;
+  Config* config_;
+  Messager* messager_;
+  Instance* instance_;
+  Acceptor* acceptor_;
 
-  RunLoop *io_loop_;
-  RunLoop *learn_loop_;
+  RunLoop* io_loop_;
+  RunLoop* learn_loop_;
 
   uint64_t instance_id_;
   TimerId learn_timer_;
@@ -82,10 +80,10 @@ private:
   static std::atomic<bool> is_sending_checkpoint_;
 
   // No copying allowed
-  Learner(const Learner &);
-  void operator=(const Learner &);
+  Learner(const Learner&);
+  void operator=(const Learner&);
 };
 
-} // namespace skywalker
+}  // namespace skywalker
 
-#endif // SKYWALKER_PAXOS_LEARNER_H_
+#endif  // SKYWALKER_PAXOS_LEARNER_H_
