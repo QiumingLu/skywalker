@@ -5,6 +5,8 @@
 #ifndef SKYWALKER_PAXOS_LEARNER_H_
 #define SKYWALKER_PAXOS_LEARNER_H_
 
+#include <atomic>
+
 #include "paxos/ballot_number.h"
 #include "proto/paxos.pb.h"
 #include "util/random.h"
