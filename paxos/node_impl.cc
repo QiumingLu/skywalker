@@ -4,6 +4,8 @@
 
 #include "paxos/node_impl.h"
 
+#include <algorithm>
+#include <random>
 #include <utility>
 
 #include "paxos/schedule.h"
@@ -18,38 +20,41 @@ NodeImpl::NodeImpl(const Options& options)
 NodeImpl::~NodeImpl() { stop_ = true; }
 
 bool NodeImpl::StartWorking() {
-  bool res = true;
   bool use_master = false;
+  std::vector<Group*> groups;
   for (auto& g : options_.groups) {
     if (g.use_master) {
       use_master = true;
     }
     std::unique_ptr<Group> group(new Group(options_.my.id, g, &network_));
-    res = group->Recover();
-    if (res) {
+    if (group->Recover()) {
       LOG_DEBUG("Group %u recover successful!", g.group_id);
+      groups.push_back(group.get());
       groups_.insert(std::make_pair(g.group_id, std::move(group)));
     } else {
       LOG_DEBUG("Group %u recover failed!", g.group_id);
-      return res;
+      return false;
     }
   }
 
   Schedule::Instance()->Start(use_master);
-  for (auto& g : groups_) {
-    g.second->Start();
+  for (auto& g : groups) {
+    g->Start();
   }
 
   network_.StartServer(
       std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
   LOG_DEBUG("Skywalker server start successful!");
 
-  for (auto& g : groups_) {
-    g.second->SyncMembership();
-    g.second->SyncMaster();
+  // 防止所有的Master都是同一个节点。
+  std::shuffle(groups.begin(), groups.end(),
+               std::default_random_engine((unsigned)options_.my.id));
+  for (auto& g : groups) {
+    g->SyncMembership();
+    g->SyncMaster();
   }
 
-  return res;
+  return true;
 }
 
 size_t NodeImpl::group_size() const { return groups_.size(); }
