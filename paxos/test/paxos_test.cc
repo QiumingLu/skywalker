@@ -28,7 +28,6 @@ int main(int argc, char** argv) {
   }
 
   skywalker::GroupOptions g_options;
-  g_options.group_id = 0;
   g_options.use_master = true;
   g_options.log_sync = true;
   g_options.sync_interval = 0;

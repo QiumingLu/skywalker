@@ -6,7 +6,6 @@
 #define SKYWALKER_PAXOS_NODE_IMPL_H_
 
 #include <stdint.h>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -50,13 +49,12 @@ class NodeImpl : public Node {
   virtual void StopGC(uint32_t group_id);
 
  private:
-  bool Valid(uint32_t group_id) const;
   void OnReceiveMessage(const Slice& s);
 
   bool stop_;
   Options options_;
   Network network_;
-  std::map<uint32_t, std::unique_ptr<Group>> groups_;
+  std::vector<std::unique_ptr<Group>> groups_;
 
   // No copying allowed
   NodeImpl(const NodeImpl&);

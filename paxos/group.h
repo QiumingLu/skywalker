@@ -27,7 +27,8 @@ class Network;
 
 class Group {
  public:
-  Group(uint64_t node_id, const GroupOptions& options, Network* network);
+  Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
+        Network* network);
 
   bool Recover();
   void Start(RunLoop* loop);

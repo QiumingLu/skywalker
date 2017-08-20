@@ -23,7 +23,8 @@ namespace skywalker {
 
 class Config {
  public:
-  Config(uint64_t node_id, const GroupOptions& options, Network* network);
+  Config(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
+         Network* network);
   ~Config();
 
   bool Recover();

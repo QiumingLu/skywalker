@@ -7,8 +7,7 @@
 namespace skywalker {
 
 GroupOptions::GroupOptions()
-    : group_id(0),
-      use_master(true),
+    : use_master(true),
       log_sync(true),
       master_lease_time(10 * 1000 * 1000),
       sync_interval(5),

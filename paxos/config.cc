@@ -8,9 +8,10 @@
 
 namespace skywalker {
 
-Config::Config(uint64_t node_id, const GroupOptions& options, Network* network)
+Config::Config(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
+               Network* network)
     : node_id_(node_id),
-      group_id_(options.group_id),
+      group_id_(group_id),
       log_sync_(options.log_sync),
       sync_interval_(options.sync_interval),
       keep_log_count_(options.keep_log_count),

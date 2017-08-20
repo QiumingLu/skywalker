@@ -25,8 +25,6 @@ struct Member {
 };
 
 struct GroupOptions {
-  uint32_t group_id;
-
   // Default: true
   bool use_master;
 
@@ -63,6 +61,7 @@ struct Options {
   // the skywalker's thread_size = 5 + io_thread_size
   uint32_t io_thread_size;
 
+  // the index of group options is group id.
   std::vector<GroupOptions> groups;
 
   Options();

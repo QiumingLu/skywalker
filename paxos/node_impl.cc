@@ -22,19 +22,21 @@ NodeImpl::~NodeImpl() { stop_ = true; }
 bool NodeImpl::StartWorking() {
   bool use_master = false;
   std::vector<Group*> groups;
+  int i = 0;
   for (auto& g : options_.groups) {
     if (g.use_master) {
       use_master = true;
     }
-    std::unique_ptr<Group> group(new Group(options_.my.id, g, &network_));
+    std::unique_ptr<Group> group(new Group(options_.my.id, i, g, &network_));
     if (group->Recover()) {
-      LOG_DEBUG("Group %u recover successful!", g.group_id);
+      LOG_DEBUG("Group %u recover successful!", i);
       groups.push_back(group.get());
-      groups_.insert(std::make_pair(g.group_id, std::move(group)));
+      groups_.push_back(std::move(group));
     } else {
-      LOG_DEBUG("Group %u recover failed!", g.group_id);
+      LOG_DEBUG("Group %u recover failed!", i);
       return false;
     }
+    ++i;
   }
 
   if (options_.io_thread_size == 0) {
@@ -69,20 +71,14 @@ size_t NodeImpl::group_size() const { return groups_.size(); }
 bool NodeImpl::Propose(uint32_t group_id, uint32_t machine_id,
                        const std::string& value, void* context,
                        const ProposeCompleteCallback& cb) {
-  if (!Valid(group_id)) {
-    return false;
-  }
-  return groups_.at(group_id)->OnPropose(machine_id, value, context, cb);
+  return groups_[group_id]->OnPropose(machine_id, value, context, cb);
 }
 
 bool NodeImpl::Propose(uint32_t group_id, uint32_t machine_id,
                        const std::string& value, void* context,
                        ProposeCompleteCallback&& cb) {
-  if (!Valid(group_id)) {
-    return false;
-  }
-  return groups_.at(group_id)->OnPropose(machine_id, value, context,
-                                         std::move(cb));
+  return groups_[group_id]->OnPropose(machine_id, value, context,
+                                      std::move(cb));
 }
 
 void NodeImpl::OnReceiveMessage(const Slice& s) {
@@ -91,69 +87,37 @@ void NodeImpl::OnReceiveMessage(const Slice& s) {
   if (!stop_) {
     std::shared_ptr<Content> c(new Content());
     c->ParseFromArray(s.data(), static_cast<int>(s.size()));
-    if (Valid(c->group_id())) {
-      groups_.at(c->group_id())->OnReceiveContent(c);
-    }
+    groups_[c->group_id()]->OnReceiveContent(c);
   }
 }
 
 bool NodeImpl::ChangeMember(uint32_t group_id,
                             const std::vector<std::pair<Member, bool>>& value,
                             void* context, const ProposeCompleteCallback& cb) {
-  if (!Valid(group_id)) {
-    return false;
-  }
-  return groups_.at(group_id)->ChangeMember(value, context, cb);
+  return groups_[group_id]->ChangeMember(value, context, cb);
 }
 
 void NodeImpl::GetMembership(uint32_t group_id, std::vector<Member>* result,
                              uint64_t* version) const {
-  if (Valid(group_id)) {
-    groups_.at(group_id)->GetMembership(result, version);
-  }
+  groups_[group_id]->GetMembership(result, version);
 }
 
 bool NodeImpl::GetMaster(uint32_t group_id, Member* i,
                          uint64_t* version) const {
-  if (!Valid(group_id)) {
-    return false;
-  }
-  return groups_.at(group_id)->GetMaster(i, version);
+  return groups_[group_id]->GetMaster(i, version);
 }
 
 bool NodeImpl::IsMaster(uint32_t group_id) const {
-  if (!Valid(group_id)) {
-    return false;
-  }
-  return groups_.at(group_id)->IsMaster();
+  return groups_[group_id]->IsMaster();
 }
 
 void NodeImpl::RetireMaster(uint32_t group_id) {
-  if (Valid(group_id)) {
-    groups_.at(group_id)->RetireMaster();
-  }
+  groups_[group_id]->RetireMaster();
 }
 
-void NodeImpl::StartGC(uint32_t group_id) {
-  if (Valid(group_id)) {
-    groups_.at(group_id)->StartGC();
-  }
-}
+void NodeImpl::StartGC(uint32_t group_id) { groups_[group_id]->StartGC(); }
 
-void NodeImpl::StopGC(uint32_t group_id) {
-  if (Valid(group_id)) {
-    groups_.at(group_id)->StopGC();
-  }
-}
-
-bool NodeImpl::Valid(uint32_t group_id) const {
-  assert(groups_.find(group_id) != groups_.end());
-  if (groups_.find(group_id) == groups_.end()) {
-    LOG_WARN("Invalid groud id(%u)", group_id);
-    return false;
-  }
-  return true;
-}
+void NodeImpl::StopGC(uint32_t group_id) { groups_[group_id]->StopGC(); }
 
 bool Node::Start(const Options& options, Node** nodeptr) {
   *nodeptr = nullptr;

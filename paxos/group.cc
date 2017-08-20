@@ -12,9 +12,10 @@
 
 namespace skywalker {
 
-Group::Group(uint64_t node_id, const GroupOptions& options, Network* network)
+Group::Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
+             Network* network)
     : node_id_(node_id),
-      config_(node_id, options, network),
+      config_(node_id, group_id, options, network),
       instance_(&config_),
       use_master_(options.use_master),
       lease_timeout_(options.master_lease_time),
