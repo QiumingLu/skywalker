@@ -3,70 +3,50 @@
 // found in the LICENSE file.
 
 #include "log/log_cleaner.h"
-
-#include <random>
-
 #include "log/log_manager.h"
 #include "paxos/config.h"
-#include "util/timeops.h"
+#include "paxos/schedule.h"
 
 namespace skywalker {
 
-void* LogCleaner::StartGC(void* data) {
-  LogCleaner* cleaner = reinterpret_cast<LogCleaner*>(data);
-  cleaner->GCLoop();
-  return nullptr;
-}
-
 LogCleaner::LogCleaner(Config* config, LogManager* manager)
-    : config_(config), manager_(manager), stop_(false) {}
+    : config_(config), manager_(manager), started_(false) {}
 
-LogCleaner::~LogCleaner() {
-  exit_ = true;
-  stop_ = false;
-  thread_.Join();
+LogCleaner::~LogCleaner() {}
+
+void LogCleaner::StartGC() {
+  bool expected = false;
+  if (started_.compare_exchange_strong(expected, true)) {
+    timer_ = Schedule::Instance()->CleanLoop()->RunEvery(
+        3000000, std::bind(&LogCleaner::GCLoop, this));
+  }
 }
 
-void LogCleaner::Start() {
-  assert(!thread_.Started());
-  thread_.Start(&LogCleaner::StartGC, this);
+void LogCleaner::StopGC() {
+  bool expected = true;
+  if (started_.compare_exchange_strong(expected, false)) {
+    Schedule::Instance()->CleanLoop()->Remove(timer_);
+  }
 }
-
-void LogCleaner::StartGC() { stop_ = false; }
-
-void LogCleaner::StopGC() { stop_ = true; }
 
 void LogCleaner::GCLoop() {
-  exit_ = false;
-  std::default_random_engine generator;
-  std::uniform_int_distribution<int> distribution(0, 800);
+  int keep = config_->KeepLogCount();
+  uint64_t min_chosen_id = manager_->GetMinChosenInstanceId();
+  uint64_t max_chosen_id = manager_->GetMaxChosenInstanceId();
+  uint64_t checkpoint_id =
+      config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
+
+  WriteBatch batch;
+  while (min_chosen_id + keep < max_chosen_id &&
+         min_chosen_id < checkpoint_id) {
+    batch.Delete(min_chosen_id++);
+  }
 
   WriteOptions options;
   options.sync = false;
-  WriteBatch batch;
-
-  int keep = config_->KeepLogCount();
-
-  while (!exit_) {
-    uint64_t min_chosen_id = manager_->GetMinChosenInstanceId();
-    uint64_t max_chosen_id = manager_->GetMaxChosenInstanceId();
-    uint64_t checkpoint_id =
-        config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
-
-    while (min_chosen_id + keep < max_chosen_id &&
-           min_chosen_id < checkpoint_id) {
-      batch.Delete(min_chosen_id++);
-    }
-    int res = config_->GetDB()->Write(options, &batch);
-    if (res == 0) {
-      batch.Clear();
-      manager_->SetMinChosenInstanceId(min_chosen_id);
-    }
-
-    SleepForMicroseconds((1200 + distribution(generator)) * 1000);
-    while (stop_) {
-      SleepForMicroseconds(5 * 1000 * 1000);
-    }
+  int res = config_->GetDB()->Write(options, &batch);
+  if (res == 0) {
+    manager_->SetMinChosenInstanceId(min_chosen_id);
   }
 }
 

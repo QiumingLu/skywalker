@@ -30,7 +30,7 @@ class Group {
   Group(uint64_t node_id, const GroupOptions& options, Network* network);
 
   bool Recover();
-  void Start();
+  void Start(RunLoop* loop);
 
   void SyncMembership();
   void SyncMaster();
@@ -80,7 +80,6 @@ class Group {
 
   ProposeQueue propose_queue_;
   RunLoop* io_loop_;
-  RunLoopThread io_thread_;
 
   // No copying allowed
   Group(const Group&);

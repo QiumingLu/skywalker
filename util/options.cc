@@ -19,6 +19,6 @@ GroupOptions::GroupOptions()
       membership(),
       followers() {}
 
-Options::Options() {}
+Options::Options() : io_thread_size(0) {}
 
 }  // namespace skywalker

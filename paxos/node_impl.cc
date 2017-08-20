@@ -37,9 +37,16 @@ bool NodeImpl::StartWorking() {
     }
   }
 
-  Schedule::Instance()->Start(use_master);
+  if (options_.io_thread_size == 0) {
+    options_.io_thread_size = static_cast<uint32_t>((groups.size() + 1) / 2);
+  } else if (options_.io_thread_size > groups.size()) {
+    options_.io_thread_size = static_cast<uint32_t>(groups.size());
+  }
+  assert(options_.io_thread_size != 0);
+  Schedule::Instance()->Start(options_.io_thread_size, use_master);
   for (auto& g : groups) {
-    g->Start();
+    g->Start(Schedule::Instance()->GetNextIOLoop());
+    g->StartGC();
   }
 
   network_.StartServer(

@@ -7,7 +7,7 @@
 
 #include <atomic>
 
-#include "util/thread.h"
+#include "util/timerlist.h"
 
 namespace skywalker {
 
@@ -19,21 +19,17 @@ class LogCleaner {
   LogCleaner(Config* config, LogManager* manager);
   ~LogCleaner();
 
-  void Start();
-
   void StartGC();
   void StopGC();
 
  private:
-  static void* StartGC(void* data);
   void GCLoop();
 
   Config* config_;
   LogManager* manager_;
 
-  bool exit_;
-  std::atomic<bool> stop_;
-  Thread thread_;
+  std::atomic<bool> started_;
+  TimerId timer_;
 
   // No copying allowed
   LogCleaner(const LogCleaner&);

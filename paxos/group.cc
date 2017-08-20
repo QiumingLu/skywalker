@@ -39,8 +39,8 @@ bool Group::Recover() {
   return false;
 }
 
-void Group::Start() {
-  io_loop_ = io_thread_.Loop();
+void Group::Start(RunLoop* loop) {
+  io_loop_ = loop;
   instance_.SetIOLoop(io_loop_);
   propose_queue_.SetIOLoop(io_loop_);
   instance_.SetLearnLoop(Schedule::Instance()->LearnLoop());

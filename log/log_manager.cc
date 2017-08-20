@@ -25,15 +25,11 @@ bool LogManager::Recover(uint64_t instance_id) {
   min_chosen_id_ = temp;
   max_chosen_id_ = instance_id;
 
-  bool res = true;
   uint64_t id = config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
   if (id < instance_id) {
-    res = ReplayLog(id, instance_id);
+    return ReplayLog(id, instance_id);
   }
-  if (res) {
-    cleaner_.Start();
-  }
-  return res;
+  return true;
 }
 
 bool LogManager::ReplayLog(uint64_t from, uint64_t to) {

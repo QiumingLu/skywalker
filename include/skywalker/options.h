@@ -57,6 +57,12 @@ struct GroupOptions {
 
 struct Options {
   Member my;
+
+  // Default: io_thread_size = (groups.size() + 1) / 2
+  // the io_thread_size must be (0, groups.size()]
+  // the skywalker's thread_size = 5 + io_thread_size
+  uint32_t io_thread_size;
+
   std::vector<GroupOptions> groups;
 
   Options();
