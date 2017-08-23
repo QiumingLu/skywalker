@@ -33,6 +33,8 @@ Config::Config(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
   } else {
     snprintf(name, sizeof(name), "g%u", group_id_);
   }
+  
+  FileManager::Instance()->CreateDir(log_storage_path_);
 
   log_storage_path_ += name;
   checkpoint_path_ = log_storage_path_ + "/checkpoint";

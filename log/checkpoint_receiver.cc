@@ -130,8 +130,8 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
     if (files.empty()) {
       continue;
     }
-    res = config_->GetCheckpoint()->LoadCheckpoint(config_->GetGroupId(),
-                                                   d.first, d.second, files);
+    res = config_->GetCheckpoint()->LoadCheckpoint(
+        config_->GetGroupId(), msg.instance_id(), d.first, d.second, files);
     if (!res) {
       LOG_ERROR("Group %u - load checkpoint failed, the machine_id=%d, dir=%s.",
                 config_->GetGroupId(), d.first, d.second.c_str());
