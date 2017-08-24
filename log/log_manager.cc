@@ -17,17 +17,22 @@ LogManager::LogManager(Config* config)
       max_chosen_id_(0),
       cleaner_(config, this) {}
 
-bool LogManager::Recover(uint64_t instance_id) {
+bool LogManager::Recover(uint64_t* instance_id) {
   uint64_t temp = 0;
   if (config_->GetDB()->GetMinChosenInstanceId(&temp) == -1) {
     return false;
   }
-  min_chosen_id_ = temp;
-  max_chosen_id_ = instance_id;
-
   uint64_t id = config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
-  if (id < instance_id) {
-    return ReplayLog(id, instance_id);
+
+  if (id > *instance_id) {
+    *instance_id = id;
+  }
+
+  min_chosen_id_ = temp;
+  max_chosen_id_ = *instance_id;
+
+  if (id < *instance_id) {
+    return ReplayLog(id, *instance_id);
   }
   return true;
 }

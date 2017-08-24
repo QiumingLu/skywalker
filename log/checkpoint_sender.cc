@@ -108,7 +108,7 @@ bool CheckpointSender::SendFile(uint64_t instance_id, int machine_id,
   size_t offset = 0;
   while (res) {
     Slice fragmenet;
-    s = seq_file->Read(kBufferSize, &fragmenet, buffer);
+    s = seq_file->Read(kBufferSize, &fragmenet, buffer_);
     if (!s.ok()) {
       res = false;
       LOG_ERROR("Group %u - %s", config_->GetGroupId(), s.ToString().c_str());
@@ -169,8 +169,8 @@ void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
 bool CheckpointSender::CheckReceive() {
   bool res = true;
   MutexLock lock(&mutex_);
-  while (flag_ && (sequence_id_ > ack_sequence_id_ + 64)) {
-    res = cond_.Wait(25 * 1000 * 1000);
+  while (flag_ && (sequence_id_ > ack_sequence_id_ + 16)) {
+    res = cond_.Wait(10 * 1000 * 1000);
     if (!res) {
       LOG_ERROR("Group %u - receive comfirm message timeout!",
                 config_->GetGroupId());

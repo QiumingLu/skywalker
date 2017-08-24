@@ -16,7 +16,7 @@ class LogManager {
  public:
   explicit LogManager(Config* config);
 
-  bool Recover(uint64_t instance_id);
+  bool Recover(uint64_t* instance_id);
 
   void StartGC();
   void StopGC();

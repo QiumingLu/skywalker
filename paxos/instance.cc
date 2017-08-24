@@ -29,7 +29,7 @@ bool Instance::Recover() {
     LOG_ERROR("Group %u - Acceptor recover failed.", config_->GetGroupId());
     return res;
   }
-  res = config_->GetLogManager()->Recover(instance_id_);
+  res = config_->GetLogManager()->Recover(&instance_id_);
   if (!res) {
     LOG_ERROR("Group %u - CheckpointManager recover failed.",
               config_->GetGroupId());

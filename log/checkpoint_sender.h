@@ -34,7 +34,7 @@ class CheckpointSender {
 
   bool CheckReceive();
 
-  char buffer[kBufferSize];
+  char buffer_[kBufferSize];
 
   Config* config_;
   CheckpointManager* manager_;

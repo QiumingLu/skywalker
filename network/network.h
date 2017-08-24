@@ -47,7 +47,7 @@ class Network {
 
   Member my_;
   std::unique_ptr<voyager::TcpServer> server_;
-  std::map<uint64_t, voyager::TcpConnectionPtr> connection_map_;
+  std::map<uint64_t, std::unique_ptr<voyager::TcpClient> > connection_map_;
 
   voyager::EventLoop* loop_;
   voyager::BGEventLoop net_loop_;

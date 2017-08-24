@@ -20,7 +20,7 @@ Network::~Network() {}
 
 void Network::StartServer(const std::function<void(const Slice&)>& cb) {
   voyager::SockAddr addr(my_.host, my_.port);
-  server_.reset(new voyager::TcpServer(loop_, addr));
+  server_.reset(new voyager::TcpServer(loop_, addr, "SkywalkerServer"));
 
   server_->SetMessageCallback(
       [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
@@ -43,12 +43,21 @@ void Network::StartServer(const std::function<void(const Slice&)>& cb) {
 
 void Network::SendMessage(uint64_t node_id, Config* config,
                           const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([node_id, config, content_ptr, this]() {
+  loop_->QueueInLoop([this, node_id, config, content_ptr]() {
     std::string s;
     if (SerializeToString(content_ptr, &s)) {
       auto it = connection_map_.find(node_id);
       if (it != connection_map_.end()) {
-        it->second->SendMessage(s);
+        voyager::TcpConnectionPtr p = it->second->GetTcpConnectionPtr();
+        if (p) {
+          p->SendMessage(s);
+        } else {
+          std::shared_ptr<Membership> temp = config->GetMembership();
+          if (temp->members().find(node_id) == temp->members().end()) {
+            it->second->Close();
+            connection_map_.erase(it);
+          }
+        }
       } else {
         std::shared_ptr<Membership> temp = config->GetMembership();
         auto iter = temp->members().find(node_id);
@@ -69,7 +78,10 @@ void Network::SendMessage(const std::shared_ptr<Membership>& m,
         if (i.first != my_.id) {
           auto it = connection_map_.find(i.first);
           if (it != connection_map_.end()) {
-            it->second->SendMessage(s);
+            voyager::TcpConnectionPtr p = it->second->GetTcpConnectionPtr();
+            if (p) {
+              p->SendMessage(s);
+            }
           } else {
             SendMessageInLoop(i.second, s);
           }
@@ -83,29 +95,21 @@ void Network::SendMessageInLoop(const MemberMessage& member,
                                 const std::string& s) {
   uint64_t node_id = member.id();
   voyager::SockAddr addr(member.host(), static_cast<uint16_t>(member.port()));
-  voyager::TcpClient* client(new voyager::TcpClient(loop_, addr));
+  std::unique_ptr<voyager::TcpClient> client(
+      new voyager::TcpClient(loop_, addr, "SkywalkerClient"));
 
   client->SetConnectionCallback(
-      [node_id, s, this](const voyager::TcpConnectionPtr& p) {
-        auto it = connection_map_.find(node_id);
-        if (it == connection_map_.end()) {
-          connection_map_.insert(std::make_pair(node_id, p));
-          p->SendMessage(s);
-        } else {
-          p->ShutDown();
-          it->second->SendMessage(s);
-        }
-      });
+      [s](const voyager::TcpConnectionPtr& p) { p->SendMessage(s); });
 
-  client->SetConnectFailureCallback([client]() { delete client; });
+  client->SetCloseCallback([this, node_id](const voyager::TcpConnectionPtr& p) {
+    connection_map_.erase(node_id);
+  });
 
-  client->SetCloseCallback(
-      [node_id, client, this](const voyager::TcpConnectionPtr& p) {
-        connection_map_.erase(node_id);
-        delete client;
-      });
+  // client->SetConnectFailureCallback(
+  //     [this, node_id]() { connection_map_.erase(node_id); });
 
-  client->Connect(false);
+  client->Connect(true);
+  connection_map_.insert(std::make_pair(node_id, std::move(client)));
 }
 
 bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,

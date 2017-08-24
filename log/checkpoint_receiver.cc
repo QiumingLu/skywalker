@@ -143,7 +143,7 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
   if (res) {
     LOG_INFO("Group %u - load checkpoint successful, so exit process now!",
              config_->GetGroupId());
-    exit(-1);
+    abort();
   }
   return res;
 }
