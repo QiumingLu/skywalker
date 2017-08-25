@@ -86,7 +86,7 @@ void Instance::OnPropose(uint32_t machine_id, const std::string& value,
   proposer_.NewPropose(propose_value_);
 }
 
-void Instance::OnReceiveContent(const std::shared_ptr<Content>& c) {
+void Instance::OnContent(const std::shared_ptr<Content>& c) {
   switch (c->type()) {
     case PAXOS_MESSAGE:
       OnPaxosMessage(c->paxos_msg());

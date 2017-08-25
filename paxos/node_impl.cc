@@ -52,7 +52,7 @@ bool NodeImpl::StartWorking() {
   }
 
   network_.StartServer(
-      std::bind(&NodeImpl::OnReceiveMessage, this, std::placeholders::_1));
+      std::bind(&NodeImpl::OnContent, this, std::placeholders::_1));
   LOG_DEBUG("Skywalker server start successful!");
 
   // 防止所有的Master都是同一个节点。
@@ -81,13 +81,11 @@ bool NodeImpl::Propose(uint32_t group_id, uint32_t machine_id,
                                       std::move(cb));
 }
 
-void NodeImpl::OnReceiveMessage(const Slice& s) {
+void NodeImpl::OnContent(const std::shared_ptr<Content>& c) {
   // FIXME
   // Maybe use a mutex?
   if (!stop_) {
-    std::shared_ptr<Content> c(new Content());
-    c->ParseFromArray(s.data(), static_cast<int>(s.size()));
-    groups_[c->group_id()]->OnReceiveContent(c);
+    groups_[c->group_id()]->OnContent(c);
   }
 }
 

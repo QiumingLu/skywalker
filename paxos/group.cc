@@ -140,8 +140,8 @@ bool Group::OnPropose(uint32_t machine_id, const std::string& value,
       std::move(cb));
 }
 
-void Group::OnReceiveContent(const std::shared_ptr<Content>& c) {
-  io_loop_->QueueInLoop([c, this]() { instance_.OnReceiveContent(c); });
+void Group::OnContent(const std::shared_ptr<Content>& c) {
+  io_loop_->QueueInLoop([c, this]() { instance_.OnContent(c); });
 }
 
 bool Group::ChangeMember(const std::vector<std::pair<Member, bool>>& value,

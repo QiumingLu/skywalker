@@ -51,6 +51,9 @@ bool LogManager::ReplayLog(uint64_t from, uint64_t to) {
     const PaxosValue& value = temp.accepted_value();
     config_->GetMachineManager()->Execute(instance_id, value, nullptr);
   }
+  LOG_INFO("Group %u - replay log successful, from %llu to %llu.",
+           config_->GetGroupId(), (unsigned long long)from,
+           (unsigned long long)to);
   return true;
 }
 

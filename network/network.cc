@@ -18,24 +18,14 @@ Network::Network(const Member& my) : my_(my), net_loop_(voyager::kPoll) {
 
 Network::~Network() {}
 
-void Network::StartServer(const std::function<void(const Slice&)>& cb) {
+void Network::StartServer(
+    const std::function<void(const std::shared_ptr<Content>&)>& cb) {
+  cb_ = cb;
   voyager::SockAddr addr(my_.host, my_.port);
   server_.reset(new voyager::TcpServer(loop_, addr, "SkywalkerServer"));
-
   server_->SetMessageCallback(
-      [cb](const voyager::TcpConnectionPtr&, voyager::Buffer* buf) {
-        while (true) {
-          if (buf->ReadableSize() >= kHeaderSize) {
-            int size;
-            memcpy(&size, buf->Peek(), kHeaderSize);
-            if (buf->ReadableSize() >= static_cast<size_t>(size)) {
-              cb(Slice(buf->Peek() + kHeaderSize, size - kHeaderSize));
-              buf->Retrieve(size);
-              continue;
-            }
-          }
-          break;
-        }
+      [this](const voyager::TcpConnectionPtr& p, voyager::Buffer* buf) {
+        OnMessage(p, buf);
       });
 
   server_->Start();
@@ -105,8 +95,8 @@ void Network::SendMessageInLoop(const MemberMessage& member,
     connection_map_.erase(node_id);
   });
 
-  // client->SetConnectFailureCallback(
-  //     [this, node_id]() { connection_map_.erase(node_id); });
+  client->SetConnectFailureCallback(
+      [this, node_id]() { connection_map_.erase(node_id); });
 
   client->Connect(true);
   connection_map_.insert(std::make_pair(node_id, std::move(client)));
@@ -114,18 +104,41 @@ void Network::SendMessageInLoop(const MemberMessage& member,
 
 bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,
                                 std::string* s) {
-  char buf[kHeaderSize];
-  memset(buf, 0, kHeaderSize);
-  s->append(buf, kHeaderSize);
+  char buf[kHeaderLen];
+  memset(buf, 0, kHeaderLen);
+  s->append(buf, kHeaderLen);
   bool res = content_ptr->AppendToString(s);
   if (res) {
     int size = static_cast<int>(s->size());
-    memcpy(buf, &size, kHeaderSize);
-    s->replace(s->begin(), s->begin() + kHeaderSize, buf, kHeaderSize);
+    memcpy(buf, &size, kHeaderLen);
+    s->replace(s->begin(), s->begin() + kHeaderLen, buf, kHeaderLen);
   } else {
     LOG_ERROR("Network::SendMessage - Content.SerializeToString error.");
   }
   return res;
+}
+
+void Network::OnMessage(const voyager::TcpConnectionPtr& p,
+                        voyager::Buffer* buf) {
+  bool res = true;
+  while (res) {
+    if (buf->ReadableSize() >= kHeaderLen) {
+      int size;
+      memcpy(&size, buf->Peek(), kHeaderLen);
+      if (buf->ReadableSize() >= static_cast<size_t>(size)) {
+        std::shared_ptr<Content> c(new Content());
+        res = c->ParseFromArray(buf->Peek() + kHeaderLen, size - kHeaderLen);
+        if (res) {
+          cb_(c);
+          buf->Retrieve(size);
+        } else {
+          p->ShutDown();
+        }
+        continue;
+      }
+    }
+    break;
+  }
 }
 
 }  // namespace skywalker
