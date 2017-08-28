@@ -7,6 +7,8 @@
 #include <string.h>
 #include <utility>
 
+#include <voyager/util/coding.h>
+
 #include "paxos/config.h"
 #include "skywalker/logging.h"
 
@@ -109,8 +111,8 @@ bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,
   s->append(buf, kHeaderLen);
   bool res = content_ptr->AppendToString(s);
   if (res) {
-    int size = static_cast<int>(s->size());
-    memcpy(buf, &size, kHeaderLen);
+    int32_t size = static_cast<int32_t>(s->size());
+    voyager::EncodeFixed32(buf, size);
     s->replace(s->begin(), s->begin() + kHeaderLen, buf, kHeaderLen);
   } else {
     LOG_ERROR("Network::SendMessage - Content.SerializeToString error.");
@@ -123,8 +125,7 @@ void Network::OnMessage(const voyager::TcpConnectionPtr& p,
   bool res = true;
   while (res) {
     if (buf->ReadableSize() >= kHeaderLen) {
-      int size;
-      memcpy(&size, buf->Peek(), kHeaderLen);
+      uint32_t size = voyager::DecodeFixed32(buf->Peek());
       if (buf->ReadableSize() >= static_cast<size_t>(size)) {
         std::shared_ptr<Content> c(new Content());
         res = c->ParseFromArray(buf->Peek() + kHeaderLen, size - kHeaderLen);

@@ -1,0 +1,16 @@
+.DS_Store
+*.pb.*
+*.a
+*.o
+*.dylib*
+*.so
+*.so.*
+*_test
+*.swp
+build_config.mk
+out-shared/
+out-static/
+build/
+examples/journey/build_config.mk
+examples/journey/journey_client
+examples/journey/journey_server

@@ -56,7 +56,7 @@ uint32_t crc32(uint32_t crc, const char *buf, size_t size) {
   const uint8_t *p = reinterpret_cast<const uint8_t *>(buf);
   crc ^= 0xffffffffu;
   for (size_t i = 0; i < size; ++i) {
-    crc = table[(crc ^ 0xff) ^ *p++] ^ (crc >> 8);
+    crc = table[(crc & 0xff) ^ *p++] ^ (crc >> 8);
   }
   crc ^= 0xffffffffu;
   return crc;
