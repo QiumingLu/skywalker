@@ -106,16 +106,15 @@ void Network::SendMessageInLoop(const MemberMessage& member,
 
 bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,
                                 std::string* s) {
-  char buf[kHeaderLen];
-  memset(buf, 0, kHeaderLen);
-  s->append(buf, kHeaderLen);
+  char buf[kHeaderSize];
+  memset(buf, 0, kHeaderSize);
+  s->append(buf, kHeaderSize);
   bool res = content_ptr->AppendToString(s);
   if (res) {
-    int32_t size = static_cast<int32_t>(s->size());
-    voyager::EncodeFixed32(buf, size);
-    s->replace(s->begin(), s->begin() + kHeaderLen, buf, kHeaderLen);
+    voyager::EncodeFixed32(buf, static_cast<uint32_t>(s->size()));
+    s->replace(s->begin(), s->begin() + kHeaderSize, buf, kHeaderSize);
   } else {
-    LOG_ERROR("Network::SendMessage - Content.SerializeToString error.");
+    LOG_ERROR("Network::SendMessage - content serialize to string failed.");
   }
   return res;
 }
@@ -124,15 +123,16 @@ void Network::OnMessage(const voyager::TcpConnectionPtr& p,
                         voyager::Buffer* buf) {
   bool res = true;
   while (res) {
-    if (buf->ReadableSize() >= kHeaderLen) {
+    if (buf->ReadableSize() >= kHeaderSize) {
       uint32_t size = voyager::DecodeFixed32(buf->Peek());
       if (buf->ReadableSize() >= static_cast<size_t>(size)) {
         std::shared_ptr<Content> c(new Content());
-        res = c->ParseFromArray(buf->Peek() + kHeaderLen, size - kHeaderLen);
+        res = c->ParseFromArray(buf->Peek() + kHeaderSize, size - kHeaderSize);
         if (res) {
           cb_(c);
           buf->Retrieve(size);
         } else {
+          LOG_ERROR("Network::OnMessage - content parse from array failed.");
           p->ShutDown();
         }
         continue;

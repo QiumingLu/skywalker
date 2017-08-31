@@ -40,7 +40,8 @@ class Network {
                    const std::shared_ptr<Content>& content_ptr);
 
  private:
-  static const uint32_t kHeaderLen = 4;
+  static const uint32_t kHeaderSize = 4;
+
   void SendMessageInLoop(const MemberMessage& member, const std::string& s);
   bool SerializeToString(const std::shared_ptr<Content>& content_ptr,
                          std::string* s);
