@@ -23,7 +23,7 @@ Learner::Learner(Config* config, Instance* instance, Acceptor* acceptor)
       instance_(instance),
       acceptor_(acceptor),
       instance_id_(0),
-      rand_(static_cast<uint32_t>(NowMicros())),
+      rand_(static_cast<uint32_t>(NowMillis())),
       is_learning_(false),
       has_learned_(false),
       is_receiving_checkponit_(false) {}

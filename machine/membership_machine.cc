@@ -70,6 +70,9 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
 
     int ret = config_->GetDB()->SetMembership(*membership_);
     if (ret == 0) {
+      if (cb_) {
+        cb_(group_id);
+      }
       return true;
     } else {
       LOG_ERROR("Group %u - update membership failed.", config_->GetGroupId());

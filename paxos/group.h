@@ -33,6 +33,9 @@ class Group {
   bool Recover();
   void Start(RunLoop* loop);
 
+  void SetNewMembershipCallback(const NewMembershipCallback& cb);
+  void SetNewMasterCallback(const NewMasterCallback& cb);
+
   void SyncMembership();
   void SyncMaster();
 

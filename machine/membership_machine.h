@@ -23,6 +23,8 @@ class MembershipMachine : public StateMachine {
 
   void Recover();
 
+  void SetNewMembershipCallback(const NewMembershipCallback& cb) { cb_ = cb; }
+
   std::shared_ptr<Membership> GetMembership() const;
   bool HasSyncMembership() const;
 
@@ -38,6 +40,8 @@ class MembershipMachine : public StateMachine {
 
   mutable Mutex mutex_;
   std::shared_ptr<Membership> membership_;
+
+  NewMembershipCallback cb_;
 
   // No copying allowed
   MembershipMachine(const MembershipMachine&);

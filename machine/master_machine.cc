@@ -10,7 +10,8 @@
 
 namespace skywalker {
 
-MasterMachine::MasterMachine(Config* config) : config_(config) {
+MasterMachine::MasterMachine(Config* config)
+    : config_(config), has_call_(false) {
   set_machine_id(1);
 }
 
@@ -35,6 +36,7 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
     state.set_version(instance_id);
     int ret = config_->GetDB()->SetMasterState(state);
     if (ret == 0) {
+      bool b = (state.node_id() != state_.node_id());
       state.set_lease_time(NowMicros() + state.lease_time());
       SetMasterState(state);
       LOG_INFO(
@@ -43,6 +45,10 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
           config_->GetGroupId(), (unsigned long long)state.version(),
           (unsigned long long)state.node_id(),
           (unsigned long long)state.lease_time());
+      if ((!has_call_ || b) && cb_) {
+        has_call_ = true;
+        cb_(group_id);
+      }
       return true;
     } else {
       LOG_ERROR("Group %u - update master state failed.",

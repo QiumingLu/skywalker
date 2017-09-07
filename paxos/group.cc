@@ -48,6 +48,14 @@ void Group::Start(RunLoop* loop) {
   propose_queue_.SetCallbackLoop(Schedule::Instance()->CallbackLoop());
 }
 
+void Group::SetNewMembershipCallback(const NewMembershipCallback& cb) {
+  membership_machine_->SetNewMembershipCallback(cb);
+}
+
+void Group::SetNewMasterCallback(const NewMasterCallback& cb) {
+  master_machine_->SetNewMasterCallback(cb);
+}
+
 void Group::SyncMembership() {
   instance_.SyncData(true);
   int i = 0;

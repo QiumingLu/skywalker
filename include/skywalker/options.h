@@ -17,6 +17,14 @@
 
 namespace skywalker {
 
+typedef std::function<void(uint32_t group_id)> NewMembershipCallback;
+
+typedef std::function<void(uint32_t group_id)> NewMasterCallback;
+
+typedef std::function<void(uint64_t instance_id, const Status& s,
+                           void* context)>
+    ProposeCompleteCallback;
+
 struct Member {
   uint64_t id;
   std::string host;
@@ -64,12 +72,11 @@ struct Options {
   // the index of group options is group id.
   std::vector<GroupOptions> groups;
 
+  NewMembershipCallback membership_cb;
+  NewMasterCallback master_cb;
+
   Options();
 };
-
-typedef std::function<void(uint64_t instance_id, const Status& s,
-                           void* context)>
-    ProposeCompleteCallback;
 
 }  // namespace skywalker
 

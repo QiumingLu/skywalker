@@ -7,6 +7,7 @@
 
 #include <string>
 #include "proto/paxos.pb.h"
+#include "skywalker/options.h"
 #include "skywalker/state_machine.h"
 #include "util/mutex.h"
 
@@ -19,6 +20,8 @@ class MasterMachine : public StateMachine {
   explicit MasterMachine(Config* config);
 
   void Recover();
+
+  void SetNewMasterCallback(const NewMasterCallback& cb) { cb_ = cb; }
 
   void SetMasterState(const MasterState& state);
   MasterState GetMasterState() const;
@@ -37,6 +40,9 @@ class MasterMachine : public StateMachine {
 
   mutable Mutex mutex_;
   MasterState state_;
+
+  bool has_call_;
+  NewMasterCallback cb_;
 
   // No copying allowed
   MasterMachine(const MasterMachine&);

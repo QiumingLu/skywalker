@@ -9,6 +9,7 @@
 #include "paxos/config.h"
 #include "paxos/instance.h"
 #include "skywalker/logging.h"
+#include "util/timeops.h"
 
 namespace skywalker {
 
@@ -26,7 +27,7 @@ Proposer::Proposer(Config* config, Instance* instance)
       accepting_(false),
       skip_prepare_(false),
       was_rejected_by_someone_(false),
-      rand_(0xdeadbeef) {}
+      rand_(static_cast<uint32_t>(NowMillis())) {}
 
 void Proposer::NewPropose(const PaxosValue& value) {
   value_ = value;
