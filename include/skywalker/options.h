@@ -72,7 +72,10 @@ struct Options {
   // the index of group options is group id.
   std::vector<GroupOptions> groups;
 
+  // The node may be not initialize completely when this callback.
   NewMembershipCallback membership_cb;
+
+  // The node may be not initialize completely when this callback.
   NewMasterCallback master_cb;
 
   Options();
