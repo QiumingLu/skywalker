@@ -41,6 +41,8 @@ class TimerList {
  private:
   void InsertInLoop(TimerId timer);
 
+  uint64_t last_time_out_;
+
   RunLoop* loop_;
   std::set<Timer*> timer_ptrs_;
   std::set<TimerId> timers_;

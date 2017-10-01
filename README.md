@@ -46,6 +46,11 @@ Skywalker支持Linux，macOS 等类Unix平台，不支持Windows平台，以下�
 * Linux 4.4.0，GCC 5.4.0 
 * macOS 10.12，Clang 3.6.0
 
+## 编译依赖
+* LevelDB  v1.3及以上版本
+* Protobuf v3.0.0及以上版本
+* Voyager  v1.0.0及以上版本
+
 ## 编译安装
 (1) LevelDB编译安装(https://github.com/google/leveldb/blob/master/README.md) 
 * 进入third_party/leveldb目录 
