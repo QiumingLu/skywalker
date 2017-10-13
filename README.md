@@ -42,7 +42,7 @@ Skywalker是一个基于[Leslie Lamport](https://en.wikipedia.org/wiki/Leslie_La
 ## 性能
 
 ## 兼容性
-Skywalker支持Linux，macOS 等类Unix平台，不支持Windows平台，以下是一些曾测试的平台/编译器组合：
+Skywalker支持Linux，Mac OS X，FreeBSD等类Unix平台，不支持Windows平台，以下是一些曾测试的平台/编译器组合：
 * Linux 4.4.0，GCC 5.4.0 
 * macOS 10.12，Clang 3.6.0
 
@@ -76,5 +76,5 @@ Skywalker支持Linux，macOS 等类Unix平台，不支持Windows平台，以下�
 
 ## 使用示例
 
-<br />1、简单地使用Skywalker的基本功能，可以参考https://github.com/QiumingLu/skywalker/tree/master/examples/journey 。
+<br />1、简单地使用Skywalker的基本功能，可以参考examples/journey 。
 <br />2、在Skywalker的基础上搭建分布式服务，可以参考https://github.com/QiumingLu/saber 。

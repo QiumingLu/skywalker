@@ -5,7 +5,6 @@
 #ifndef SKYWALKER_INCLUDE_FILE_H_
 #define SKYWALKER_INCLUDE_FILE_H_
 
-#include <pthread.h>
 #include <stdint.h>
 
 #include <string>

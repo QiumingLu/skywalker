@@ -120,12 +120,15 @@ void TimerList::RunTimerProcs() {
     return;
   }
 
+  uint64_t end = timers_.rbegin()->first;
   uint64_t micros_now = NowMicros();
+
   std::set<TimerId>::iterator it;
   while (true) {
     it = timers_.begin();
     if (it != timers_.end() &&
-        (it->first <= micros_now || micros_now < last_time_out_)) {
+        (it->first <= micros_now || micros_now < last_time_out_) &&
+        it->first <= end) {
       Timer* t = it->second;
       TimerProcCallback cb = t->timerproc_cb;
       if (t->micros_interval > 0) {
@@ -137,7 +140,6 @@ void TimerList::RunTimerProcs() {
         timer_ptrs_.erase(t);
       }
       timers_.erase(it);
-      // 为了避免周期定时无法移除定时器的问题。
       cb();
     } else {
       break;

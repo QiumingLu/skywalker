@@ -26,6 +26,9 @@ RunLoopThread::~RunLoopThread() {
 }
 
 RunLoop* RunLoopThread::Loop() {
+  if (loop_ != nullptr) {
+    return loop_;
+  }
   assert(!thread_.Started());
   thread_.Start(&RunLoopThread::StartRunLoop, this);
   MutexLock lock(&mu_);

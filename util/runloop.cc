@@ -44,7 +44,7 @@ void RunLoop::Loop() {
 }
 
 void RunLoop::Exit() {
-  this->QueueInLoop([this]() { exit_ = true; });
+  RunInLoop([this]() { exit_ = true; });
 }
 
 bool RunLoop::IsInMyLoop() const { return tid_ == CurrentThread::Tid(); }
