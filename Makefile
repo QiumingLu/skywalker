@@ -153,8 +153,8 @@ $(STATIC_OUTDIR)/libskywalker.a:$(STATIC_LIBOBJECTS)
 	ar -rs $@ $(STATIC_LIBOBJECTS)
 	rm -rf ./proto/*.pb.*
 
-$(STATIC_OUTDIR)/paxos_test:paxos/test/paxos_test.cc $(STATIC_LIBOBJECTS)
-	$(CXX) $(LDFLAGS) $(CXXFLAGS) paxos/test/paxos_test.cc $(STATIC_LIBOBJECTS) -o $@ $(LIBS)
+$(STATIC_OUTDIR)/paxos_test:paxos/tests/paxos_test.cc $(STATIC_LIBOBJECTS)
+	$(CXX) $(LDFLAGS) $(CXXFLAGS) paxos/tests/paxos_test.cc $(STATIC_LIBOBJECTS) -o $@ $(LIBS)
 
 $(STATIC_OUTDIR)/%.o: %.cc 
 	$(CXX) $(CXXFLAGS) -c $< -o $@ 

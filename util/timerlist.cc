@@ -125,7 +125,7 @@ void TimerList::RunTimerProcs() {
   if (micros_now < last_time_out_) {
     uint64_t diff = last_time_out_ - micros_now;
     std::set<TimerId> timers;
-    for (auto &it : timers_) {
+    for (auto& it : timers_) {
       uint64_t value = it.first > diff ? it.first - diff : 0;
       it.second->micros_value = value;
       timers.insert(TimerId(value, it.second));
@@ -154,7 +154,6 @@ void TimerList::RunTimerProcs() {
       break;
     }
   }
-  last_time_out_ = micros_now;
 }
 
 }  // namespace skywalker
