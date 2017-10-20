@@ -44,7 +44,10 @@ void RunLoop::Loop() {
 }
 
 void RunLoop::Exit() {
-  RunInLoop([this]() { exit_ = true; });
+  exit_ = true;
+  if (!IsInMyLoop()) {
+    cond_.Signal();
+  }
 }
 
 bool RunLoop::IsInMyLoop() const { return tid_ == CurrentThread::Tid(); }

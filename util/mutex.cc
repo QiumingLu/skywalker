@@ -36,7 +36,12 @@ void Mutex::UnLock() {
 }
 
 Condition::Condition(Mutex* mutex) : mutex_(mutex) {
-  PthreadCall("pthread_cond_init", pthread_cond_init(&cond_, nullptr));
+  pthread_condattr_t attr;
+#ifdef __linux__
+  PthreadCall("pthread_condattr_setclock",
+              pthread_condattr_setclock(&attr, CLOCK_MONOTONIC));
+#endif
+  PthreadCall("pthread_cond_init", pthread_cond_init(&cond_, &attr));
 }
 
 Condition::~Condition() {
