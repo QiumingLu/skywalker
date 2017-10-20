@@ -36,12 +36,15 @@ void Mutex::UnLock() {
 }
 
 Condition::Condition(Mutex* mutex) : mutex_(mutex) {
-  pthread_condattr_t attr;
 #ifdef __linux__
+  pthread_condattr_t attr;
+  pthread_condattr_init(&attr);
   PthreadCall("pthread_condattr_setclock",
               pthread_condattr_setclock(&attr, CLOCK_MONOTONIC));
-#endif
   PthreadCall("pthread_cond_init", pthread_cond_init(&cond_, &attr));
+#else
+  PthreadCall("pthread_cond_init", pthread_cond_init(&cond_, nullptr));
+#endif
 }
 
 Condition::~Condition() {
@@ -53,10 +56,18 @@ void Condition::Wait() {
 }
 
 bool Condition::Wait(uint64_t micros) {
+struct timespec outtime;
+#ifdef __linux__
+  clock_gettime(CLOCK_MONOTONIC, &outtime);
+  outtime.tv_sec += micros / 1000000;
+  outtime.tv_nsec += (micros % 1000000) * 1000;
+  outtime.tv_sec += outtime.tv_nsec / 1000000000;
+  outtime.tv_nsec = outtime.tv_nsec % 1000000000;
+#else
   uint64_t now = (NowMicros() + micros) * 1000;
-  struct timespec outtime;
   outtime.tv_sec = now / 1000000000;
   outtime.tv_nsec = now % 1000000000;
+#endif
   int res = pthread_cond_timedwait(&cond_, &mutex_->mutex_, &outtime);
   if (res != 0 && res != ETIMEDOUT) {
     PthreadCall("pthread_cond_timedwait", res);
