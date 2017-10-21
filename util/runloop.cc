@@ -25,10 +25,9 @@ RunLoop::RunLoop()
 void RunLoop::Loop() {
   AssertInMyLoop();
   exit_ = false;
+  std::vector<Func> funcs;
   while (!exit_) {
-    uint64_t t = timers_.TimeoutMicros();
-    uint64_t timeout = std::min(t, static_cast<uint64_t>(5000 * 1000));
-    std::vector<Func> funcs;
+    uint64_t timeout = timers_.TimeoutMicros();
     {
       MutexLock lock(&mutex_);
       if (funcs_.empty()) {
@@ -36,10 +35,11 @@ void RunLoop::Loop() {
       }
       funcs.swap(funcs_);
     }
+    timers_.RunTimerProcs();
     for (auto& f : funcs) {
       f();
     }
-    timers_.RunTimerProcs();
+    funcs.clear();
   }
 }
 

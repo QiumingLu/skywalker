@@ -56,6 +56,10 @@ void Condition::Wait() {
 }
 
 bool Condition::Wait(uint64_t micros) {
+  if (micros == UINTMAX_MAX) {
+    Wait();
+    return true;
+  }
   struct timespec outtime;
 #ifdef __linux__
   clock_gettime(CLOCK_MONOTONIC, &outtime);
