@@ -4,6 +4,7 @@
 
 #include "log/checkpoint_receiver.h"
 
+#include <unistd.h>
 #include <vector>
 
 #include "log/checkpoint_manager.h"
@@ -143,8 +144,8 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
   if (res) {
     LOG_INFO("Group %u - load checkpoint successful!", config_->GetGroupId());
     LOG_WARN("Killing the process now...");
-    SetLogHandler(nullptr);
-    exit(1);
+    // FIXME
+    _exit(2);
   }
   return res;
 }
