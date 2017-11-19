@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "paxos/config.h"
+#include "skywalker/logging.h"
 
 namespace skywalker {
 
@@ -28,6 +29,9 @@ bool MachineManager::Execute(uint64_t instance_id, const PaxosValue& value,
     assert(it->second != nullptr);
     return it->second->Execute(config_->GetGroupId(), instance_id,
                                value.user_data(), context);
+  } else {
+    LOG_WARN("Group %u - machine(id=%u) is not existed.", config_->GetGroupId(),
+             value.machine_id());
   }
   return true;
 }

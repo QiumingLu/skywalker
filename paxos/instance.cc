@@ -4,6 +4,8 @@
 
 #include "paxos/instance.h"
 
+#include <stdio.h>
+
 #include <utility>
 
 #include "paxos/config.h"
@@ -170,7 +172,10 @@ void Instance::CheckLearn() {
           status = Status::Conflict("another value has been chosen.");
         }
       } else {
-        status = Status::MachineError("machine execute failed.");
+        char msg[64];
+        snprintf(msg, sizeof(msg), "machine(id=%u) execute failed.",
+                 learned_value.machine_id());
+        status = Status::MachineError(msg);
       }
       propose_cb_(instance_id_, status, context_);
       is_proposing_ = false;
