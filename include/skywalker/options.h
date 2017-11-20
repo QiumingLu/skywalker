@@ -77,7 +77,11 @@ struct Options {
   // | io thread            |          N            |
   // |                                              |
   // | callback thread      |          N            |
+  // |                                              |
+  // | leveldb thread model |         0/1           |
   //  -----------------------------------------------
+  // The skywalker's thread size is:
+  // 5 + io_thread_size + callback_thread_size
 
   // Default: io_thread_size = (groups.size() + 1) / 2
   // the io_thread_size must be (0, groups.size()]
