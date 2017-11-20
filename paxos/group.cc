@@ -40,12 +40,12 @@ bool Group::Recover() {
   return false;
 }
 
-void Group::Start(RunLoop* loop) {
-  io_loop_ = loop;
+void Group::Start(RunLoop* io_loop, RunLoop* callback_loop) {
+  io_loop_ = io_loop;
   instance_.SetIOLoop(io_loop_);
   propose_queue_.SetIOLoop(io_loop_);
+  propose_queue_.SetCallbackLoop(callback_loop);
   instance_.SetLearnLoop(Schedule::Instance()->LearnLoop());
-  propose_queue_.SetCallbackLoop(Schedule::Instance()->CallbackLoop());
 }
 
 void Group::SetNewMembershipCallback(const NewMembershipCallback& cb) {

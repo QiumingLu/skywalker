@@ -20,9 +20,8 @@ class Schedule {
     return &schedule;
   }
 
-  void Start(uint32_t io_thread_size, bool use_master = true);
-
-  RunLoop* CallbackLoop() const;
+  void Start(uint32_t io_thread_size, uint32_t callback_thread_size,
+             bool use_master = true);
 
   RunLoop* CleanLoop() const;
 
@@ -30,25 +29,28 @@ class Schedule {
 
   RunLoop* MasterLoop() const;
 
-  // round-robin
   RunLoop* GetNextIOLoop();
+
+  RunLoop* GetNextCallbackLoop();
 
  private:
   bool started_;
-  uint32_t next_;
+  uint32_t io_next_;
+  uint32_t callback_next_;
 
-  RunLoop* callback_loop_;
-  RunLoop* learn_loop_;
   RunLoop* clean_loop_;
+  RunLoop* learn_loop_;
   RunLoop* master_loop_;
 
-  RunLoopThread callback_thread_;
   RunLoopThread clean_thread_;
   RunLoopThread learn_thread_;
   RunLoopThread master_thread_;
 
   std::vector<RunLoop*> io_loops_;
-  std::vector<std::unique_ptr<RunLoopThread> > io_threads_;
+  std::vector<RunLoop*> callback_loops_;
+
+  std::vector<std::unique_ptr<RunLoopThread>> io_threads_;
+  std::vector<std::unique_ptr<RunLoopThread>> callback_threads_;
 
   Schedule();
   ~Schedule();

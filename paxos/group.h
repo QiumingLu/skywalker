@@ -31,7 +31,7 @@ class Group {
         Network* network);
 
   bool Recover();
-  void Start(RunLoop* loop);
+  void Start(RunLoop* io_loop, RunLoop* callback_loop);
 
   void SetNewMembershipCallback(const NewMembershipCallback& cb);
   void SetNewMasterCallback(const NewMasterCallback& cb);

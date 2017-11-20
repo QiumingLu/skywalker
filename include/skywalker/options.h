@@ -62,12 +62,31 @@ struct GroupOptions {
 };
 
 struct Options {
-  Member my;
+  // The skywalker's thread model is:
+  //  ______________________________________________
+  // | name                 |        size           |
+  // |————————————————————————————————————————————--|
+  // | network thread       |          1            |
+  // |                                              |
+  // | master thread        |          1            |
+  // |                                              |
+  // | learn thread         |          1            |
+  // |                                              |
+  // | clean thread         |          1            |
+  // |                                              |
+  // | io thread            |          N            |
+  // |                                              |
+  // | callback thread      |          N            |
+  //  -----------------------------------------------
 
   // Default: io_thread_size = (groups.size() + 1) / 2
   // the io_thread_size must be (0, groups.size()]
-  // the skywalker's thread_size = 5 + io_thread_size
   uint32_t io_thread_size;
+
+  // Default: 1
+  uint32_t callback_thread_size;
+
+  Member my;
 
   // the index of group options is group id.
   std::vector<GroupOptions> groups;

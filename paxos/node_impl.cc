@@ -45,11 +45,13 @@ bool NodeImpl::StartWorking() {
     options_.io_thread_size = static_cast<uint32_t>(groups.size());
   }
   assert(options_.io_thread_size != 0);
-  Schedule::Instance()->Start(options_.io_thread_size, use_master);
+  Schedule::Instance()->Start(options_.io_thread_size,
+                              options_.callback_thread_size, use_master);
   for (auto& g : groups) {
     g->SetNewMembershipCallback(options_.membership_cb);
     g->SetNewMasterCallback(options_.master_cb);
-    g->Start(Schedule::Instance()->GetNextIOLoop());
+    g->Start(Schedule::Instance()->GetNextIOLoop(),
+             Schedule::Instance()->GetNextCallbackLoop());
     g->StartGC();
   }
 
