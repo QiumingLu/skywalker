@@ -10,13 +10,13 @@
 #include "paxos/config.h"
 #include "skywalker/logging.h"
 
-namespace {
-const uint64_t kMinChosenKey = UINTMAX_MAX;
-const uint64_t kMembership = (UINTMAX_MAX - 1);
-const uint64_t kMasterState = (UINTMAX_MAX - 2);
-}  // namespace
-
 namespace skywalker {
+
+namespace {
+static const uint64_t kMinChosenKey = UINTMAX_MAX;
+static const uint64_t kMembership = (UINTMAX_MAX - 1);
+static const uint64_t kMasterState = (UINTMAX_MAX - 2);
+}  // namespace
 
 int Comparator::Compare(const leveldb::Slice& a,
                         const leveldb::Slice& b) const {
