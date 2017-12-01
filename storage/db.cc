@@ -9,6 +9,7 @@
 
 #include "paxos/config.h"
 #include "skywalker/logging.h"
+#include "util/coding.h"
 
 namespace {
 const uint64_t kMinChosenKey = UINTMAX_MAX;
@@ -20,12 +21,8 @@ namespace skywalker {
 
 int Comparator::Compare(const leveldb::Slice& a,
                         const leveldb::Slice& b) const {
-  size_t size = sizeof(uint64_t);
-  assert(a.size() == size && b.size() == size);
-  uint64_t key;
-  uint64_t key2;
-  memcpy(&key, a.data(), size);
-  memcpy(&key2, b.data(), size);
+  uint64_t key = DecodeFixed64(a.data());
+  uint64_t key2 = DecodeFixed64(b.data());
   if (key == key2) {
     return 0;
   }
@@ -52,7 +49,7 @@ int DB::Open(const std::string& name) {
 int DB::Put(const WriteOptions& options, uint64_t instance_id,
             const std::string& value) {
   char key[sizeof(instance_id)];
-  memcpy(key, &instance_id, sizeof(key));
+  EncodeFixed64(key, instance_id);
   leveldb::WriteOptions op;
   op.sync = options.sync;
   leveldb::Status status =
@@ -66,7 +63,7 @@ int DB::Put(const WriteOptions& options, uint64_t instance_id,
 
 int DB::Delete(const WriteOptions& options, uint64_t instance_id) {
   char key[sizeof(instance_id)];
-  memcpy(key, &instance_id, sizeof(key));
+  EncodeFixed64(key, instance_id);
   leveldb::WriteOptions op;
   op.sync = options.sync;
   leveldb::Status status = db_->Delete(op, leveldb::Slice(key, sizeof(key)));
@@ -90,7 +87,7 @@ int DB::Write(const WriteOptions& options, WriteBatch* updates) {
 
 int DB::Get(uint64_t instance_id, std::string* value) {
   char key[sizeof(instance_id)];
-  memcpy(key, &instance_id, sizeof(key));
+  EncodeFixed64(key, instance_id);
   leveldb::Status status =
       db_->Get(leveldb::ReadOptions(), leveldb::Slice(key, sizeof(key)), value);
   int ret = 0;
@@ -111,8 +108,7 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
   leveldb::Iterator* it = db_->NewIterator(leveldb::ReadOptions());
   it->SeekToLast();
   while (it->Valid()) {
-    uint64_t id = 0;
-    memcpy(&id, it->key().data(), sizeof(id));
+    uint64_t id = DecodeFixed64(it->key().data());
     if (id == kMinChosenKey || id == kMembership || id == kMasterState) {
       it->Prev();
     } else {
@@ -127,7 +123,7 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
 
 int DB::SetMinChosenInstanceId(uint64_t id) {
   char value[sizeof(id)];
-  memcpy(value, &id, sizeof(value));
+  EncodeFixed64(value, id);
   return Put(WriteOptions(), kMinChosenKey, std::string(value, sizeof(value)));
 }
 
@@ -135,7 +131,7 @@ int DB::GetMinChosenInstanceId(uint64_t* id) {
   std::string value;
   int ret = Get(kMinChosenKey, &value);
   if (ret == 0) {
-    memcpy(id, &*(value.data()), value.size());
+    *id = DecodeFixed64(value.data());
   }
   return ret;
 }
