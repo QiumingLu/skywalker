@@ -105,14 +105,12 @@ void Network::SendMessageInLoop(const MemberMessage& member,
 
 bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,
                                 std::string* s) {
-  char buf[kHeaderSize];
-  memset(buf, 0, kHeaderSize);
-  s->append(buf, kHeaderSize);
+  uint32_t size =
+      kHeaderSize + static_cast<uint32_t>(content_ptr->ByteSizeLong());
+  s->reserve(size);
+  PutFixed32(s, size);
   bool res = content_ptr->AppendToString(s);
-  if (res) {
-    EncodeFixed32(buf, static_cast<uint32_t>(s->size()));
-    s->replace(s->begin(), s->begin() + kHeaderSize, buf, kHeaderSize);
-  } else {
+  if (!res) {
     LOG_ERROR("Network::SendMessage - content serialize to string failed.");
   }
   return res;
