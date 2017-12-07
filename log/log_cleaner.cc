@@ -6,6 +6,7 @@
 #include "log/log_manager.h"
 #include "paxos/config.h"
 #include "paxos/schedule.h"
+#include "util/timeops.h"
 
 namespace skywalker {
 
@@ -48,6 +49,7 @@ void LogCleaner::GCLoop() {
   if (res == 0) {
     manager_->SetMinChosenInstanceId(min_chosen_id);
   }
+  SleepForMicroseconds(10000);
 }
 
 }  // namespace skywalker
