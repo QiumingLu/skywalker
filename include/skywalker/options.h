@@ -88,6 +88,7 @@ struct Options {
   uint32_t io_thread_size;
 
   // Default: 1
+  // the callback_thread_size must be (0, groups.size()]
   uint32_t callback_thread_size;
 
   Member my;

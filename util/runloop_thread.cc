@@ -27,12 +27,10 @@ RunLoopThread::~RunLoopThread() {
 
 RunLoop* RunLoopThread::Loop() {
   assert(!thread_.Started());
-  if (!thread_.Started()) {
-    thread_.Start(&RunLoopThread::StartRunLoop, this);
-    MutexLock lock(&mu_);
-    while (loop_ == nullptr) {
-      cond_.Wait();
-    }
+  thread_.Start(&RunLoopThread::StartRunLoop, this);
+  MutexLock lock(&mu_);
+  while (loop_ == nullptr) {
+    cond_.Wait();
   }
   return loop_;
 }

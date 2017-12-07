@@ -8,7 +8,6 @@
 #include <random>
 #include <utility>
 
-#include "paxos/schedule.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/logging.h"
 
@@ -20,13 +19,9 @@ NodeImpl::NodeImpl(const Options& options)
 NodeImpl::~NodeImpl() { stop_ = true; }
 
 bool NodeImpl::StartWorking() {
-  bool use_master = false;
   std::vector<Group*> groups;
   int i = 0;
   for (auto& g : options_.groups) {
-    if (g.use_master) {
-      use_master = true;
-    }
     std::unique_ptr<Group> group(new Group(options_.my.id, i, g, &network_));
     if (group->Recover()) {
       LOG_DEBUG("Group %u recover successful!", i);
@@ -44,14 +39,21 @@ bool NodeImpl::StartWorking() {
   } else if (options_.io_thread_size > groups.size()) {
     options_.io_thread_size = static_cast<uint32_t>(groups.size());
   }
+
+  if (options_.callback_thread_size == 0) {
+    options_.callback_thread_size = 1;
+  } else if (options_.callback_thread_size > groups.size()) {
+    options_.callback_thread_size = static_cast<uint32_t>(groups.size());
+  }
+
   assert(options_.io_thread_size != 0);
-  Schedule::Instance()->Start(options_.io_thread_size,
-                              options_.callback_thread_size, use_master);
+  assert(options_.callback_thread_size != 0);
+  pool_.Start(options_.io_thread_size, options_.callback_thread_size);
+
   for (auto& g : groups) {
     g->SetNewMembershipCallback(options_.membership_cb);
     g->SetNewMasterCallback(options_.master_cb);
-    g->Start(Schedule::Instance()->GetNextIOLoop(),
-             Schedule::Instance()->GetNextCallbackLoop());
+    g->Start(pool_.GetNextIOLoop(), pool_.GetNextCallbackLoop());
     g->StartGC();
   }
 

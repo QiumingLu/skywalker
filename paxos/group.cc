@@ -33,6 +33,8 @@ Group::Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
   master_machine_ = config_.GetMasterMachine();
 }
 
+Group::~Group() { Schedule::Instance()->MasterLoop()->Remove(timer_); }
+
 bool Group::Recover() {
   if (config_.Recover() && instance_.Recover()) {
     return true;
@@ -118,7 +120,8 @@ void Group::TryBeMaster() {
     retrie_master_ = false;
   }
 
-  Schedule::Instance()->MasterLoop()->RunAt(next, [this]() { TryBeMaster(); });
+  timer_ = Schedule::Instance()->MasterLoop()->RunAt(
+      next, [this]() { TryBeMaster(); });
 }
 
 void Group::TryBeMasterInLoop() {

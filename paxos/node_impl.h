@@ -12,6 +12,7 @@
 
 #include "network/network.h"
 #include "paxos/group.h"
+#include "paxos/schedule.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/node.h"
 #include "skywalker/options.h"
@@ -55,6 +56,7 @@ class NodeImpl : public Node {
   bool stop_;
   Options options_;
   Network network_;
+  ThreadPool pool_;
   std::vector<std::unique_ptr<Group>> groups_;
 
   // No copying allowed

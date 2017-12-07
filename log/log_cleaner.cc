@@ -12,7 +12,7 @@ namespace skywalker {
 LogCleaner::LogCleaner(Config* config, LogManager* manager)
     : config_(config), manager_(manager), started_(false) {}
 
-LogCleaner::~LogCleaner() {}
+LogCleaner::~LogCleaner() { StopGC(); }
 
 void LogCleaner::StartGC() {
   bool expected = false;

@@ -29,6 +29,7 @@ class Group {
  public:
   Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
         Network* network);
+  ~Group();
 
   bool Recover();
   void Start(RunLoop* io_loop, RunLoop* callback_loop);
@@ -76,6 +77,7 @@ class Group {
   MembershipMachine* membership_machine_;
   MasterMachine* master_machine_;
   ProposeCompleteCallback propose_cb_;
+  TimerId timer_;
 
   Mutex mutex_;
   Condition cond_;

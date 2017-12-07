@@ -18,6 +18,6 @@ GroupOptions::GroupOptions()
       membership(),
       followers() {}
 
-Options::Options() : io_thread_size(0), callback_thread_size(0) {}
+Options::Options() : io_thread_size(0), callback_thread_size(1) {}
 
 }  // namespace skywalker

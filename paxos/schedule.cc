@@ -8,25 +8,16 @@
 
 namespace skywalker {
 
-Schedule::Schedule()
-    : started_(false),
-      io_next_(0),
-      callback_next_(0),
-      clean_loop_(nullptr),
-      learn_loop_(nullptr),
-      master_loop_(nullptr) {}
+ThreadPool::ThreadPool() : started_(false), io_next_(0), callback_next_(0) {}
 
-Schedule::~Schedule() {}
-
-void Schedule::Start(uint32_t io_thread_size, uint32_t callback_thread_size,
-                     bool use_master) {
+void ThreadPool::Start(uint32_t io_thread_size, uint32_t callback_thread_size) {
   assert(!started_);
   started_ = true;
-  clean_loop_ = clean_thread_.Loop();
-  learn_loop_ = learn_thread_.Loop();
-  if (use_master) {
-    master_loop_ = master_thread_.Loop();
-  }
+
+  io_loops_.reserve(io_thread_size);
+  callback_loops_.reserve(callback_thread_size);
+  io_threads_.reserve(io_thread_size);
+  callback_threads_.reserve(callback_thread_size);
 
   for (uint32_t i = 0; i < io_thread_size; ++i) {
     RunLoopThread* thread = new RunLoopThread();
@@ -40,22 +31,7 @@ void Schedule::Start(uint32_t io_thread_size, uint32_t callback_thread_size,
   }
 }
 
-RunLoop* Schedule::CleanLoop() const {
-  assert(started_);
-  return clean_loop_;
-}
-
-RunLoop* Schedule::LearnLoop() const {
-  assert(started_);
-  return learn_loop_;
-}
-
-RunLoop* Schedule::MasterLoop() const {
-  assert(started_);
-  return master_loop_;
-}
-
-RunLoop* Schedule::GetNextIOLoop() {
+RunLoop* ThreadPool::GetNextIOLoop() {
   assert(started_);
   if (io_next_ == io_loops_.size()) {
     io_next_ = 0;
@@ -63,12 +39,31 @@ RunLoop* Schedule::GetNextIOLoop() {
   return io_loops_[io_next_++];
 }
 
-RunLoop* Schedule::GetNextCallbackLoop() {
+RunLoop* ThreadPool::GetNextCallbackLoop() {
   assert(started_);
   if (callback_next_ == callback_loops_.size()) {
     callback_next_ = 0;
   }
   return callback_loops_[callback_next_++];
+}
+
+Schedule::Schedule()
+    : clean_loop_(nullptr), learn_loop_(nullptr), master_loop_(nullptr) {
+  clean_loop_ = clean_thread_.Loop();
+  learn_loop_ = learn_thread_.Loop();
+}
+
+Schedule::~Schedule() {}
+
+RunLoop* Schedule::CleanLoop() const { return clean_loop_; }
+
+RunLoop* Schedule::LearnLoop() const { return learn_loop_; }
+
+RunLoop* Schedule::MasterLoop() {
+  if (master_loop_ == nullptr) {
+    master_loop_ = master_thread_.Loop();
+  }
+  return master_loop_;
 }
 
 }  // namespace skywalker
