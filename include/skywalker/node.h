@@ -16,7 +16,7 @@ namespace skywalker {
 // Update Makefile if you change these
 static const int kMajorVersion = 1;
 static const int kMinorVersion = 0;
-static const int kPatchVersion = 1;
+static const int kPatchVersion = 2;
 
 // A Node is safe for concurrent access from multiple threads without
 // any external synchronization.
