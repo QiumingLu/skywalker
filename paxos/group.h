@@ -46,7 +46,7 @@ class Group {
   bool OnPropose(uint32_t machine_id, const std::string& value, void* context,
                  ProposeCompleteCallback&& cb);
 
-  void OnContent(const std::shared_ptr<Content>& c);
+  void OnContent(std::unique_ptr<Content> c);
 
   bool ChangeMember(const std::vector<std::pair<Member, bool>>& value,
                     void* context, const ProposeCompleteCallback& cb);

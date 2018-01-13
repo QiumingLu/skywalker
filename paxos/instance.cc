@@ -88,13 +88,13 @@ void Instance::OnPropose(uint32_t machine_id, const std::string& value,
   proposer_.NewPropose(propose_value_);
 }
 
-void Instance::OnContent(const std::shared_ptr<Content>& c) {
-  switch (c->type()) {
+void Instance::OnContent(const Content& c) {
+  switch (c.type()) {
     case PAXOS_MESSAGE:
-      OnPaxosMessage(c->paxos_msg());
+      OnPaxosMessage(c.paxos_msg());
       break;
     case CHECKPOINT_MESSAGE:
-      OnCheckpointMessage(c->checkpoint_msg());
+      OnCheckpointMessage(c.checkpoint_msg());
       break;
     default:
       LOG_ERROR("Group %u - receive an invalid content.",

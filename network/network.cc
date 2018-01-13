@@ -20,7 +20,7 @@ Network::Network(const Member& my) : my_(my), net_loop_(voyager::kPoll) {
 Network::~Network() {}
 
 void Network::StartServer(
-    const std::function<void(const std::shared_ptr<Content>&)>& cb) {
+    const std::function<void(std::unique_ptr<Content>)>& cb) {
   cb_ = cb;
   voyager::SockAddr addr(my_.host, my_.port);
   server_.reset(new voyager::TcpServer(loop_, addr, "SkywalkerServer"));
@@ -123,10 +123,10 @@ void Network::OnMessage(const voyager::TcpConnectionPtr& p,
     if (buf->ReadableSize() >= kHeaderSize) {
       uint32_t size = DecodeFixed32(buf->Peek());
       if (buf->ReadableSize() >= static_cast<size_t>(size)) {
-        std::shared_ptr<Content> c(new Content());
+        std::unique_ptr<Content> c(new Content());
         res = c->ParseFromArray(buf->Peek() + kHeaderSize, size - kHeaderSize);
         if (res) {
-          cb_(c);
+          cb_(std::move(c));
           buf->Retrieve(size);
         } else {
           LOG_ERROR("Network::OnMessage - content parse from array failed.");

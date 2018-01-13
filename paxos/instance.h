@@ -40,7 +40,7 @@ class Instance {
 
   void OnPropose(uint32_t machine_id, const std::string& value,
                  void* context = nullptr);
-  void OnContent(const std::shared_ptr<Content>& c);
+  void OnContent(const Content& c);
 
   void OnPaxosMessage(const PaxosMessage& msg);
   void OnCheckpointMessage(const CheckpointMessage& msg);

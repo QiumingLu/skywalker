@@ -12,7 +12,7 @@ Messager::Messager(Config* config, Network* network)
     : config_(config), network_(network) {}
 
 std::shared_ptr<Content> Messager::PackMessage(PaxosMessage* msg) {
-  std::shared_ptr<Content> content_ptr(new Content());
+  auto content_ptr = std::make_shared<Content>();
   content_ptr->set_type(PAXOS_MESSAGE);
   content_ptr->set_group_id(config_->GetGroupId());
   content_ptr->set_allocated_paxos_msg(msg);
@@ -20,7 +20,7 @@ std::shared_ptr<Content> Messager::PackMessage(PaxosMessage* msg) {
 }
 
 std::shared_ptr<Content> Messager::PackMessage(CheckpointMessage* msg) {
-  std::shared_ptr<Content> content_ptr(new Content());
+  auto content_ptr = std::make_shared<Content>();
   content_ptr->set_type(CHECKPOINT_MESSAGE);
   content_ptr->set_group_id(config_->GetGroupId());
   content_ptr->set_allocated_checkpoint_msg(msg);

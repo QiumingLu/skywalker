@@ -30,8 +30,7 @@ class Network {
   explicit Network(const Member& my);
   ~Network();
 
-  void StartServer(
-      const std::function<void(const std::shared_ptr<Content>&)>& cb);
+  void StartServer(const std::function<void(std::unique_ptr<Content>)>& cb);
 
   void SendMessage(uint64_t node_id, Config* config,
                    const std::shared_ptr<Content>& content_ptr);
@@ -48,7 +47,7 @@ class Network {
   void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
 
   Member my_;
-  std::function<void(const std::shared_ptr<Content>&)> cb_;
+  std::function<void(std::unique_ptr<Content>)> cb_;
   std::unique_ptr<voyager::TcpServer> server_;
   std::map<uint64_t, std::unique_ptr<voyager::TcpClient> > connection_map_;
 

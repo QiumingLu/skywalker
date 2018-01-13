@@ -151,8 +151,12 @@ bool Group::OnPropose(uint32_t machine_id, const std::string& value,
       std::move(cb));
 }
 
-void Group::OnContent(const std::shared_ptr<Content>& c) {
-  io_loop_->QueueInLoop([c, this]() { instance_.OnContent(c); });
+void Group::OnContent(std::unique_ptr<Content> c) {
+  Content* content = c.release();
+  io_loop_->QueueInLoop([content, this]() {
+    instance_.OnContent(*content);
+    delete content;
+  });
 }
 
 bool Group::ChangeMember(const std::vector<std::pair<Member, bool>>& value,

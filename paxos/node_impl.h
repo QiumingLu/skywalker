@@ -51,7 +51,7 @@ class NodeImpl : public Node {
   virtual void StopGC(uint32_t group_id);
 
  private:
-  void OnContent(const std::shared_ptr<Content>& c);
+  void OnContent(std::unique_ptr<Content> c);
 
   bool stop_;
   Options options_;

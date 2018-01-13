@@ -87,11 +87,16 @@ bool NodeImpl::Propose(uint32_t group_id, uint32_t machine_id,
                                       std::move(cb));
 }
 
-void NodeImpl::OnContent(const std::shared_ptr<Content>& c) {
+void NodeImpl::OnContent(std::unique_ptr<Content> c) {
   // FIXME
   // Maybe use a mutex?
   if (!stop_) {
-    groups_[c->group_id()]->OnContent(c);
+    uint32_t group_id = c->group_id();
+    if (group_id < groups_.size()) {
+      groups_[group_id]->OnContent(std::move(c));
+    } else {
+      LOG_DEBUG("Receive an invalid content, group_id=%u is invalid", group_id);
+    }
   }
 }
 
