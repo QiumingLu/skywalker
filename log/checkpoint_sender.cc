@@ -51,13 +51,15 @@ bool CheckpointSender::SendCheckpoint(uint64_t node_id) {
 }
 
 void CheckpointSender::BeginToSend(uint64_t instance_id) {
-  CheckpointMessage* begin = new CheckpointMessage();
+  Content content;
+  content.set_type(CHECKPOINT_MESSAGE);
+  content.set_group_id(config_->GetGroupId());
+  CheckpointMessage* begin = content.mutable_checkpoint_msg();
   begin->set_type(CHECKPOINT_BEGIN);
   begin->set_node_id(config_->GetNodeId());
   begin->set_instance_id(instance_id);
   begin->set_sequence_id(sequence_id_++);
-  config_->GetMessager()->SendMessage(
-      receiver_node_id_, config_->GetMessager()->PackMessage(begin));
+  config_->GetMessager()->SendMessage(receiver_node_id_, content);
 }
 
 bool CheckpointSender::SendCheckpointFiles(uint64_t instance_id) {
@@ -106,6 +108,11 @@ bool CheckpointSender::SendFile(uint64_t instance_id, int machine_id,
   }
   bool res = true;
   size_t offset = 0;
+
+  Content content;
+  content.set_type(CHECKPOINT_MESSAGE);
+  content.set_group_id(config_->GetGroupId());
+
   while (res) {
     Slice fragmenet;
     s = seq_file->Read(kBufferSize, &fragmenet, buffer_);
@@ -120,7 +127,7 @@ bool CheckpointSender::SendFile(uint64_t instance_id, int machine_id,
 
     offset += fragmenet.size();
 
-    CheckpointMessage* msg = new CheckpointMessage();
+    CheckpointMessage* msg = content.mutable_checkpoint_msg();
     msg->set_type(CHECKPOINT_FILE);
     msg->set_node_id(config_->GetNodeId());
     msg->set_instance_id(instance_id);
@@ -129,8 +136,7 @@ bool CheckpointSender::SendFile(uint64_t instance_id, int machine_id,
     msg->set_file(file);
     msg->set_offset(offset);
     msg->set_data(fragmenet.data(), fragmenet.size());
-    config_->GetMessager()->SendMessage(
-        receiver_node_id_, config_->GetMessager()->PackMessage(msg));
+    config_->GetMessager()->SendMessage(receiver_node_id_, content);
     res = CheckReceive();
   }
   delete seq_file;
@@ -139,13 +145,15 @@ bool CheckpointSender::SendFile(uint64_t instance_id, int machine_id,
 }
 
 void CheckpointSender::EndToSend(uint64_t instance_id) {
-  CheckpointMessage* end = new CheckpointMessage();
+  Content content;
+  content.set_type(CHECKPOINT_MESSAGE);
+  content.set_group_id(config_->GetGroupId());
+  CheckpointMessage* end = content.mutable_checkpoint_msg();
   end->set_type(CHECKPOINT_END);
   end->set_node_id(config_->GetNodeId());
   end->set_instance_id(instance_id);
   end->set_sequence_id(sequence_id_);
-  config_->GetMessager()->SendMessage(receiver_node_id_,
-                                      config_->GetMessager()->PackMessage(end));
+  config_->GetMessager()->SendMessage(receiver_node_id_, content);
 }
 
 void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {

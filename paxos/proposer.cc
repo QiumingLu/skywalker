@@ -57,7 +57,10 @@ void Proposer::Prepare(bool need_new_proposal_id) {
       config_->GetGroupId(), (unsigned long long)instance_id_,
       (unsigned long long)proposal_id_);
 
-  PaxosMessage* msg = new PaxosMessage();
+  Content content;
+  content.set_type(PAXOS_MESSAGE);
+  content.set_group_id(config_->GetGroupId());
+  PaxosMessage* msg = content.mutable_paxos_msg();
   msg->set_type(PREPARE);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
@@ -66,9 +69,8 @@ void Proposer::Prepare(bool need_new_proposal_id) {
   counter_.StartNewRound();
   AddRetryTimer();
 
-  std::shared_ptr<Content> c(messager_->PackMessage(msg));
-  messager_->BroadcastMessage(c);
-  instance_->OnPaxosMessage(c->paxos_msg());
+  messager_->BroadcastMessage(content);
+  instance_->OnPaxosMessage(*msg);
 }
 
 void Proposer::OnPrepareReply(const PaxosMessage& msg) {
@@ -112,7 +114,10 @@ void Proposer::Accept() {
       config_->GetGroupId(), (unsigned long long)instance_id_,
       (unsigned long long)proposal_id_);
 
-  PaxosMessage* msg = new PaxosMessage();
+  Content content;
+  content.set_type(PAXOS_MESSAGE);
+  content.set_group_id(config_->GetGroupId());
+  PaxosMessage* msg = content.mutable_paxos_msg();
   msg->set_type(ACCEPT);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
@@ -122,9 +127,8 @@ void Proposer::Accept() {
   counter_.StartNewRound();
   AddRetryTimer();
 
-  std::shared_ptr<Content> c(messager_->PackMessage(msg));
-  messager_->BroadcastMessage(c);
-  instance_->OnPaxosMessage(c->paxos_msg());
+  messager_->BroadcastMessage(content);
+  instance_->OnPaxosMessage(*msg);
 }
 
 void Proposer::OnAccpetReply(const PaxosMessage& msg) {
@@ -164,7 +168,10 @@ void Proposer::SetMaxProposalId(const PaxosMessage& msg) {
 }
 
 void Proposer::NewChosenValue() {
-  PaxosMessage* msg = new PaxosMessage();
+  Content content;
+  content.set_type(PAXOS_MESSAGE);
+  content.set_group_id(config_->GetGroupId());
+  PaxosMessage* msg = content.mutable_paxos_msg();
   msg->set_type(NEW_CHOSEN_VALUE);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
@@ -172,9 +179,8 @@ void Proposer::NewChosenValue() {
   if (value_.ByteSizeLong() <= 64) {
     *(msg->mutable_value()) = value_;
   }
-  std::shared_ptr<Content> c(messager_->PackMessage(msg));
-  messager_->BroadcastMessage(c);
-  instance_->OnPaxosMessage(c->paxos_msg());
+  messager_->BroadcastMessage(content);
+  instance_->OnPaxosMessage(*msg);
 }
 
 void Proposer::AddRetryTimer(uint64_t timeout) {

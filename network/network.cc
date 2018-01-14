@@ -33,52 +33,58 @@ void Network::StartServer(
 }
 
 void Network::SendMessage(uint64_t node_id, Config* config,
-                          const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([this, node_id, config, content_ptr]() {
-    std::string s;
-    if (SerializeToString(content_ptr, &s)) {
-      auto it = connection_map_.find(node_id);
-      if (it != connection_map_.end()) {
-        voyager::TcpConnectionPtr p = it->second->GetTcpConnectionPtr();
-        if (p) {
-          p->SendMessage(s);
-        } else {
-          std::shared_ptr<Membership> temp = config->GetMembership();
-          if (temp->members().find(node_id) == temp->members().end()) {
-            it->second->Close();
-            connection_map_.erase(it);
-          }
-        }
+                          const Content& content) {
+  std::string* s = new std::string();
+  if (!SerializeToString(content, s)) {
+    delete s;
+    return;
+  }
+  loop_->QueueInLoop([this, node_id, config, s]() {
+    auto it = connection_map_.find(node_id);
+    if (it != connection_map_.end()) {
+      voyager::TcpConnectionPtr p = it->second->GetTcpConnectionPtr();
+      if (p) {
+        p->SendMessage(*s);
       } else {
         std::shared_ptr<Membership> temp = config->GetMembership();
-        auto iter = temp->members().find(node_id);
-        if (iter != temp->members().end()) {
-          SendMessageInLoop(iter->second, s);
+        if (temp->members().find(node_id) == temp->members().end()) {
+          it->second->Close();
+          connection_map_.erase(it);
         }
       }
+    } else {
+      std::shared_ptr<Membership> temp = config->GetMembership();
+      auto iter = temp->members().find(node_id);
+      if (iter != temp->members().end()) {
+        SendMessageInLoop(iter->second, *s);
+      }
     }
+    delete s;
   });
 }
 
 void Network::SendMessage(const std::shared_ptr<Membership>& m,
-                          const std::shared_ptr<Content>& content_ptr) {
-  loop_->QueueInLoop([this, m, content_ptr]() {
-    std::string s;
-    if (SerializeToString(content_ptr, &s)) {
-      for (auto& i : m->members()) {
-        if (i.first != my_.id) {
-          auto it = connection_map_.find(i.first);
-          if (it != connection_map_.end()) {
-            voyager::TcpConnectionPtr p = it->second->GetTcpConnectionPtr();
-            if (p) {
-              p->SendMessage(s);
-            }
-          } else {
-            SendMessageInLoop(i.second, s);
+                          const Content& content) {
+  std::string* s = new std::string();
+  if (!SerializeToString(content, s)) {
+    delete s;
+    return;
+  }
+  loop_->QueueInLoop([this, m, s]() {
+    for (auto& i : m->members()) {
+      if (i.first != my_.id) {
+        auto it = connection_map_.find(i.first);
+        if (it != connection_map_.end()) {
+          voyager::TcpConnectionPtr p = it->second->GetTcpConnectionPtr();
+          if (p) {
+            p->SendMessage(*s);
           }
+        } else {
+          SendMessageInLoop(i.second, *s);
         }
       }
     }
+    delete s;
   });
 }
 
@@ -103,13 +109,11 @@ void Network::SendMessageInLoop(const MemberMessage& member,
   connection_map_.insert(std::make_pair(node_id, std::move(client)));
 }
 
-bool Network::SerializeToString(const std::shared_ptr<Content>& content_ptr,
-                                std::string* s) {
-  uint32_t size =
-      kHeaderSize + static_cast<uint32_t>(content_ptr->ByteSizeLong());
+bool Network::SerializeToString(const Content& content, std::string* s) {
+  uint32_t size = kHeaderSize + static_cast<uint32_t>(content.ByteSizeLong());
   s->reserve(size);
   PutFixed32(s, size);
-  bool res = content_ptr->AppendToString(s);
+  bool res = content.AppendToString(s);
   if (!res) {
     LOG_ERROR("Network::SendMessage - content serialize to string failed.");
   }

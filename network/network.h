@@ -32,18 +32,16 @@ class Network {
 
   void StartServer(const std::function<void(std::unique_ptr<Content>)>& cb);
 
-  void SendMessage(uint64_t node_id, Config* config,
-                   const std::shared_ptr<Content>& content_ptr);
+  void SendMessage(uint64_t node_id, Config* config, const Content& content);
 
   void SendMessage(const std::shared_ptr<Membership>& m,
-                   const std::shared_ptr<Content>& content_ptr);
+                   const Content& content);
 
  private:
   static const uint32_t kHeaderSize = 4;
 
   void SendMessageInLoop(const MemberMessage& member, const std::string& s);
-  bool SerializeToString(const std::shared_ptr<Content>& content_ptr,
-                         std::string* s);
+  bool SerializeToString(const Content& content, std::string* s);
   void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
 
   Member my_;

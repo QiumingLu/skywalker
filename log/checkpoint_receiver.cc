@@ -152,13 +152,15 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
 
 bool CheckpointReceiver::ComfirmReceive(const CheckpointMessage& msg,
                                         bool res) {
-  CheckpointMessage* reply_msg = new CheckpointMessage();
+  Content content;
+  content.set_type(CHECKPOINT_MESSAGE);
+  content.set_group_id(config_->GetGroupId());
+  CheckpointMessage* reply_msg = content.mutable_checkpoint_msg();
   reply_msg->set_type(CHECKPOINT_COMFIRM);
   reply_msg->set_node_id(config_->GetNodeId());
   reply_msg->set_sequence_id(msg.sequence_id());
   reply_msg->set_flag(res);
-  config_->GetMessager()->SendMessage(
-      msg.node_id(), config_->GetMessager()->PackMessage(reply_msg));
+  config_->GetMessager()->SendMessage(msg.node_id(), content);
   if (!res && msg.node_id() == sender_node_id_) {
     Reset();
     return false;

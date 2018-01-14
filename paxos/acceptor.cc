@@ -26,7 +26,10 @@ bool Acceptor::Recover(uint64_t* instance_id) {
 
 void Acceptor::OnPrepare(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_) {
-    PaxosMessage* reply_msg = new PaxosMessage();
+    Content content;
+    content.set_type(PAXOS_MESSAGE);
+    content.set_group_id(config_->GetGroupId());
+    PaxosMessage* reply_msg = content.mutable_paxos_msg();
     reply_msg->set_type(PREPARE_REPLY);
     reply_msg->set_node_id(config_->GetNodeId());
     reply_msg->set_instance_id(msg.instance_id());
@@ -48,9 +51,8 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
 
     if (msg.node_id() == config_->GetNodeId()) {
       instance_->OnPaxosMessage(*reply_msg);
-      delete reply_msg;
     } else {
-      messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+      messager_->SendMessage(msg.node_id(), content);
     }
   } else if (msg.instance_id() == instance_id_ + 1) {
     NewChosenValue(msg);
@@ -59,7 +61,10 @@ void Acceptor::OnPrepare(const PaxosMessage& msg) {
 
 void Acceptor::OnAccpet(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_) {
-    PaxosMessage* reply_msg = new PaxosMessage();
+    Content content;
+    content.set_type(PAXOS_MESSAGE);
+    content.set_group_id(config_->GetGroupId());
+    PaxosMessage* reply_msg = content.mutable_paxos_msg();
     reply_msg->set_type(ACCEPT_REPLY);
     reply_msg->set_node_id(config_->GetNodeId());
     reply_msg->set_instance_id(msg.instance_id());
@@ -77,9 +82,8 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
 
     if (msg.node_id() == config_->GetNodeId()) {
       instance_->OnPaxosMessage(*reply_msg);
-      delete reply_msg;
     } else {
-      messager_->SendMessage(msg.node_id(), messager_->PackMessage(reply_msg));
+      messager_->SendMessage(msg.node_id(), content);
     }
   } else if (msg.instance_id() == instance_id_ + 1) {
     NewChosenValue(msg);
