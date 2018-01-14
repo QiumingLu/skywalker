@@ -112,6 +112,12 @@ bool CheckpointSender::SendFile(uint64_t instance_id, int machine_id,
   Content content;
   content.set_type(CHECKPOINT_MESSAGE);
   content.set_group_id(config_->GetGroupId());
+  CheckpointMessage* msg = content.mutable_checkpoint_msg();
+  msg->set_type(CHECKPOINT_FILE);
+  msg->set_node_id(config_->GetNodeId());
+  msg->set_instance_id(instance_id);
+  msg->set_machine_id(machine_id);
+  msg->set_file(file);
 
   while (res) {
     Slice fragmenet;
@@ -126,14 +132,7 @@ bool CheckpointSender::SendFile(uint64_t instance_id, int machine_id,
     }
 
     offset += fragmenet.size();
-
-    CheckpointMessage* msg = content.mutable_checkpoint_msg();
-    msg->set_type(CHECKPOINT_FILE);
-    msg->set_node_id(config_->GetNodeId());
-    msg->set_instance_id(instance_id);
     msg->set_sequence_id(sequence_id_++);
-    msg->set_machine_id(machine_id);
-    msg->set_file(file);
     msg->set_offset(offset);
     msg->set_data(fragmenet.data(), fragmenet.size());
     config_->GetMessager()->SendMessage(receiver_node_id_, content);
