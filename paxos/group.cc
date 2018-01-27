@@ -18,8 +18,9 @@ Group::Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
       config_(node_id, group_id, options, network),
       instance_(&config_),
       use_master_(options.use_master),
-      lease_timeout_(options.master_lease_time),
       retrie_master_(false),
+      lease_timeout_(options.master_lease_time),
+      now_(0),
       mutex_(),
       cond_(&mutex_),
       propose_end_(false),
@@ -126,11 +127,12 @@ void Group::TryBeMaster() {
 
 void Group::TryBeMasterInLoop() {
   MasterState state(master_machine_->GetMasterState());
-  if (state.lease_time() <= NowMicros() || state.node_id() == node_id_) {
+  now_ = NowMicros();
+  if (state.lease_time() <= now_ || state.node_id() == node_id_) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
     instance_.OnPropose(master_machine_->machine_id(),
-                        state.SerializeAsString());
+                        state.SerializeAsString(), &now_);
   } else {
     propose_cb_(instance_.GetInstanceId(),
                 Status::Conflict("Already has master"), nullptr);

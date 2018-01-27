@@ -29,11 +29,6 @@ class Checkpoint {
   virtual bool LoadCheckpoint(uint32_t group_id, uint64_t instance_id,
                               uint32_t machine_id, const std::string& dir,
                               const std::vector<std::string>& files);
-
- private:
-  // No copying allowed
-  Checkpoint(const Checkpoint&);
-  void operator=(const Checkpoint&);
 };
 
 }  // namespace skywalker

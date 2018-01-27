@@ -24,10 +24,6 @@ class StateMachine {
 
  private:
   uint32_t id_;
-
-  // No copying allowed
-  StateMachine(const StateMachine&);
-  void operator=(const StateMachine&);
 };
 
 }  // namespace skywalker

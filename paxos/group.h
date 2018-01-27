@@ -72,8 +72,9 @@ class Group {
   Instance instance_;
 
   bool use_master_;
-  uint64_t lease_timeout_;
   bool retrie_master_;
+  uint64_t lease_timeout_;
+  uint64_t now_;
   MembershipMachine* membership_machine_;
   MasterMachine* master_machine_;
   ProposeCompleteCallback propose_cb_;
