@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,13 +26,14 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  skywalker::Checkpoint checkpoint;
   skywalker::GroupOptions g_options;
   g_options.use_master = true;
   g_options.log_sync = true;
   g_options.sync_interval = 0;
   g_options.keep_log_count = 1000;
   g_options.log_storage_path = std::string(path);
-  g_options.checkpoint = new skywalker::Checkpoint();
+  g_options.checkpoint = &checkpoint;
 
   skywalker::Options options;
 
@@ -72,7 +72,6 @@ int main(int argc, char** argv) {
                   });
   }
 
-  delete g_options.checkpoint;
   delete node;
 
   return 0;

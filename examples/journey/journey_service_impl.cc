@@ -7,7 +7,7 @@
 #include <functional>
 #include <iostream>
 
-#include "murmurhash3.h"
+#include <voyager/util/hash.h>
 
 namespace journey {
 
@@ -85,9 +85,10 @@ void JourneyServiceImpl::Propose(google::protobuf::RpcController* controller,
 
 uint32_t JourneyServiceImpl::Shard(const std::string& key) {
   assert(group_size_ > 0);
-  uint32_t out;
-  MurmurHash3_x86_32(key.c_str(), static_cast<int>(key.size()), 0, &out);
-  return (out & (group_size_ - 1));
+  if (group_size_ == 1) {
+    return 0;
+  }
+  return voyager::Hash32(key) % group_size_;
 }
 
 }  // namespace journey

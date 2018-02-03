@@ -5,7 +5,7 @@ set_source_files_properties(${proto_srcs} ${proto_hdrs} PROPERTIES COMPILE_FLAGS
 add_executable(journey_client journey_client.cc ${proto_srcs})
 target_link_libraries(journey_client ${Skywalker_LINKER_LIBS} ${Skywalker_LINK})
 
-add_executable(journey_server murmurhash3.cc journey_server.cc 
+add_executable(journey_server journey_server.cc
                               journey_service_impl.cc
                               journey_db_machine.cc journey_db.cc
                               ${proto_srcs})

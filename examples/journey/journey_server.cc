@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -16,7 +15,6 @@
 #include <voyager/rpc/rpc_server.h>
 #include <voyager/util/string_util.h>
 
-#include "checkpoint_impl.h"
 #include "journey_service_impl.h"
 
 int main(int argc, char** argv) {
@@ -30,15 +28,15 @@ int main(int argc, char** argv) {
     printf("getcwd error\n");
     return -1;
   }
-  skywalker::Checkpoint* checkpoint = new journey::CheckpointImpl();
 
+  skywalker::Checkpoint checkpoint;
   skywalker::GroupOptions g_options;
   g_options.use_master = true;
   g_options.log_sync = true;
   g_options.sync_interval = 0;
   g_options.keep_log_count = 1000;
   g_options.log_storage_path = std::string(path);
-  g_options.checkpoint = checkpoint;
+  g_options.checkpoint = &checkpoint;
 
   skywalker::Options options;
 
@@ -81,8 +79,6 @@ int main(int argc, char** argv) {
     server.Start();
     loop.Loop();
   }
-
-  delete checkpoint;
 
   return 0;
 }
