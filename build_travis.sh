@@ -19,16 +19,16 @@ $CXX $CXXFLAGS -x c++ - -o $CXXOUTPUT 2>/dev/null  <<EOF
     int main() {}
 EOF
   if [ "$?" != 0 ]; then
-    wget https://github.com/google/protobuf/archive/v3.2.0.tar.gz
-    tar zxvf v3.2.0.tar.gz
-    cd protobuf-3.2.0
+    wget https://github.com/google/protobuf/archive/v3.5.1.tar.gz
+    tar zxvf v3.5.1.tar.gz
+    cd protobuf-3.5.1
     ./autogen.sh
     ./configure --prefix=$INSTALL_PATH
     make
     sudo make install
     cd ..
-    rm -rf protobuf-3.2.0
-    rm -rf v3.2.0.tar.gz
+    rm -rf protobuf-3.5.1
+    rm -rf v3.5.1.tar.gz
   fi
 
 $CXX $CXXFLAGS -x c++ - -o $CXXOUTPUT 2>/dev/null  <<EOF

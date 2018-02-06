@@ -12,7 +12,7 @@ namespace skywalker {
 
 class StateMachine {
  public:
-  StateMachine() {}
+  StateMachine() : id_(-1) {}
   virtual ~StateMachine() {}
 
   // must set the id > 5

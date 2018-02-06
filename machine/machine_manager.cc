@@ -15,6 +15,7 @@ namespace skywalker {
 MachineManager::MachineManager(Config* config) : config_(config) {}
 
 void MachineManager::AddMachine(StateMachine* machine) {
+  assert(machine->machine_id() != -1);
   machines_.insert(std::make_pair(machine->machine_id(), machine));
 }
 
