@@ -5,11 +5,11 @@
 #ifndef SKYWALKER_PAXOS_PROPOSE_QUEUE_H_
 #define SKYWALKER_PAXOS_PROPOSE_QUEUE_H_
 
+#include <mutex>
 #include <queue>
 #include "skywalker/options.h"
 #include "skywalker/state_machine.h"
 #include "skywalker/status.h"
-#include "util/mutex.h"
 #include "util/runloop.h"
 
 namespace skywalker {
@@ -40,7 +40,7 @@ class ProposeQueue {
   RunLoop* io_loop_;
   RunLoop* callback_loop_;
 
-  Mutex mutex_;
+  std::mutex mutex_;
   bool last_finished_;
   std::queue<ProposeHandler> propose_queue_;
   std::queue<ProposeCompleteCallback> cb_queue_;

@@ -5,9 +5,11 @@
 #ifndef SKYWALKER_UTIL_RUNLOOP_THREAD_H_
 #define SKYWALKER_UTIL_RUNLOOP_THREAD_H_
 
-#include "util/mutex.h"
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include "util/runloop.h"
-#include "util/thread.h"
 
 namespace skywalker {
 
@@ -19,14 +21,12 @@ class RunLoopThread {
   RunLoop* Loop();
 
  private:
-  static void* StartRunLoop(void* data);
-
   void ThreadFunc();
 
   RunLoop* loop_;
-  Mutex mu_;
-  Condition cond_;
-  Thread thread_;
+  std::mutex mu_;
+  std::condition_variable cond_;
+  std::unique_ptr<std::thread> thread_;
 
   // No copying allowed
   RunLoopThread(const RunLoopThread&);

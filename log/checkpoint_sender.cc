@@ -10,7 +10,6 @@
 #include "paxos/config.h"
 #include "skywalker/file.h"
 #include "skywalker/logging.h"
-#include "util/mutexlock.h"
 
 namespace skywalker {
 
@@ -19,8 +18,6 @@ CheckpointSender::CheckpointSender(Config* config, CheckpointManager* manager)
       manager_(manager),
       receiver_node_id_(0),
       sequence_id_(0),
-      mutex_(),
-      cond_(&mutex_),
       ack_sequence_id_(0),
       flag_(true) {}
 
@@ -156,12 +153,12 @@ void CheckpointSender::EndToSend(uint64_t instance_id) {
 }
 
 void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   if (msg.node_id() == receiver_node_id_ &&
       msg.sequence_id() == ack_sequence_id_) {
     ++ack_sequence_id_;
     flag_ = msg.flag();
-    cond_.Signal();
+    cond_.notify_one();
   } else {
     LOG_WARN(
         "Group %u - receive a confirm message, "
@@ -175,10 +172,11 @@ void CheckpointSender::OnComfirmReceive(const CheckpointMessage& msg) {
 
 bool CheckpointSender::CheckReceive() {
   bool res = true;
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   while (flag_ && (sequence_id_ > ack_sequence_id_ + 16)) {
-    res = cond_.Wait(10 * 1000 * 1000);
-    if (!res) {
+    std::cv_status cs =
+        cond_.wait_for(lock, std::chrono::microseconds(10 * 1000 * 1000));
+    if (cs == std::cv_status::timeout) {
       LOG_ERROR("Group %u - receive comfirm message timeout!",
                 config_->GetGroupId());
       break;

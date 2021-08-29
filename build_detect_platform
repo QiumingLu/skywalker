@@ -47,9 +47,9 @@ fi
 
 
 PLATFORM_CCFLAGS=
-PLATFORM_CXXFLAGS="-std=c++11 -Wall -Wextra -Wno-unused-parameter -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -march=native -pthread -I/usr/local/include -I/usr/include"
+PLATFORM_CXXFLAGS="-std=c++11 -fno-rtti -Wall -Wextra -Wno-unused-parameter -Woverloaded-virtual -Wpointer-arith -Wshadow -Wwrite-strings -I/usr/local/include -I/usr/include"
 PLATFORM_LDFLAGS="-L/usr/local/lib -L/usr/lib"
-PLATFORM_LIBS="-lpthread -lprotobuf -lleveldb -lvoyager"
+PLATFORM_LIBS="-lprotobuf -lleveldb -lvoyager"
 
 PLATFORM_SHARED_EXT="so"
 PLATFORM_SHARED_LDFLAGS="-shared -Wl,-soname -Wl,"
@@ -60,15 +60,15 @@ if [ "$TARGET_OS" = "Darwin" ]; then
   [ -z "$INSTALL_PATH" ] && INSTALL_PATH=`pwd`
   PLATFORM_SHARED_LDFLAGS="-dynamiclib -install_name $INSTALL_PATH/"
 fi
- 
+
 DIRS="$PREFIX/log $PREFIX/machine $PREFIX/network $PREFIX/paxos $PREFIX/storage $PREFIX/util $PREFIX/proto"
 
-PROTOC=protoc 
+PROTOC=protoc
 PROTOS_PATH=$PREFIX/proto
 PROTOS=`find $PROTOS_PATH -name '*.proto'`
 $PROTOC -I $PROTOS_PATH --cpp_out=$PROTOS_PATH $PROTOS
 
-set -f 
+set -f
 PRUNE_TEST="-name *test*.cc -prune"
 PRUNE_BENCH="-name *_bench.cc -prune"
 PORTABLE_FILES=`find $DIRS $PRUNE_TEST -o $PRUNE_BENCH -o -name '*.cc' -print | sort | sed "s,^$PREFIX/,," | tr "\n" " "`

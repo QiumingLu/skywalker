@@ -5,11 +5,11 @@
 #ifndef SKYWALKER_MACHINE_MASTER_MACHINE_H_
 #define SKYWALKER_MACHINE_MASTER_MACHINE_H_
 
+#include <mutex>
 #include <string>
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/state_machine.h"
-#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -38,7 +38,7 @@ class MasterMachine : public StateMachine {
  private:
   Config* config_;
 
-  mutable Mutex mutex_;
+  mutable std::mutex mutex_;
   MasterState state_;
 
   bool has_call_;

@@ -7,7 +7,6 @@
 #include <utility>
 
 #include "skywalker/logging.h"
-#include "util/mutexlock.h"
 
 namespace skywalker {
 
@@ -26,7 +25,7 @@ bool ProposeQueue::CheckCapacity() const {
 
 bool ProposeQueue::Put(const ProposeHandler& f,
                        const ProposeCompleteCallback& cb) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   if (last_finished_) {
     last_finished_ = false;
     io_loop_->QueueInLoop(f);
@@ -41,7 +40,7 @@ bool ProposeQueue::Put(const ProposeHandler& f,
 }
 
 bool ProposeQueue::Put(ProposeHandler&& f, const ProposeCompleteCallback& cb) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   if (last_finished_) {
     last_finished_ = false;
     io_loop_->QueueInLoop(std::move(f));
@@ -56,7 +55,7 @@ bool ProposeQueue::Put(ProposeHandler&& f, const ProposeCompleteCallback& cb) {
 }
 
 bool ProposeQueue::Put(const ProposeHandler& f, ProposeCompleteCallback&& cb) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   if (last_finished_) {
     last_finished_ = false;
     io_loop_->QueueInLoop(f);
@@ -71,7 +70,7 @@ bool ProposeQueue::Put(const ProposeHandler& f, ProposeCompleteCallback&& cb) {
 }
 
 bool ProposeQueue::Put(ProposeHandler&& f, ProposeCompleteCallback&& cb) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   if (last_finished_) {
     last_finished_ = false;
     io_loop_->QueueInLoop(std::move(f));
@@ -87,7 +86,7 @@ bool ProposeQueue::Put(ProposeHandler&& f, ProposeCompleteCallback&& cb) {
 
 void ProposeQueue::ProposeComplete(uint64_t instance_id, const Status& s,
                                    void* context) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   assert(!last_finished_);
   assert(!cb_queue_.empty());
   ProposeCompleteCallback cb = cb_queue_.front();

@@ -60,13 +60,13 @@ void JourneyServiceImpl::Propose(google::protobuf::RpcController* controller,
     } else {
       std::string value;
       request->SerializeToString(&value);
-      propose = node_->Propose(
-          group_id, machine_->machine_id(), value, response,
-          [done, this](uint64_t, const skywalker::Status&, void* ctx) {
-            if (done) {
-              done->Run();
-            }
-          });
+      propose =
+          node_->Propose(group_id, machine_->machine_id(), value, response,
+                         [done](uint64_t, const skywalker::Status&, void* ctx) {
+                           if (done) {
+                             done->Run();
+                           }
+                         });
     }
   } else {
     skywalker::Member master;

@@ -10,7 +10,6 @@
 
 #include "paxos/config.h"
 #include "skywalker/logging.h"
-#include "util/mutexlock.h"
 
 namespace skywalker {
 

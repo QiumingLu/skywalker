@@ -5,10 +5,11 @@
 #ifndef SKYWALKER_LOG_CHECKPOINT_SENDER_H_
 #define SKYWALKER_LOG_CHECKPOINT_SENDER_H_
 
+#include <condition_variable>
+#include <mutex>
 #include <string>
 
 #include "proto/paxos.pb.h"
-#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -42,8 +43,8 @@ class CheckpointSender {
   uint64_t receiver_node_id_;
   int sequence_id_;
 
-  Mutex mutex_;
-  Condition cond_;
+  std::mutex mutex_;
+  std::condition_variable cond_;
   int ack_sequence_id_;
   bool flag_;
 

@@ -6,8 +6,10 @@
 #define SKYWALKER_PAXOS_GROUP_H_
 
 #include <stdint.h>
+#include <condition_variable>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -19,7 +21,6 @@
 #include "paxos/schedule.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
-#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -80,8 +81,8 @@ class Group {
   ProposeCompleteCallback propose_cb_;
   TimerId timer_;
 
-  Mutex mutex_;
-  Condition cond_;
+  std::mutex mutex_;
+  std::condition_variable cond_;
   bool propose_end_;
   Status result_;
 

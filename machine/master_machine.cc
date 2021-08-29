@@ -5,7 +5,6 @@
 #include "machine/master_machine.h"
 #include "paxos/config.h"
 #include "skywalker/logging.h"
-#include "util/mutexlock.h"
 #include "util/timeops.h"
 
 namespace skywalker {
@@ -83,17 +82,17 @@ void MasterMachine::SetString(const std::string& s) {
 }
 
 void MasterMachine::SetMasterState(const MasterState& state) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   state_ = state;
 }
 
 MasterState MasterMachine::GetMasterState() const {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   return state_;
 }
 
 bool MasterMachine::GetMaster(uint64_t* node_id, uint64_t* version) const {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   if (state_.lease_time() > NowMicros()) {
     *version = state_.version();
     *node_id = state_.node_id();
@@ -103,7 +102,7 @@ bool MasterMachine::GetMaster(uint64_t* node_id, uint64_t* version) const {
 }
 
 bool MasterMachine::IsMaster() const {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   if (state_.node_id() == config_->GetNodeId() &&
       state_.lease_time() > NowMicros()) {
     return true;

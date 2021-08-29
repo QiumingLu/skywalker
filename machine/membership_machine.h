@@ -5,13 +5,13 @@
 #ifndef SKYWALKER_MACHINE_MEMBERSHIP_MACHINE_H_
 #define SKYWALKER_MACHINE_MEMBERSHIP_MACHINE_H_
 
+#include <mutex>
 #include <string>
 #include <vector>
 
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 #include "skywalker/state_machine.h"
-#include "util/mutex.h"
 
 namespace skywalker {
 
@@ -38,7 +38,7 @@ class MembershipMachine : public StateMachine {
   Config* config_;
   bool has_sync_membership_;
 
-  mutable Mutex mutex_;
+  mutable std::mutex mutex_;
   std::shared_ptr<Membership> membership_;
 
   NewMembershipCallback cb_;

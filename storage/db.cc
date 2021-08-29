@@ -4,6 +4,7 @@
 
 #include "storage/db.h"
 
+#include <leveldb/comparator.h>
 #include <leveldb/options.h>
 #include <leveldb/status.h>
 
@@ -19,23 +20,34 @@ static const uint64_t kMembership = (UINTMAX_MAX - 1);
 static const uint64_t kMasterState = (UINTMAX_MAX - 2);
 }  // namespace
 
-int Comparator::Compare(const leveldb::Slice& a,
-                        const leveldb::Slice& b) const {
-  uint64_t key = DecodeFixed64(a.data());
-  uint64_t key2 = DecodeFixed64(b.data());
-  if (key == key2) {
-    return 0;
+class SComparator : public leveldb::Comparator {
+ public:
+  SComparator() = default;
+  int Compare(const leveldb::Slice& a, const leveldb::Slice& b) const override {
+    uint64_t key = DecodeFixed64(a.data());
+    uint64_t key2 = DecodeFixed64(b.data());
+    if (key == key2) {
+      return 0;
+    }
+    return key > key2 ? 1 : -1;
   }
-  return key > key2 ? 1 : -1;
-}
+
+  const char* Name() const override { return "SkyWalker Comparator"; }
+
+  void FindShortestSeparator(std::string* start,
+                             const leveldb::Slice& limit) const override {}
+
+  void FindShortSuccessor(std::string* key) const override {}
+};
 
 DB::DB(Config* config) : config_(config), db_(nullptr) {}
 
 DB::~DB() { delete db_; }
 
 int DB::Open(const std::string& name) {
+  static SComparator comparator;
   leveldb::Options options;
-  options.comparator = &comparator_;
+  options.comparator = &comparator;
   options.create_if_missing = true;
   options.write_buffer_size = 1024 * 1024 + config_->GetGroupId() * 10 * 1024;
   leveldb::Status status = leveldb::DB::Open(options, name, &db_);

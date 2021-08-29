@@ -6,10 +6,12 @@
 #define SKYWALKER_UTIL_RUNLOOP_H_
 
 #include <stdint.h>
+#include <condition_variable>
 #include <functional>
+#include <mutex>
+#include <thread>
 #include <vector>
 
-#include "util/mutex.h"
 #include "util/timerlist.h"
 
 namespace skywalker {
@@ -43,10 +45,10 @@ class RunLoop {
 
  private:
   bool exit_;
-  const uint64_t tid_;
+  const std::thread::id tid_;
 
-  Mutex mutex_;
-  Condition cond_;
+  std::mutex mutex_;
+  std::condition_variable cond_;
   std::vector<Func> funcs_;
   TimerList timers_;
 

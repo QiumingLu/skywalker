@@ -6,7 +6,6 @@
 #include "paxos/config.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/logging.h"
-#include "util/mutexlock.h"
 
 namespace skywalker {
 
@@ -41,7 +40,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
                                 const std::string& value, void* /* context */) {
   MemberChangeMessage temp;
   if (temp.ParseFromString(value)) {
-    MutexLock lock(&mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     if (instance_id < membership_->version()) {
       return true;
     }
@@ -85,7 +84,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
 }
 
 std::string MembershipMachine::GetString() const {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   std::string s;
   membership_->SerializeToString(&s);
   return s;
@@ -95,7 +94,7 @@ void MembershipMachine::SetString(const std::string& s) {
   Membership* temp = new Membership();
   temp->ParseFromString(s);
 
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   if (temp->version() > membership_->version()) {
     membership_.reset(temp);
   } else {
@@ -104,7 +103,7 @@ void MembershipMachine::SetString(const std::string& s) {
 }
 
 std::shared_ptr<Membership> MembershipMachine::GetMembership() const {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   return membership_;
 }
 

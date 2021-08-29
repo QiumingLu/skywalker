@@ -7,7 +7,6 @@
 #include <utility>
 
 #include "skywalker/logging.h"
-#include "util/mutexlock.h"
 #include "util/timeops.h"
 
 namespace skywalker {
@@ -21,8 +20,6 @@ Group::Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
       retrie_master_(false),
       lease_timeout_(options.master_lease_time),
       now_(0),
-      mutex_(),
-      cond_(&mutex_),
       propose_end_(false),
       propose_queue_(100) {
   propose_cb_ = std::bind(&ProposeQueue::ProposeComplete, &propose_queue_,
@@ -182,7 +179,7 @@ bool Group::ChangeMember(const std::vector<std::pair<Member, bool>>& value,
 }
 
 bool Group::NewPropose(ProposeHandler&& f) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   propose_end_ = false;
   ProposeCompleteCallback cb =
       std::bind(&Group::ProposeComplete, this, std::placeholders::_1,
@@ -190,7 +187,7 @@ bool Group::NewPropose(ProposeHandler&& f) {
   bool res = propose_queue_.Put(std::move(f), std::move(cb));
   if (res) {
     while (!propose_end_) {
-      cond_.Wait();
+      cond_.wait(lock);
     }
   }
   return res;
@@ -198,10 +195,10 @@ bool Group::NewPropose(ProposeHandler&& f) {
 
 void Group::ProposeComplete(uint64_t instance_id, const Status& result,
                             void* context) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   propose_end_ = true;
   result_ = result;
-  cond_.Signal();
+  cond_.notify_one();
   LOG_DEBUG("Group %u - %s", config_.GetGroupId(), result.ToString().c_str());
 }
 

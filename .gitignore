@@ -7,6 +7,7 @@
 *.so.*
 *_test
 *.swp
+.vscode/
 build_config.mk
 out-shared/
 out-static/

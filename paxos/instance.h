@@ -13,7 +13,6 @@
 #include "paxos/proposer.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
-#include "util/mutex.h"
 #include "util/runloop.h"
 
 namespace skywalker {

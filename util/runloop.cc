@@ -10,17 +10,11 @@
 #include <utility>
 
 #include "skywalker/logging.h"
-#include "util/mutexlock.h"
-#include "util/thread.h"
 
 namespace skywalker {
 
 RunLoop::RunLoop()
-    : exit_(false),
-      tid_(CurrentThread::Tid()),
-      mutex_(),
-      cond_(&mutex_),
-      timers_(this) {}
+    : exit_(false), tid_(std::this_thread::get_id()), timers_(this) {}
 
 void RunLoop::Loop() {
   AssertInMyLoop();
@@ -29,9 +23,9 @@ void RunLoop::Loop() {
   while (!exit_) {
     uint64_t timeout = timers_.TimeoutMicros();
     {
-      MutexLock lock(&mutex_);
+      std::unique_lock<std::mutex> lock(mutex_);
       if (funcs_.empty()) {
-        cond_.Wait(timeout);
+        cond_.wait_for(lock, std::chrono::microseconds(timeout));
       }
       funcs.swap(funcs_);
     }
@@ -46,17 +40,17 @@ void RunLoop::Loop() {
 void RunLoop::Exit() {
   exit_ = true;
   if (!IsInMyLoop()) {
-    cond_.Signal();
+    cond_.notify_one();
   }
 }
 
-bool RunLoop::IsInMyLoop() const { return tid_ == CurrentThread::Tid(); }
+bool RunLoop::IsInMyLoop() const { return tid_ == std::this_thread::get_id(); }
 
 void RunLoop::AssertInMyLoop() {
   if (!IsInMyLoop()) {
-    LOG_FATAL("runloop tid=%llu, but current thread tid=%llu",
-              static_cast<unsigned long long>(tid_),
-              static_cast<unsigned long long>(CurrentThread::Tid()));
+    // LOG_FATAL("runloop tid=%llu, but current thread tid=%llu",
+    // static_cast<unsigned long long>(tid_),
+    // static_cast<unsigned long long>(std::this_thread::get_id()));
   }
 }
 
@@ -77,15 +71,15 @@ void RunLoop::RunInLoop(Func&& func) {
 }
 
 void RunLoop::QueueInLoop(const Func& func) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   funcs_.push_back(func);
-  cond_.Signal();
+  cond_.notify_one();
 }
 
 void RunLoop::QueueInLoop(Func&& func) {
-  MutexLock lock(&mutex_);
+  std::unique_lock<std::mutex> lock(mutex_);
   funcs_.push_back(std::move(func));
-  cond_.Signal();
+  cond_.notify_one();
 }
 
 TimerId RunLoop::RunAt(uint64_t micros_value, const TimerProcCallback& cb) {

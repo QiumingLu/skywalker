@@ -6,31 +6,25 @@
 
 #include <assert.h>
 
-#include "util/mutexlock.h"
-
 namespace skywalker {
 
-void* RunLoopThread::StartRunLoop(void* data) {
-  RunLoopThread* thread = reinterpret_cast<RunLoopThread*>(data);
-  thread->ThreadFunc();
-  return nullptr;
-}
-
-RunLoopThread::RunLoopThread() : loop_(nullptr), mu_(), cond_(&mu_) {}
+RunLoopThread::RunLoopThread() : loop_(nullptr) {}
 
 RunLoopThread::~RunLoopThread() {
   if (loop_ != nullptr) {
     loop_->Exit();
-    thread_.Join();
+  }
+  if (thread_) {
+    thread_->join();
   }
 }
 
 RunLoop* RunLoopThread::Loop() {
-  assert(!thread_.Started());
-  thread_.Start(&RunLoopThread::StartRunLoop, this);
-  MutexLock lock(&mu_);
+  assert(!thread_);
+  thread_.reset(new std::thread([this]() { ThreadFunc(); }));
+  std::unique_lock<std::mutex> lock(mu_);
   while (loop_ == nullptr) {
-    cond_.Wait();
+    cond_.wait(lock);
   }
   return loop_;
 }
@@ -38,9 +32,9 @@ RunLoop* RunLoopThread::Loop() {
 void RunLoopThread::ThreadFunc() {
   RunLoop loop;
   {
-    MutexLock lock(&mu_);
+    std::unique_lock<std::mutex> lock(mu_);
     loop_ = &loop;
-    cond_.Signal();
+    cond_.notify_one();
   }
   loop_->Loop();
   loop_ = nullptr;
