@@ -14,7 +14,8 @@
 namespace skywalker {
 
 NodeImpl::NodeImpl(const Options& options)
-    : stop_(false), options_(options), network_(options.my, options.net_thread_size) {}
+    : stop_(false), options_(options),
+      network_(options.my, options.net_thread_size) {}
 
 NodeImpl::~NodeImpl() { stop_ = true; }
 

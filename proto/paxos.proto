@@ -31,9 +31,7 @@ message PaxosMessage {
   uint64 rejected_id = 8;
   uint64 now_instance_id = 9;
   uint64 min_chosen_instance_id = 10;
-  bytes membership = 11;
-  bytes master_state = 12;
-  PaxosValue value = 13;
+  PaxosValue value = 11;
 }
 
 enum CheckpointMessageType {

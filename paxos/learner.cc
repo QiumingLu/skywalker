@@ -88,10 +88,6 @@ void Learner::SendNowInstanceId(const PaxosMessage& msg) {
   reply_msg->set_now_instance_id(instance_id_);
   reply_msg->set_min_chosen_instance_id(
       config_->GetLogManager()->GetMinChosenInstanceId());
-  if (instance_id_ > msg.instance_id() + 50) {
-    reply_msg->set_master_state(config_->GetMasterMachine()->GetString());
-    reply_msg->set_membership(config_->GetMembershipMachine()->GetString());
-  }
 
   // in order to make it run in learn loop.
   uint64_t node_id = msg.node_id();
@@ -102,20 +98,6 @@ void Learner::SendNowInstanceId(const PaxosMessage& msg) {
 }
 
 void Learner::OnSendNowInstanceId(const PaxosMessage& msg) {
-  if (!msg.membership().empty()) {
-    config_->GetMembershipMachine()->SetString(msg.membership());
-    bool valid = config_->IsValidNodeId(config_->GetNodeId());
-    if (!valid) {
-      LOG_INFO("Group %u - now the node is not in the membership",
-               config_->GetGroupId());
-      return;
-    }
-  }
-
-  if (!msg.master_state().empty()) {
-    config_->GetMasterMachine()->SetString(msg.master_state());
-  }
-
   if (msg.instance_id() == instance_id_ &&
       msg.now_instance_id() > instance_id_) {
     if (msg.min_chosen_instance_id() > instance_id_) {

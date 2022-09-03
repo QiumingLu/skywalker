@@ -65,22 +65,6 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
   return false;
 }
 
-std::string MasterMachine::GetString() const {
-  std::string s;
-  if (state_.lease_time() > NowMicros()) {
-    state_.SerializeToString(&s);
-  }
-  return s;
-}
-
-void MasterMachine::SetString(const std::string& s) {
-  MasterState state;
-  state.ParseFromString(s);
-  if (state.version() > state_.version()) {
-    SetMasterState(state);
-  }
-}
-
 void MasterMachine::SetMasterState(const MasterState& state) {
   std::unique_lock<std::mutex> lock(mutex_);
   state_ = state;

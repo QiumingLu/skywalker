@@ -28,9 +28,6 @@ class MembershipMachine : public StateMachine {
   std::shared_ptr<Membership> GetMembership() const;
   bool HasSyncMembership() const;
 
-  std::string GetString() const;
-  void SetString(const std::string& s);
-
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value, void* /* context */);
 

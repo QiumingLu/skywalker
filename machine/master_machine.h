@@ -29,9 +29,6 @@ class MasterMachine : public StateMachine {
   bool GetMaster(uint64_t* node_id, uint64_t* version) const;
   bool IsMaster() const;
 
-  std::string GetString() const;
-  void SetString(const std::string& s);
-
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value, void* context);
 

@@ -39,6 +39,7 @@ bool Instance::Recover() {
               config_->GetGroupId());
     return res;
   }
+  acceptor_.SetInstanceId(instance_id_);
   learner_.SetInstanceId(instance_id_);
   proposer_.SetInstanceId(instance_id_);
   proposer_.SetStartProposalId(acceptor_.GetPromisedBallot().GetProposalId() +

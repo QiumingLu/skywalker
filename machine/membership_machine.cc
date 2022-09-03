@@ -83,25 +83,6 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
   return false;
 }
 
-std::string MembershipMachine::GetString() const {
-  std::unique_lock<std::mutex> lock(mutex_);
-  std::string s;
-  membership_->SerializeToString(&s);
-  return s;
-}
-
-void MembershipMachine::SetString(const std::string& s) {
-  Membership* temp = new Membership();
-  temp->ParseFromString(s);
-
-  std::unique_lock<std::mutex> lock(mutex_);
-  if (temp->version() > membership_->version()) {
-    membership_.reset(temp);
-  } else {
-    delete temp;
-  }
-}
-
 std::shared_ptr<Membership> MembershipMachine::GetMembership() const {
   std::unique_lock<std::mutex> lock(mutex_);
   return membership_;
