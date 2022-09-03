@@ -22,8 +22,6 @@ class Acceptor {
 
   bool Recover(uint64_t* instance_id);
 
-  void SetInstanceId(uint64_t id) { instance_id_ = id; }
-
   const BallotNumber& GetPromisedBallot() const { return promised_ballot_; }
   const BallotNumber& GetAcceptedBallot() const { return accepted_ballot_; }
   const PaxosValue& GetAcceptedValue() const { return accepted_value_; }
@@ -31,6 +29,7 @@ class Acceptor {
   void OnPrepare(const PaxosMessage& msg);
   void OnAccpet(const PaxosMessage& msg);
 
+  void SetInstanceId(uint64_t instance_id);
   void NextInstance();
 
  private:

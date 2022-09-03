@@ -59,7 +59,6 @@ class Learner {
 
   bool WriteToDB(const PaxosMessage& msg);
   void FinishLearnValue(const PaxosValue& value);
-  void BroadcastMessageToFollower(const BallotNumber& ballot);
 
   Config* config_;
   Messager* messager_;

@@ -23,53 +23,7 @@ bool ProposeQueue::CheckCapacity() const {
   return true;
 }
 
-bool ProposeQueue::Put(const ProposeHandler& f,
-                       const ProposeCompleteCallback& cb) {
-  std::unique_lock<std::mutex> lock(mutex_);
-  if (last_finished_) {
-    last_finished_ = false;
-    io_loop_->QueueInLoop(f);
-  } else {
-    if (!CheckCapacity()) {
-      return false;
-    }
-    propose_queue_.push(f);
-  }
-  cb_queue_.push(cb);
-  return true;
-}
-
-bool ProposeQueue::Put(ProposeHandler&& f, const ProposeCompleteCallback& cb) {
-  std::unique_lock<std::mutex> lock(mutex_);
-  if (last_finished_) {
-    last_finished_ = false;
-    io_loop_->QueueInLoop(std::move(f));
-  } else {
-    if (!CheckCapacity()) {
-      return false;
-    }
-    propose_queue_.push(std::move(f));
-  }
-  cb_queue_.push(cb);
-  return true;
-}
-
-bool ProposeQueue::Put(const ProposeHandler& f, ProposeCompleteCallback&& cb) {
-  std::unique_lock<std::mutex> lock(mutex_);
-  if (last_finished_) {
-    last_finished_ = false;
-    io_loop_->QueueInLoop(f);
-  } else {
-    if (!CheckCapacity()) {
-      return false;
-    }
-    propose_queue_.push(f);
-  }
-  cb_queue_.push(std::move(cb));
-  return true;
-}
-
-bool ProposeQueue::Put(ProposeHandler&& f, ProposeCompleteCallback&& cb) {
+bool ProposeQueue::Put(ProposeHandler f, ProposeCompleteCallback cb) {
   std::unique_lock<std::mutex> lock(mutex_);
   if (last_finished_) {
     last_finished_ = false;

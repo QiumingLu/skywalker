@@ -12,12 +12,12 @@ Config::Config(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
                Network* network)
     : node_id_(node_id),
       group_id_(group_id),
+      propose_timeout_(options.propose_timeout),
       log_sync_(options.log_sync),
       sync_interval_(options.sync_interval),
       keep_log_count_(options.keep_log_count),
       log_storage_path_(options.log_storage_path),
       machines_(options.machines),
-      followers_(new Membership()),
       default_checkpoint_(nullptr),
       checkpoint_(options.checkpoint),
       db_(new DB(this)),
@@ -43,15 +43,6 @@ Config::Config(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
   if (!checkpoint_) {
     default_checkpoint_ = new Checkpoint();
     checkpoint_ = default_checkpoint_;
-  }
-
-  MemberMessage member;
-  for (auto& i : options.followers) {
-    member.set_id(i.id);
-    member.set_host(i.host);
-    member.set_port(i.port);
-    member.set_context(i.context);
-    (*(followers_->mutable_members()))[member.id()] = member;
   }
 }
 

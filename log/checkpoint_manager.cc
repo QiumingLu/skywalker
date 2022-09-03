@@ -15,17 +15,7 @@ CheckpointManager::CheckpointManager(Config* config)
 CheckpointManager::~CheckpointManager() {}
 
 uint64_t CheckpointManager::GetCheckpointInstanceId() const {
-  uint64_t id = -1;
-  if (config_->GetStateMachines().empty()) {
-    int res = config_->GetDB()->GetMaxInstanceId(&id);
-    if (res == 0) {
-      id = id - 1;
-    }
-  } else {
-    id = config_->GetCheckpoint()->GetCheckpointInstanceId(
-        config_->GetGroupId());
-  }
-  return id;
+  return config_->GetCheckpoint()->GetCheckpointInstanceId(config_->GetGroupId());
 }
 
 bool CheckpointManager::SendCheckpoint(uint64_t node_id) {

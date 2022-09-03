@@ -8,6 +8,7 @@ namespace skywalker {
 
 GroupOptions::GroupOptions()
     : use_master(true),
+      propose_timeout(1000 * 1000),
       log_sync(true),
       master_lease_time(10 * 1000 * 1000),
       sync_interval(5),
@@ -15,9 +16,8 @@ GroupOptions::GroupOptions()
       log_storage_path(""),
       checkpoint(nullptr),
       machines(),
-      membership(),
-      followers() {}
+      membership() {}
 
-Options::Options() : io_thread_size(0), callback_thread_size(1) {}
+Options::Options() : net_thread_size(1), io_thread_size(0), callback_thread_size(1) {}
 
 }  // namespace skywalker

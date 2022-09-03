@@ -20,7 +20,6 @@ class Messager {
 
   void SendMessage(uint64_t node_id, const Content& content);
   void BroadcastMessage(const Content& content);
-  void BroadcastMessageToFollower(const Content& content);
 
  private:
   Config* config_;

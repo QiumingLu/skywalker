@@ -92,10 +92,16 @@ void Acceptor::OnAccpet(const PaxosMessage& msg) {
 
 // Don't reset the promised_ballot_ here so that
 // the proposer can reduce to call prepare function in sometimes.
+void Acceptor::SetInstanceId(uint64_t instance_id) {
+  if (instance_id_ != instance_id) {
+    instance_id_ = instance_id;
+    accepted_ballot_.Reset();
+    accepted_value_.Clear();
+  }
+}
+
 void Acceptor::NextInstance() {
-  ++instance_id_;
-  accepted_ballot_.Reset();
-  accepted_value_.Clear();
+  SetInstanceId(instance_id_ + 1);
 }
 
 void Acceptor::NewChosenValue(const PaxosMessage& msg) {

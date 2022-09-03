@@ -27,7 +27,7 @@ class Config;
 
 class Network {
  public:
-  explicit Network(const Member& my);
+  explicit Network(const Member& my, uint32_t thread_size = 0);
   ~Network();
 
   void StartServer(const std::function<void(std::unique_ptr<Content>)>& cb);
@@ -45,6 +45,7 @@ class Network {
   void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
 
   Member my_;
+  uint32_t thread_size_;
   std::function<void(std::unique_ptr<Content>)> cb_;
   std::unique_ptr<voyager::TcpServer> server_;
   std::map<uint64_t, std::unique_ptr<voyager::TcpClient> > connection_map_;

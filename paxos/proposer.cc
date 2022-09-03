@@ -18,7 +18,7 @@ Proposer::Proposer(Config* config, Instance* instance)
       instance_(instance),
       messager_(config->GetMessager()),
       counter_(config),
-      instance_id_(0),
+      instance_id_(1),
       proposal_id_(0),
       max_proprosal_id_(0),
       max_ballot_(),
@@ -176,9 +176,6 @@ void Proposer::NewChosenValue() {
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
   msg->set_proposal_id(proposal_id_);
-  if (value_.ByteSizeLong() <= 64) {
-    *(msg->mutable_value()) = value_;
-  }
   messager_->BroadcastMessage(content);
   instance_->OnPaxosMessage(*msg);
 }

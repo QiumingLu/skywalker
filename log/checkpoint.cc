@@ -6,7 +6,7 @@
 
 namespace skywalker {
 
-uint64_t Checkpoint::GetCheckpointInstanceId(uint32_t group_id) { return -1; }
+uint64_t Checkpoint::GetCheckpointInstanceId(uint32_t group_id) { return 0; }
 
 bool Checkpoint::LockCheckpoint(uint32_t group_id) { return true; }
 

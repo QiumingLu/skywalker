@@ -36,6 +36,9 @@ struct GroupOptions {
   // Default: true
   bool use_master;
 
+  // Default: 1000 * 1000 microseconds
+  uint64_t propose_timeout;
+
   // Default: true
   bool log_sync;
 
@@ -56,7 +59,6 @@ struct GroupOptions {
 
   std::vector<StateMachine*> machines;
   std::vector<Member> membership;
-  std::vector<Member> followers;
 
   GroupOptions();
 };
@@ -66,7 +68,7 @@ struct Options {
   //  ______________________________________________
   // | name                 |        size           |
   // |————————————————————————————————————————————--|
-  // | network thread       |          1            |
+  // | network thread       |        N + 1          |
   // |                                              |
   // | master thread        |          1            |
   // |                                              |
@@ -81,7 +83,10 @@ struct Options {
   // | leveldb thread model |         0/1           |
   //  -----------------------------------------------
   // The skywalker's thread size is:
-  // 5 + io_thread_size + callback_thread_size
+  // 5 + net_thread_size + io_thread_size + callback_thread_size
+
+  // Default: net_thread_size = 1
+  uint32_t net_thread_size;
 
   // Default: io_thread_size = (groups.size() + 1) / 2
   // the io_thread_size must be (0, groups.size()]

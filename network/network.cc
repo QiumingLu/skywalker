@@ -13,7 +13,8 @@
 
 namespace skywalker {
 
-Network::Network(const Member& my) : my_(my), net_loop_(voyager::kPoll) {
+Network::Network(const Member& my, uint32_t thread_size)
+    : my_(my), thread_size_(thread_size), net_loop_(voyager::kPoll) {
   loop_ = net_loop_.Loop();
 }
 
@@ -23,7 +24,7 @@ void Network::StartServer(
     const std::function<void(std::unique_ptr<Content>)>& cb) {
   cb_ = cb;
   voyager::SockAddr addr(my_.host, my_.port);
-  server_.reset(new voyager::TcpServer(loop_, addr, "SkywalkerServer"));
+  server_.reset(new voyager::TcpServer(loop_, addr, "SkywalkerServer", thread_size_));
   server_->SetMessageCallback(
       [this](const voyager::TcpConnectionPtr& p, voyager::Buffer* buf) {
         OnMessage(p, buf);

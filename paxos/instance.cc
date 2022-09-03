@@ -7,9 +7,11 @@
 #include <stdio.h>
 
 #include <utility>
+#include <random>
 
 #include "paxos/config.h"
 #include "skywalker/logging.h"
+#include "util/timeops.h"
 
 namespace skywalker {
 
@@ -18,9 +20,10 @@ Instance::Instance(Config* config)
       acceptor_(config, this),
       learner_(config, this, &acceptor_),
       proposer_(config, this),
-      instance_id_(0),
+      instance_id_(1),
       is_proposing_(false),
-      context_(nullptr) {}
+      context_(nullptr),
+      seq_num_(0) {}
 
 Instance::~Instance() {}
 
@@ -36,7 +39,6 @@ bool Instance::Recover() {
               config_->GetGroupId());
     return res;
   }
-  acceptor_.SetInstanceId(instance_id_);
   learner_.SetInstanceId(instance_id_);
   proposer_.SetInstanceId(instance_id_);
   proposer_.SetStartProposalId(acceptor_.GetPromisedBallot().GetProposalId() +
@@ -73,10 +75,11 @@ void Instance::OnPropose(uint32_t machine_id, const std::string& value,
 
   assert(!context_);
   context_ = context;
+  propose_value_.set_value_id(GetPaxosValueId());
   propose_value_.set_machine_id(machine_id);
   propose_value_.set_user_data(value);
 
-  propose_timer_ = io_loop_->RunAfter(1000 * 1000, [this]() {
+  propose_timer_ = io_loop_->RunAfter(config_->GetProposeTimeout(), [this]() {
     proposer_.QuitPropose();
     is_proposing_ = false;
     Slice msg("proposal time more than a second.");
@@ -156,8 +159,7 @@ void Instance::CheckLearn() {
     bool my = false;
     if (is_proposing_) {
       io_loop_->Remove(propose_timer_);
-      if (propose_value_.machine_id() == learned_value.machine_id() &&
-          propose_value_.user_data() == learned_value.user_data()) {
+      if (propose_value_.value_id() == learned_value.value_id()) {
         my = true;
       }
     }
@@ -172,8 +174,8 @@ void Instance::CheckLearn() {
         }
       } else {
         char msg[64];
-        snprintf(msg, sizeof(msg), "machine(id=%u) execute failed.",
-                 learned_value.machine_id());
+        snprintf(msg, sizeof(msg), "machine(id=%u) execute value(id=%llu) failed.",
+                 learned_value.machine_id(), learned_value.value_id());
         status = Status::MachineError(msg);
       }
       propose_cb_(instance_id_, status, context_);
@@ -201,6 +203,12 @@ void Instance::NextInstance() {
   learner_.NextInstance();
   LOG_INFO("Group %u - new instance is starting, which instance_id=%llu.",
            config_->GetGroupId(), (unsigned long long)instance_id_);
+}
+
+uint64_t Instance::GetPaxosValueId() {
+  static std::mt19937 rd{std::random_device{}()};
+  static std::uniform_int_distribution<int> mrand{1 << 8, 1 << 22};
+  return (NowMillis() << 22) | mrand(rd) | (++seq_num_);
 }
 
 }  // namespace skywalker

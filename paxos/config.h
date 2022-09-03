@@ -29,6 +29,8 @@ class Config {
 
   bool Recover();
 
+  uint64_t GetProposeTimeout() const { return propose_timeout_; }
+
   Checkpoint* GetCheckpoint() const { return checkpoint_; }
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }
@@ -68,13 +70,14 @@ class Config {
   std::shared_ptr<Membership> GetMembership() const {
     return membership_machine_->GetMembership();
   }
-  std::shared_ptr<Membership> GetFollowers() const { return followers_; }
 
   bool IsValidNodeId(uint64_t node_id) const;
 
  private:
   uint64_t node_id_;
   uint32_t group_id_;
+
+  uint64_t propose_timeout_;
 
   bool log_sync_;
   uint32_t sync_interval_;
@@ -84,11 +87,7 @@ class Config {
   std::string checkpoint_path_;
 
   std::vector<StateMachine*> machines_;
-
-  std::shared_ptr<Membership> followers_;
-
   Checkpoint* default_checkpoint_;
-
   Checkpoint* checkpoint_;
   DB* db_;
   Messager* messager_;

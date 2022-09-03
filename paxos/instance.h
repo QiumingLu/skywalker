@@ -44,6 +44,7 @@ class Instance {
   void OnCheckpointMessage(const CheckpointMessage& msg);
 
  private:
+  uint64_t GetPaxosValueId();
   void CheckLearn();
   bool MachineExecute(const PaxosValue& value, bool my);
   void NextInstance();
@@ -62,6 +63,8 @@ class Instance {
   PaxosValue propose_value_;
   ProposeCompleteCallback propose_cb_;
   TimerId propose_timer_;
+
+  uint8_t seq_num_;
 
   // No copying allowed
   Instance(const Instance&);

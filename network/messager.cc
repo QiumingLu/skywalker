@@ -27,11 +27,4 @@ void Messager::BroadcastMessage(const Content& content) {
   }
 }
 
-void Messager::BroadcastMessageToFollower(const Content& content) {
-  std::shared_ptr<Membership> temp = config_->GetFollowers();
-  if (temp->members().size() > 0) {
-    network_->SendMessage(temp, content);
-  }
-}
-
 }  // namespace skywalker

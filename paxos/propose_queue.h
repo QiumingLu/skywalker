@@ -26,10 +26,7 @@ class ProposeQueue {
   void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
   void SetCallbackLoop(RunLoop* loop) { callback_loop_ = loop; }
 
-  bool Put(const ProposeHandler& f, const ProposeCompleteCallback& cb);
-  bool Put(ProposeHandler&& f, const ProposeCompleteCallback& cb);
-  bool Put(const ProposeHandler& f, ProposeCompleteCallback&& cb);
-  bool Put(ProposeHandler&& f, ProposeCompleteCallback&& cb);
+  bool Put(ProposeHandler f, ProposeCompleteCallback cb);
 
  private:
   friend class Group;
