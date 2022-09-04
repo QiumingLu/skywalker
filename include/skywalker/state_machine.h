@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace skywalker {
 
@@ -15,12 +16,19 @@ class StateMachine {
   StateMachine() : id_(-1) {}
   virtual ~StateMachine() {}
 
-  // must set the id > 5
+  // internal machine id vlue is [0, 1000], so must set id > 1000
   void set_machine_id(uint32_t id) { id_ = id; }
   uint32_t machine_id() const { return id_; }
 
+  virtual bool Recover(uint32_t group_id, uint64_t instance_id,
+                       const std::string& dir,
+                       const std::vector<std::string>& files) = 0;
+
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value, void* context = nullptr) = 0;
+
+  virtual bool MakeCheckpoint(uint32_t group_id, uint64_t instance_id,
+                              const std::string& dir) = 0;
 
  private:
   uint32_t id_;

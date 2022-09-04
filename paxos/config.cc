@@ -17,9 +17,6 @@ Config::Config(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
       sync_interval_(options.sync_interval),
       keep_log_count_(options.keep_log_count),
       log_storage_path_(options.log_storage_path),
-      machines_(options.machines),
-      default_checkpoint_(nullptr),
-      checkpoint_(options.checkpoint),
       db_(new DB(this)),
       messager_(new Messager(this, network)),
       machine_manager_(new MachineManager(this)),
@@ -37,13 +34,15 @@ Config::Config(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
   FileManager::Instance()->CreateDir(log_storage_path_);
 
   log_storage_path_ += name;
-  checkpoint_path_ = log_storage_path_ + "/checkpoint";
   log_path_ = log_storage_path_ + "/log";
+  checkpoint_path_ = log_storage_path_ + "/checkpoint";
+  temp_checkpoint_path_ = checkpoint_path_ + "/temp";
 
-  if (!checkpoint_) {
-    default_checkpoint_ = new Checkpoint();
-    checkpoint_ = default_checkpoint_;
+  for (auto machine : options.machines) {
+    machine_manager_->AddMachine(machine);
   }
+  machine_manager_->AddMachine(membership_machine_);
+  machine_manager_->AddMachine(master_machine_);
 }
 
 Config::~Config() {
@@ -54,16 +53,16 @@ Config::~Config() {
   delete machine_manager_;
   delete messager_;
   delete db_;
-  delete default_checkpoint_;
 }
 
 bool Config::Recover() {
   FileManager::Instance()->CreateDir(log_storage_path_);
   FileManager::Instance()->CreateDir(checkpoint_path_);
-  bool exists = FileManager::Instance()->FileExists(checkpoint_path_);
-  if (!exists) {
-    LOG_ERROR("Group %u - checkpoint path(%s) access failed.", group_id_,
-              checkpoint_path_.c_str());
+  FileManager::Instance()->CreateDir(temp_checkpoint_path_);
+  if (!FileManager::Instance()->FileExists(checkpoint_path_) ||
+      !FileManager::Instance()->FileExists(temp_checkpoint_path_)) {
+    LOG_ERROR("Group %u - checkpoint path(%s) temp(%s) access failed.", group_id_,
+              checkpoint_path_.c_str(), temp_checkpoint_path_.c_str());
     return false;
   }
 
@@ -74,15 +73,7 @@ bool Config::Recover() {
     return false;
   }
 
-  for (auto machine : machines_) {
-    machine_manager_->AddMachine(machine);
-  }
-  machine_manager_->AddMachine(membership_machine_);
-  machine_manager_->AddMachine(master_machine_);
-
-  membership_machine_->Recover();
-  master_machine_->Recover();
-
+  machine_manager_->Recover();
   LOG_INFO("Group %u - Config recover successful!", group_id_);
 
   return true;

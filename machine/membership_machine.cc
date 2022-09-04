@@ -6,15 +6,15 @@
 #include "paxos/config.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/logging.h"
+#include "skywalker/file.h"
 
 namespace skywalker {
 
 MembershipMachine::MembershipMachine(Config* config,
                                      const GroupOptions& options)
     : config_(config),
-      has_sync_membership_(false),
       membership_(new Membership()) {
-  set_machine_id(0);
+  set_machine_id(1);
   MemberMessage member;
   for (auto& i : options.membership) {
     member.set_id(i.id);
@@ -25,15 +25,26 @@ MembershipMachine::MembershipMachine(Config* config,
   }
 }
 
-void MembershipMachine::Recover() {
-  Membership* temp = new Membership();
-  int ret = config_->GetDB()->GetMembership(temp);
-  if (ret == 0) {
-    has_sync_membership_ = true;
-    membership_.reset(temp);
-  } else {
-    delete temp;
+bool MembershipMachine::Recover(uint32_t group_id, uint64_t instance_id,
+                                const std::string& dir,
+                                const std::vector<std::string>& files) {
+  if (dir.empty() || files.empty()) {
+    return true;
   }
+  std::string data;
+  Status status = ReadFileToString(FileManager::Instance(), files[0], &data);
+  if (!status.ok()) {
+    LOG_ERROR("Group %u - instance %llu membership read failed %s.",
+              config_->GetGroupId(), instance_id, status.ToString().c_str());
+    return false;
+  }
+  if (membership_->ParseFromString(data)) {
+    return true;
+  } else {
+    LOG_ERROR("Group %u - instance %llu membership parse failed.",
+              config_->GetGroupId(), instance_id); 
+  }
+  return false;
 }
 
 bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
@@ -41,19 +52,14 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
   MemberChangeMessage temp;
   if (temp.ParseFromString(value)) {
     std::unique_lock<std::mutex> lock(mutex_);
-    if (instance_id < membership_->version()) {
-      return true;
+    if (instance_id <= membership_->version()) {
+      return false;
     }
 
     // Copy on write
     if (!membership_.unique()) {
       std::shared_ptr<Membership> new_membership(new Membership(*membership_));
       membership_.swap(new_membership);
-    } else if (!has_sync_membership_) {
-      membership_.reset(new Membership());
-    }
-    if (!has_sync_membership_) {
-      has_sync_membership_ = true;
     }
     assert(membership_.unique());
 
@@ -66,19 +72,14 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
       }
     }
     membership_->set_version(instance_id);
-
-    int ret = config_->GetDB()->SetMembership(*membership_);
-    if (ret == 0) {
-      if (cb_) {
-        cb_(group_id);
-      }
-      return true;
-    } else {
-      LOG_ERROR("Group %u - update membership failed.", config_->GetGroupId());
+    mutex_.unlock();
+    if (cb_) {
+      cb_(group_id);
     }
+    return true;
   } else {
-    LOG_ERROR("Group %u - membership parse from string failed.",
-              config_->GetGroupId());
+    LOG_ERROR("Group %u - instance %llu membership parse from string failed.",
+              config_->GetGroupId(), instance_id);
   }
   return false;
 }
@@ -88,8 +89,17 @@ std::shared_ptr<Membership> MembershipMachine::GetMembership() const {
   return membership_;
 }
 
-bool MembershipMachine::HasSyncMembership() const {
-  return has_sync_membership_;
+bool MembershipMachine::MakeCheckpoint(uint32_t group_id,
+                                       uint64_t instance_id,
+                                       const std::string& dir) {
+  Status status = WriteStringToFileSync(
+      FileManager::Instance(), membership_->SerializeAsString(), dir + "/membershipdb");
+  if (!status.ok()) {
+    LOG_ERROR("Group %u - instance %llu membership write failed %s.",
+              config_->GetGroupId(), instance_id, status.ToString().c_str());
+    return false;
+  }
+  return true;
 }
 
 }  // namespace skywalker

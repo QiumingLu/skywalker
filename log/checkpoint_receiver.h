@@ -5,7 +5,7 @@
 #ifndef SKYWALKER_LOG_CHECKPOINT_RECEIVER_H_
 #define SKYWALKER_LOG_CHECKPOINT_RECEIVER_H_
 
-#include <map>
+#include <set>
 #include <string>
 
 #include "proto/paxos.pb.h"
@@ -36,7 +36,7 @@ class CheckpointReceiver {
 
   uint64_t sender_node_id_;
   int sequence_id_;
-  std::map<int, std::string> dirs_;
+  std::set<int> dirs_;
 
   // No copying allowed
   CheckpointReceiver(const CheckpointReceiver&);

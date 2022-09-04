@@ -44,12 +44,6 @@ class DB {
   int SetMinChosenInstanceId(uint64_t id);
   int GetMinChosenInstanceId(uint64_t* id);
 
-  int SetMembership(const Membership& v);
-  int GetMembership(Membership* v);
-
-  int SetMasterState(const MasterState& state);
-  int GetMasterState(MasterState* state);
-
  private:
   Config* config_;
   leveldb::DB* db_;

@@ -17,8 +17,6 @@ class CheckpointManager {
   explicit CheckpointManager(Config* config);
   ~CheckpointManager();
 
-  uint64_t GetCheckpointInstanceId() const;
-
   bool SendCheckpoint(uint64_t node_id);
   bool ReceiveCheckpoint(const CheckpointMessage& message);
 

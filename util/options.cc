@@ -14,7 +14,6 @@ GroupOptions::GroupOptions()
       sync_interval(5),
       keep_log_count(100000),
       log_storage_path(""),
-      checkpoint(nullptr),
       machines(),
       membership() {}
 

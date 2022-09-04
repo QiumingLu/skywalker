@@ -56,39 +56,6 @@ void Group::SetNewMasterCallback(const NewMasterCallback& cb) {
   master_machine_->SetNewMasterCallback(cb);
 }
 
-void Group::SyncMembership() {
-  instance_.SyncData(true);
-  int i = 0;
-  while (true) {
-    if (!membership_machine_->HasSyncMembership()) {
-      NewPropose(std::bind(&Group::SyncMembershipInLoop, this));
-    }
-    if (membership_machine_->HasSyncMembership()) {
-      break;
-    }
-    if (++i > 3) {
-      instance_.SyncData(false);
-      i = 0;
-    }
-    SleepForMicroseconds(500 * 1000);
-  }
-}
-
-void Group::SyncMembershipInLoop() {
-  if (!membership_machine_->HasSyncMembership()) {
-    std::shared_ptr<Membership> temp = membership_machine_->GetMembership();
-    MemberChangeMessage message;
-    for (auto& i : temp->members()) {
-      *(message.add_member()) = i.second;
-      message.add_type(MEMBER_ADD);
-    }
-    instance_.OnPropose(membership_machine_->machine_id(),
-                        message.SerializeAsString());
-  } else {
-    propose_cb_(instance_.GetInstanceId(), Status::OK(), nullptr);
-  }
-}
-
 void Group::SyncMaster() {
   if (use_master_) {
     TryBeMaster();

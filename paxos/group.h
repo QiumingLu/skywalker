@@ -38,7 +38,6 @@ class Group {
   void SetNewMembershipCallback(const NewMembershipCallback& cb);
   void SetNewMasterCallback(const NewMasterCallback& cb);
 
-  void SyncMembership();
   void SyncMaster();
 
   bool OnPropose(uint32_t machine_id, const std::string& value, void* context,
@@ -61,7 +60,6 @@ class Group {
   void StopGC();
 
  private:
-  void SyncMembershipInLoop();
   void TryBeMaster();
   void TryBeMasterInLoop();
   bool NewPropose(ProposeHandler&& f);

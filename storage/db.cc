@@ -16,8 +16,6 @@ namespace skywalker {
 
 namespace {
 static const uint64_t kMinChosenKey = UINTMAX_MAX;
-static const uint64_t kMembership = (UINTMAX_MAX - 1);
-static const uint64_t kMasterState = (UINTMAX_MAX - 2);
 }  // namespace
 
 class SComparator : public leveldb::Comparator {
@@ -121,7 +119,7 @@ int DB::GetMaxInstanceId(uint64_t* instance_id) {
   it->SeekToLast();
   while (it->Valid()) {
     uint64_t id = DecodeFixed64(it->key().data());
-    if (id == kMinChosenKey || id == kMembership || id == kMasterState) {
+    if (id == kMinChosenKey) {
       it->Prev();
     } else {
       *instance_id = id;
@@ -146,48 +144,6 @@ int DB::GetMinChosenInstanceId(uint64_t* id) {
     *id = DecodeFixed64(value.data());
   }
   return ret;
-}
-
-int DB::SetMembership(const Membership& m) {
-  std::string s;
-  if (!m.SerializeToString(&s)) {
-    return -1;
-  }
-  return Put(WriteOptions(), kMembership, s);
-}
-
-int DB::GetMembership(Membership* m) {
-  std::string s;
-  int ret = Get(kMembership, &s);
-  if (ret != 0) {
-    return ret;
-  }
-  if (m->ParseFromString(s)) {
-    return 0;
-  } else {
-    return -1;
-  }
-}
-
-int DB::SetMasterState(const MasterState& state) {
-  std::string s;
-  if (!state.SerializeToString(&s)) {
-    return -1;
-  }
-  return Put(WriteOptions(), kMasterState, s);
-}
-
-int DB::GetMasterState(MasterState* state) {
-  std::string s;
-  int ret = Get(kMasterState, &s);
-  if (ret != 0) {
-    return ret;
-  }
-  if (state->ParseFromString(s)) {
-    return 0;
-  } else {
-    return -1;
-  }
 }
 
 }  // namespace skywalker

@@ -21,19 +21,22 @@ class MembershipMachine : public StateMachine {
  public:
   MembershipMachine(Config* config, const GroupOptions& options);
 
-  void Recover();
-
   void SetNewMembershipCallback(const NewMembershipCallback& cb) { cb_ = cb; }
 
   std::shared_ptr<Membership> GetMembership() const;
-  bool HasSyncMembership() const;
+
+  virtual bool Recover(uint32_t group_id, uint64_t instance_id,
+                       const std::string& dir,
+                       const std::vector<std::string>& files);
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value, void* /* context */);
 
+  virtual bool MakeCheckpoint(uint32_t group_id, uint64_t instance_id,
+                              const std::string& dir);
+
  private:
   Config* config_;
-  bool has_sync_membership_;
 
   mutable std::mutex mutex_;
   std::shared_ptr<Membership> membership_;

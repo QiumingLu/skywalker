@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 
-#include "skywalker/checkpoint.h"
 #include "skywalker/state_machine.h"
 #include "skywalker/status.h"
 
@@ -53,9 +52,6 @@ struct GroupOptions {
 
   // Default: ""
   std::string log_storage_path;
-
-  // Default: nullptr
-  Checkpoint* checkpoint;
 
   std::vector<StateMachine*> machines;
   std::vector<Member> membership;

@@ -24,7 +24,8 @@ bool LogManager::Recover(uint64_t* instance_id) {
   }
 
   uint64_t max_instance_id = *instance_id;
-  uint64_t checkpoint_id = config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
+  uint64_t checkpoint_id =
+      config_->GetMachineManager()->GetLatestCheckpointInstanceId() + 1;
 
   *instance_id = std::max(checkpoint_id, max_instance_id);
 

@@ -19,20 +19,25 @@ class MasterMachine : public StateMachine {
  public:
   explicit MasterMachine(Config* config);
 
-  void Recover();
-
   void SetNewMasterCallback(const NewMasterCallback& cb) { cb_ = cb; }
 
-  void SetMasterState(const MasterState& state);
   MasterState GetMasterState() const;
 
   bool GetMaster(uint64_t* node_id, uint64_t* version) const;
   bool IsMaster() const;
 
+  virtual bool Recover(uint32_t group_id, uint64_t instance_id,
+                       const std::string& dir,
+                       const std::vector<std::string>& files);
+
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value, void* context);
 
+  virtual bool MakeCheckpoint(uint32_t group_id, uint64_t instance_id,
+                              const std::string& dir);
+
  private:
+  void SetMasterState(const MasterState& state);
   Config* config_;
 
   mutable std::mutex mutex_;

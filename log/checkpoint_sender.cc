@@ -28,9 +28,9 @@ bool CheckpointSender::SendCheckpoint(uint64_t node_id) {
   sequence_id_ = 0;
   ack_sequence_id_ = 0;
   flag_ = true;
-  bool res = config_->GetCheckpoint()->LockCheckpoint(config_->GetGroupId());
+  bool res = config_->GetMachineManager()->TryLockCheckpoint();
   if (res) {
-    uint64_t instance_id = manager_->GetCheckpointInstanceId();
+    uint64_t instance_id = config_->GetMachineManager()->GetLatestCheckpointInstanceId();
     BeginToSend(instance_id);
 
     res = SendCheckpointFiles(instance_id);
@@ -40,7 +40,7 @@ bool CheckpointSender::SendCheckpoint(uint64_t node_id) {
     } else {
       LOG_ERROR("Group %u - send checkpoint failed.", config_->GetGroupId());
     }
-    config_->GetCheckpoint()->UnLockCheckpoint(config_->GetGroupId());
+    config_->GetMachineManager()->UnLockCheckpoint();
   } else {
     LOG_WARN("Group %u - lock checkpoint failed.", config_->GetGroupId());
   }
@@ -64,14 +64,14 @@ bool CheckpointSender::SendCheckpointFiles(uint64_t instance_id) {
   std::string dir;
   std::vector<std::string> files;
 
-  const std::vector<StateMachine*>& machines = config_->GetStateMachines();
-  for (auto& machine : machines) {
+  const auto& machines = config_->GetMachineManager()->GetMachines();
+  for (const auto& it : machines) {
     files.clear();
-    res = config_->GetCheckpoint()->GetCheckpoint(
-        config_->GetGroupId(), machine->machine_id(), &dir, &files);
+    res = config_->GetMachineManager()->GetCheckpoint(
+        instance_id, it.first, &dir, &files);
     if (!res) {
       LOG_ERROR("Group %u - get checkpoint failed, the machine_id=%d.",
-                config_->GetGroupId(), machine->machine_id());
+                config_->GetGroupId(), it.first);
       return res;
     }
 
@@ -82,7 +82,7 @@ bool CheckpointSender::SendCheckpointFiles(uint64_t instance_id) {
       dir += '/';
     }
     for (auto& file : files) {
-      res = SendFile(instance_id, machine->machine_id(), dir, file);
+      res = SendFile(instance_id, it.first, dir, file);
       if (!res) {
         LOG_ERROR("Group %u - send file failed, the file=%s%s.",
                   config_->GetGroupId(), dir.c_str(), file.c_str());

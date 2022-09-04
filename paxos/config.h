@@ -31,7 +31,6 @@ class Config {
 
   uint64_t GetProposeTimeout() const { return propose_timeout_; }
 
-  Checkpoint* GetCheckpoint() const { return checkpoint_; }
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }
   MachineManager* GetMachineManager() const { return machine_manager_; }
@@ -51,10 +50,7 @@ class Config {
   const std::string& LogStoragePath() const { return log_storage_path_; }
   const std::string& LogPath() const { return log_path_; }
   const std::string& CheckpointPath() const { return checkpoint_path_; }
-
-  const std::vector<StateMachine*>& GetStateMachines() const {
-    return machines_;
-  }
+  const std::string& TempCheckpointPath() const { return temp_checkpoint_path_; };
 
   uint32_t GetGroupId() const { return group_id_; }
 
@@ -85,10 +81,8 @@ class Config {
   std::string log_storage_path_;
   std::string log_path_;
   std::string checkpoint_path_;
+  std::string temp_checkpoint_path_;
 
-  std::vector<StateMachine*> machines_;
-  Checkpoint* default_checkpoint_;
-  Checkpoint* checkpoint_;
   DB* db_;
   Messager* messager_;
   MachineManager* machine_manager_;

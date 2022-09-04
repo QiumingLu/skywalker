@@ -12,7 +12,6 @@
 #include "skywalker/checkpoint.h"
 #include "skywalker/file.h"
 #include "skywalker/logging.h"
-#include "util/timeops.h"
 
 namespace skywalker {
 
@@ -26,30 +25,7 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
   sender_node_id_ = msg.node_id();
   sequence_id_ = 0;
   dirs_.clear();
-
-  bool res = true;
-  std::vector<std::string> dirs;
-  std::vector<std::string> files;
-  FileManager::Instance()->GetChildren(config_->CheckpointPath(), &dirs);
-
-  for (auto& dir : dirs) {
-    std::string d = config_->CheckpointPath() + "/" + dir;
-    FileManager::Instance()->GetChildren(d, &files, true);
-    if (files.empty()) {
-      continue;
-    }
-    for (auto& file : files) {
-      Status del = FileManager::Instance()->DeleteFile(d + "/" + file);
-      if (!del.ok()) {
-        LOG_ERROR("Group %u - %s.", config_->GetGroupId(),
-                  del.ToString().c_str());
-        res = false;
-        break;
-      }
-    }
-    FileManager::Instance()->DeleteDir(d);
-  }
-
+  bool res = DeleteTempCheckpoint(config_);
   return ComfirmReceive(msg, res);
 }
 
@@ -73,22 +49,20 @@ bool CheckpointReceiver::ReceiveFiles(const CheckpointMessage& msg) {
     return false;
   }
 
+  std::string dir = GetCheckpointPath(config_, msg.instance_id(), msg.machine_id(), true);
   if (dirs_.find(msg.machine_id()) == dirs_.end()) {
-    char dir[512];
-    snprintf(dir, sizeof(dir), "%s/m%d", config_->CheckpointPath().c_str(),
-             msg.machine_id());
     FileManager::Instance()->CreateDir(dir);
     bool exits = FileManager::Instance()->FileExists(dir);
     if (!exits) {
       LOG_ERROR("Group %u - create checkpoint dir=%s failed.",
-                config_->GetGroupId(), dir);
+                config_->GetGroupId(), dir.c_str());
       return false;
     }
-    dirs_[msg.machine_id()] = std::string(dir);
+    dirs_.insert(msg.machine_id());
   }
 
   WritableFile* file;
-  std::string fname = dirs_[msg.machine_id()] + "/" + msg.file();
+  std::string fname = dir + "/" + msg.file();
   Status s = FileManager::Instance()->NewAppendableFile(fname, &file);
   if (s.ok()) {
     s = file->Append(msg.data());
@@ -113,41 +87,13 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
     return false;
   }
 
-  bool res = true;
-
-  bool lock = false;
-  while (!lock) {
-    lock = config_->GetCheckpoint()->LockCheckpoint(config_->GetGroupId());
-    SleepForMicroseconds(1000);
-  }
-  std::vector<std::string> files;
-  for (auto& d : dirs_) {
-    Status s = FileManager::Instance()->GetChildren(d.second, &files, true);
-    if (!s.ok()) {
-      LOG_ERROR("Group %u - %s", config_->GetGroupId(), s.ToString().c_str());
-      res = false;
-      break;
-    }
-    if (files.empty()) {
-      continue;
-    }
-    res = config_->GetCheckpoint()->LoadCheckpoint(
-        config_->GetGroupId(), msg.instance_id(), d.first, d.second, files);
-    if (!res) {
-      LOG_ERROR("Group %u - load checkpoint failed, the machine_id=%d, dir=%s.",
-                config_->GetGroupId(), d.first, d.second.c_str());
-      break;
-    }
-  }
-  config_->GetCheckpoint()->UnLockCheckpoint(config_->GetGroupId());
-
-  if (res) {
-    LOG_INFO("Group %u - load checkpoint successful!", config_->GetGroupId());
+  if (config_->GetMachineManager()->UpdateCheckpoint(msg.instance_id())) {
+    LOG_INFO("Group %u - update checkpoint successful!", config_->GetGroupId());
     LOG_WARN("Killing the process now...");
     // FIXME
     _exit(2);
   }
-  return res;
+  return false;
 }
 
 bool CheckpointReceiver::ComfirmReceive(const CheckpointMessage& msg,

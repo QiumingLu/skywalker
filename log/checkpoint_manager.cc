@@ -14,10 +14,6 @@ CheckpointManager::CheckpointManager(Config* config)
 
 CheckpointManager::~CheckpointManager() {}
 
-uint64_t CheckpointManager::GetCheckpointInstanceId() const {
-  return config_->GetCheckpoint()->GetCheckpointInstanceId(config_->GetGroupId());
-}
-
 bool CheckpointManager::SendCheckpoint(uint64_t node_id) {
   return sender_.SendCheckpoint(node_id);
 }

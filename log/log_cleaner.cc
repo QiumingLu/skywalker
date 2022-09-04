@@ -35,7 +35,7 @@ void LogCleaner::GCLoop() {
   uint64_t min_chosen_id = manager_->GetMinChosenInstanceId();
   uint64_t max_chosen_id = manager_->GetMaxChosenInstanceId();
   uint64_t checkpoint_id =
-      config_->GetCheckpointManager()->GetCheckpointInstanceId() + 1;
+      config_->GetMachineManager()->GetOldestCheckpointInstanceId() + 1;
 
   WriteBatch batch;
   while (min_chosen_id + keep < max_chosen_id &&
