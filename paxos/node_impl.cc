@@ -66,7 +66,7 @@ bool NodeImpl::StartWorking() {
   std::shuffle(groups.begin(), groups.end(),
                std::default_random_engine((unsigned)options_.my.id));
   for (auto& g : groups) {
-    g->SyncMaster();
+    g->Sync();
   }
 
   return true;

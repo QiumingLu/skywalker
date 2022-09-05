@@ -75,17 +75,17 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
 }
 
 void MasterMachine::SetMasterState(const MasterState& state) {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   state_ = state;
 }
 
 MasterState MasterMachine::GetMasterState() const {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return state_;
 }
 
 bool MasterMachine::GetMaster(uint64_t* node_id, uint64_t* version) const {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (state_.lease_time() > NowMicros()) {
     *version = state_.version();
     *node_id = state_.node_id();
@@ -95,7 +95,7 @@ bool MasterMachine::GetMaster(uint64_t* node_id, uint64_t* version) const {
 }
 
 bool MasterMachine::IsMaster() const {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (state_.node_id() == config_->GetNodeId() &&
       state_.lease_time() > NowMicros()) {
     return true;

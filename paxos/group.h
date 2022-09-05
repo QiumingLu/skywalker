@@ -38,7 +38,7 @@ class Group {
   void SetNewMembershipCallback(const NewMembershipCallback& cb);
   void SetNewMasterCallback(const NewMasterCallback& cb);
 
-  void SyncMaster();
+  void Sync();
 
   bool OnPropose(uint32_t machine_id, const std::string& value, void* context,
                  const ProposeCompleteCallback& cb);

@@ -51,28 +51,29 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
                                 const std::string& value, void* /* context */) {
   MemberChangeMessage temp;
   if (temp.ParseFromString(value)) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    if (instance_id <= membership_->version()) {
-      return false;
-    }
-
-    // Copy on write
-    if (!membership_.unique()) {
-      std::shared_ptr<Membership> new_membership(new Membership(*membership_));
-      membership_.swap(new_membership);
-    }
-    assert(membership_.unique());
-
-    for (int i = 0; i < temp.type_size(); ++i) {
-      const MemberMessage& member = temp.member(i);
-      if (temp.type(i) == MEMBER_ADD) {
-        (*(membership_->mutable_members()))[member.id()] = member;
-      } else if (temp.type(i) == MEMBER_REMOVE) {
-        membership_->mutable_members()->erase(member.id());
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      if (instance_id <= membership_->version()) {
+        return false;
       }
+
+      // Copy on write
+      if (!membership_.unique()) {
+        std::shared_ptr<Membership> new_membership(new Membership(*membership_));
+        membership_.swap(new_membership);
+      }
+      assert(membership_.unique());
+
+      for (int i = 0; i < temp.type_size(); ++i) {
+        const MemberMessage& member = temp.member(i);
+        if (temp.type(i) == MEMBER_ADD) {
+          (*(membership_->mutable_members()))[member.id()] = member;
+        } else if (temp.type(i) == MEMBER_REMOVE) {
+          membership_->mutable_members()->erase(member.id());
+        }
+      }
+      membership_->set_version(instance_id);
     }
-    membership_->set_version(instance_id);
-    mutex_.unlock();
     if (cb_) {
       cb_(group_id);
     }
@@ -85,7 +86,7 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
 }
 
 std::shared_ptr<Membership> MembershipMachine::GetMembership() const {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return membership_;
 }
 

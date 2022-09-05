@@ -56,7 +56,8 @@ void Group::SetNewMasterCallback(const NewMasterCallback& cb) {
   master_machine_->SetNewMasterCallback(cb);
 }
 
-void Group::SyncMaster() {
+void Group::Sync() {
+  instance_.SyncData(true);
   if (use_master_) {
     TryBeMaster();
   }
