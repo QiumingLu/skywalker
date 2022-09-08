@@ -12,16 +12,18 @@
 namespace skywalker {
 
 Group::Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
-             Network* network)
+             Network* network, Cluster* cluster)
     : node_id_(node_id),
-      config_(node_id, group_id, options, network),
+      config_(node_id, group_id, options, network, cluster),
       instance_(&config_),
       use_master_(options.use_master),
       retrie_master_(false),
       lease_timeout_(options.master_lease_time),
       now_(0),
       propose_end_(false),
-      propose_queue_(100) {
+      propose_queue_(100),
+      io_loop_(nullptr),
+      master_loop_(nullptr) {
   propose_cb_ = std::bind(&ProposeQueue::ProposeComplete, &propose_queue_,
                           std::placeholders::_1, std::placeholders::_2,
                           std::placeholders::_3);
@@ -31,7 +33,11 @@ Group::Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
   master_machine_ = config_.GetMasterMachine();
 }
 
-Group::~Group() { Schedule::Instance()->MasterLoop()->Remove(timer_); }
+Group::~Group() {
+  if (master_loop_) {
+    master_loop_->Remove(timer_);
+  }
+}
 
 bool Group::Recover() {
   if (config_.Recover() && instance_.Recover()) {
@@ -40,12 +46,17 @@ bool Group::Recover() {
   return false;
 }
 
-void Group::Start(RunLoop* io_loop, RunLoop* callback_loop) {
+void Group::Start(RunLoop* io_loop, RunLoop* callback_loop,
+                  RunLoop* learn_loop, RunLoop* clean_loop,
+                  RunLoop* master_loop) {
   io_loop_ = io_loop;
+  master_loop_ = master_loop;
   instance_.SetIOLoop(io_loop_);
   propose_queue_.SetIOLoop(io_loop_);
   propose_queue_.SetCallbackLoop(callback_loop);
-  instance_.SetLearnLoop(Schedule::Instance()->LearnLoop());
+  config_.SetIOLoop(io_loop_);
+  config_.SetLearnLoop(learn_loop);
+  config_.SetCleanLoop(clean_loop);
 }
 
 void Group::SetNewMembershipCallback(const NewMembershipCallback& cb) {
@@ -56,7 +67,8 @@ void Group::SetNewMasterCallback(const NewMasterCallback& cb) {
   master_machine_->SetNewMasterCallback(cb);
 }
 
-void Group::SyncMaster() {
+void Group::Sync() {
+  instance_.SyncData(true);
   if (use_master_) {
     TryBeMaster();
   }
@@ -65,33 +77,32 @@ void Group::SyncMaster() {
 void Group::TryBeMaster() {
   MasterState state(master_machine_->GetMasterState());
   uint64_t next = state.lease_time();
-  if (state.lease_time() <= NowMicros() ||
+  if (state.lease_time() <= NowMillis() ||
       (state.node_id() == node_id_ && !retrie_master_)) {
     bool b = NewPropose(std::bind(&Group::TryBeMasterInLoop, this));
     next = 0;
     if (b) {
       state = master_machine_->GetMasterState();
       if (result_.ok()) {
-        next = state.lease_time() - 100 * 1000;
+        next = state.lease_time() - 100;
       } else if (result_.IsConflict()) {
         next = state.lease_time();
       }
     }
     if (next == 0) {
-      next = NowMicros() + lease_timeout_;
+      next = NowMillis() + lease_timeout_;
     }
   }
   if (retrie_master_) {
     retrie_master_ = false;
   }
 
-  timer_ = Schedule::Instance()->MasterLoop()->RunAt(
-      next, [this]() { TryBeMaster(); });
+  timer_ = master_loop_->RunAt(next, [this]() { TryBeMaster(); });
 }
 
 void Group::TryBeMasterInLoop() {
   MasterState state(master_machine_->GetMasterState());
-  now_ = NowMicros();
+  now_ = NowMillis();
   if (state.lease_time() <= now_ || state.node_id() == node_id_) {
     state.set_node_id(node_id_);
     state.set_lease_time(lease_timeout_);
@@ -117,11 +128,9 @@ bool Group::OnPropose(uint32_t machine_id, const std::string& value,
       std::move(cb));
 }
 
-void Group::OnContent(std::unique_ptr<Content> c) {
-  Content* content = c.release();
-  io_loop_->QueueInLoop([content, this]() {
-    instance_.OnContent(*content);
-    delete content;
+void Group::OnContent(Content&& content) {
+  io_loop_->QueueInLoop([content = std::move(content), this]() {
+    instance_.OnContent(content);
   });
 }
 
@@ -204,8 +213,7 @@ bool Group::IsMaster() const { return master_machine_->IsMaster(); }
 
 void Group::RetireMaster() {
   if (use_master_) {
-    Schedule::Instance()->MasterLoop()->QueueInLoop(
-        [this]() { retrie_master_ = true; });
+    master_loop_->QueueInLoop([this]() { retrie_master_ = true; });
   } else {
     LOG_WARN("Group %u - You don't use master.", config_.GetGroupId());
   }

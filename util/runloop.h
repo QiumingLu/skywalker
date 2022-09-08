@@ -33,13 +33,13 @@ class RunLoop {
   void QueueInLoop(const Func& func);
   void QueueInLoop(Func&& func);
 
-  TimerId RunAt(uint64_t micros_value, const TimerProcCallback& cb);
-  TimerId RunAfter(uint64_t micros_delay, const TimerProcCallback& cb);
-  TimerId RunEvery(uint64_t micros_interval, const TimerProcCallback& cb);
+  TimerId RunAt(uint64_t ms_value, const TimerProcCallback& cb);
+  TimerId RunAfter(uint64_t ms_delay, const TimerProcCallback& cb);
+  TimerId RunEvery(uint64_t ms_interval, const TimerProcCallback& cb);
 
-  TimerId RunAt(uint64_t micros_value, TimerProcCallback&& cb);
-  TimerId RunAfter(uint64_t micros_delay, TimerProcCallback&& cb);
-  TimerId RunEvery(uint64_t micros_interval, TimerProcCallback&& cb);
+  TimerId RunAt(uint64_t ms_value, TimerProcCallback&& cb);
+  TimerId RunAfter(uint64_t ms_delay, TimerProcCallback&& cb);
+  TimerId RunEvery(uint64_t ms_interval, TimerProcCallback&& cb);
 
   void Remove(TimerId t);
 

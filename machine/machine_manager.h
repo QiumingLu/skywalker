@@ -17,9 +17,14 @@ namespace skywalker {
 
 class Config;
 
-std::string GetCheckpointPath(Config* config, uint64_t instance_id, bool temp);
+std::string GetCheckpointPath(Config* config, uint64_t instance_id);
 std::string GetCheckpointPath(
-    Config* config, uint64_t instance_id, uint32_t machine_id, bool temp);
+    Config* config, uint64_t instance_id, uint32_t machine_id);
+
+std::string GetTempCheckpointPath(Config* config, uint64_t instance_id);
+std::string GetTempCheckpointPath(
+    Config* config, uint64_t instance_id, uint32_t machine_id);
+
 bool DeleteTempCheckpoint(Config* config);
 
 class MachineManager {
@@ -49,6 +54,8 @@ class MachineManager {
 
  private:
   bool MakeCheckpoint(uint64_t instance_id);
+  void FinishMakeCheckpoint(uint32_t machine_id, uint32_t group_id,
+                            uint64_t instance_id, bool result);
   void CleanCheckpoint();
 
   Config* config_;
@@ -59,6 +66,9 @@ class MachineManager {
   std::vector<uint64_t> checkpoints_;
   uint64_t latest_checkpoint_instance_id_;
   uint64_t oldest_checkpoint_instance_id_;
+
+  bool make_checkpoint_;
+  std::set<uint32_t> make_checkpoint_result_;
 
   // No copying allowed
   MachineManager(const MachineManager&);

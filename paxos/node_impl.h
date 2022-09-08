@@ -12,7 +12,7 @@
 
 #include "network/network.h"
 #include "paxos/group.h"
-#include "paxos/schedule.h"
+#include "paxos/threadpool.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/node.h"
 #include "skywalker/options.h"
@@ -51,7 +51,7 @@ class NodeImpl : public Node {
   virtual void StopGC(uint32_t group_id);
 
  private:
-  void OnContent(std::unique_ptr<Content> c);
+  void OnContent(Content&& content);
 
   bool stop_;
   Options options_;

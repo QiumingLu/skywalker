@@ -35,11 +35,10 @@ class Instance {
   }
 
   void SetIOLoop(RunLoop* loop);
-  void SetLearnLoop(RunLoop* loop);
 
   void OnPropose(uint32_t machine_id, const std::string& value,
                  void* context = nullptr);
-  void OnContent(const Content& c);
+  void OnContent(const Content& content);
   void OnPaxosMessage(const PaxosMessage& msg);
   void OnCheckpointMessage(const CheckpointMessage& msg);
 

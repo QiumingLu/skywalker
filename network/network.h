@@ -30,7 +30,7 @@ class Network {
   explicit Network(const Member& my, uint32_t thread_size = 0);
   ~Network();
 
-  void StartServer(const std::function<void(std::unique_ptr<Content>)>& cb);
+  void StartServer(const std::function<void(Content&&)>& cb);
 
   void SendMessage(uint64_t node_id, Config* config, const Content& content);
 
@@ -40,13 +40,13 @@ class Network {
  private:
   static const uint32_t kHeaderSize = 4;
 
-  void SendMessageInLoop(const MemberMessage& member, const std::string& s);
+  void SendMessageInLoop(const MemberMessage& member, std::string s);
   bool SerializeToString(const Content& content, std::string* s);
   void OnMessage(const voyager::TcpConnectionPtr& p, voyager::Buffer* buf);
 
   Member my_;
   uint32_t thread_size_;
-  std::function<void(std::unique_ptr<Content>)> cb_;
+  std::function<void(Content&&)> cb_;
   std::unique_ptr<voyager::TcpServer> server_;
   std::map<uint64_t, std::unique_ptr<voyager::TcpClient> > connection_map_;
 

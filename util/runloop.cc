@@ -21,11 +21,11 @@ void RunLoop::Loop() {
   exit_ = false;
   std::vector<Func> funcs;
   while (!exit_) {
-    uint64_t timeout = timers_.TimeoutMicros();
+    uint64_t timeout = timers_.TimeoutMs();
     {
       std::unique_lock<std::mutex> lock(mutex_);
       if (funcs_.empty()) {
-        cond_.wait_for(lock, std::chrono::microseconds(timeout));
+        cond_.wait_for(lock, std::chrono::milliseconds(timeout));
       }
       funcs.swap(funcs_);
     }
@@ -82,29 +82,29 @@ void RunLoop::QueueInLoop(Func&& func) {
   cond_.notify_one();
 }
 
-TimerId RunLoop::RunAt(uint64_t micros_value, const TimerProcCallback& cb) {
-  return timers_.RunAt(micros_value, cb);
+TimerId RunLoop::RunAt(uint64_t ms_value, const TimerProcCallback& cb) {
+  return timers_.RunAt(ms_value, cb);
 }
 
-TimerId RunLoop::RunAfter(uint64_t micros_delay, const TimerProcCallback& cb) {
-  return timers_.RunAfter(micros_delay, cb);
+TimerId RunLoop::RunAfter(uint64_t ms_delay, const TimerProcCallback& cb) {
+  return timers_.RunAfter(ms_delay, cb);
 }
 
-TimerId RunLoop::RunEvery(uint64_t micros_interval,
+TimerId RunLoop::RunEvery(uint64_t ms_interval,
                           const TimerProcCallback& cb) {
-  return timers_.RunEvery(micros_interval, cb);
+  return timers_.RunEvery(ms_interval, cb);
 }
 
-TimerId RunLoop::RunAt(uint64_t micros_value, TimerProcCallback&& cb) {
-  return timers_.RunAt(micros_value, std::move(cb));
+TimerId RunLoop::RunAt(uint64_t ms_value, TimerProcCallback&& cb) {
+  return timers_.RunAt(ms_value, std::move(cb));
 }
 
-TimerId RunLoop::RunAfter(uint64_t micros_delay, TimerProcCallback&& cb) {
-  return timers_.RunAfter(micros_delay, std::move(cb));
+TimerId RunLoop::RunAfter(uint64_t ms_delay, TimerProcCallback&& cb) {
+  return timers_.RunAfter(ms_delay, std::move(cb));
 }
 
-TimerId RunLoop::RunEvery(uint64_t micros_interval, TimerProcCallback&& cb) {
-  return timers_.RunEvery(micros_interval, std::move(cb));
+TimerId RunLoop::RunEvery(uint64_t ms_interval, TimerProcCallback&& cb) {
+  return timers_.RunEvery(ms_interval, std::move(cb));
 }
 
 void RunLoop::Remove(TimerId t) { timers_.Remove(t); }

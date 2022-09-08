@@ -24,7 +24,7 @@ bool ProposeQueue::CheckCapacity() const {
 }
 
 bool ProposeQueue::Put(ProposeHandler f, ProposeCompleteCallback cb) {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (last_finished_) {
     last_finished_ = false;
     io_loop_->QueueInLoop(std::move(f));
@@ -40,7 +40,7 @@ bool ProposeQueue::Put(ProposeHandler f, ProposeCompleteCallback cb) {
 
 void ProposeQueue::ProposeComplete(uint64_t instance_id, const Status& s,
                                    void* context) {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   assert(!last_finished_);
   assert(!cb_queue_.empty());
   ProposeCompleteCallback cb = cb_queue_.front();

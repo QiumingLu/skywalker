@@ -12,9 +12,9 @@ build_config.mk
 out-shared/
 out-static/
 build/
-test/test1/g0
-test/test2/g0
-test/test3/g0
+test/test1/g*
+test/test2/g*
+test/test3/g*
 examples/journey/build_config.mk
 examples/journey/journey_client
 examples/journey/journey_server

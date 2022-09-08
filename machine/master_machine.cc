@@ -16,45 +16,56 @@ MasterMachine::MasterMachine(Config* config)
 }
 
 bool MasterMachine::Recover(uint32_t group_id, uint64_t instance_id,
-                            const std::string& dir,
-                            const std::vector<std::string>& files) {
-  if (dir.empty() || files.empty()) {
-    return true;
-  }
+                            const std::string& dir) {
   std::string data;
-  Status status = ReadFileToString(FileManager::Instance(), files[0], &data);
-  if (!status.ok()) {
-    LOG_ERROR("Group %u - instance %llu master read failed %s.",
-              config_->GetGroupId(), instance_id, status.ToString().c_str());
+  if (!StateMachine::ReadCheckpoint(
+      group_id, instance_id, dir + "/" + kMasterCheckpoint, &state_)) {
     return true;
   }
-  if (state_.ParseFromString(data)) {
-    if (state_.node_id() != config_->GetNodeId()) {
-      state_.set_lease_time(NowMicros() + state_.lease_time());
-    } else {
-      state_.set_lease_time(NowMicros());
-    }
+  if (state_.node_id() != config_->GetNodeId()) {
+    state_.set_lease_time(NowMillis() + state_.lease_time());
   } else {
-    LOG_ERROR("Group %u - instance %llu master parse failed.",
-              config_->GetGroupId(), instance_id);   
+    state_.set_lease_time(NowMillis());
   }
+  LOG_INFO("Group %u - instance %llu master recover success.",
+            group_id, (unsigned long long)instance_id);
+  return true;
+}
+
+bool MasterMachine::MakeCheckpoint(uint32_t group_id,
+                                   uint64_t instance_id,
+                                   const std::string& dir,
+                                   const FinishCheckpointCallback& cb) {
+  config_->GetCleanLoop()->QueueInLoop(
+      [this, group_id, instance_id, dir, cb, state = state_]() {
+    bool b = StateMachine::WriteCheckpoint(
+        group_id, instance_id, dir + "/" + kMasterCheckpoint, state);
+    if (b) {
+      LOG_INFO("Group %u - instance %llu master make checkpoint success.",
+                group_id, (unsigned long long)instance_id);
+    }
+    cb(machine_id(), group_id, instance_id, b);
+  });
   return true;
 }
 
 bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
                             const std::string& value, void* context) {
+  if (instance_id <= state_.version()) {
+    LOG_ERROR("Group %u - instance(id=%llu) < state version(%llu)",
+              group_id, (unsigned long long)instance_id,
+              (unsigned long long)state_.version());
+    return false;
+  }
   MasterState state;
   if (state.ParseFromString(value)) {
-    if (instance_id <= state_.version()) {
-      return false;
-    }
     state.set_version(instance_id);
 
     uint64_t* now = reinterpret_cast<uint64_t*>(context);
     if (now) {
       state.set_lease_time(*now + state.lease_time());
     } else {
-      state.set_lease_time(NowMicros() + state.lease_time());
+      state.set_lease_time(NowMillis() + state.lease_time());
     }
     SetMasterState(state);
     LOG_INFO(
@@ -74,19 +85,26 @@ bool MasterMachine::Execute(uint32_t group_id, uint64_t instance_id,
   return false;
 }
 
+bool MasterMachine::GetCheckpoint(uint32_t group_id, uint64_t instance_id,
+                                  const std::string& dir,
+                                  std::vector<std::string>* files) {
+  files->push_back(kMasterCheckpoint);
+  return true;
+}
+
 void MasterMachine::SetMasterState(const MasterState& state) {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   state_ = state;
 }
 
 MasterState MasterMachine::GetMasterState() const {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   return state_;
 }
 
 bool MasterMachine::GetMaster(uint64_t* node_id, uint64_t* version) const {
-  std::unique_lock<std::mutex> lock(mutex_);
-  if (state_.lease_time() > NowMicros()) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (state_.lease_time() > NowMillis()) {
     *version = state_.version();
     *node_id = state_.node_id();
     return true;
@@ -95,28 +113,12 @@ bool MasterMachine::GetMaster(uint64_t* node_id, uint64_t* version) const {
 }
 
 bool MasterMachine::IsMaster() const {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
   if (state_.node_id() == config_->GetNodeId() &&
-      state_.lease_time() > NowMicros()) {
+      state_.lease_time() > NowMillis()) {
     return true;
   }
   return false;
-}
-
-bool MasterMachine::MakeCheckpoint(uint32_t group_id,
-                                   uint64_t instance_id,
-                                   const std::string& dir) {
-  if (state_.node_id() == 0) {
-    return true;
-  }
-  Status status = WriteStringToFileSync(
-      FileManager::Instance(), state_.SerializeAsString(), dir + "/masterdb");
-  if (!status.ok()) {
-    LOG_ERROR("Group %u - instance %llu master write failed %s.",
-              config_->GetGroupId(), instance_id, status.ToString().c_str());
-    return false;
-  }
-  return true;
 }
 
 }  // namespace skywalker

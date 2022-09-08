@@ -17,4 +17,3 @@ mkdir -p $BUILD_DIR/$BUILD_TYPE \
            $SOURCE_DIR \
   && make \
   && make install
-

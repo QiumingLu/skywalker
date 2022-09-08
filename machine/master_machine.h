@@ -27,17 +27,22 @@ class MasterMachine : public StateMachine {
   bool IsMaster() const;
 
   virtual bool Recover(uint32_t group_id, uint64_t instance_id,
-                       const std::string& dir,
-                       const std::vector<std::string>& files);
+                       const std::string& dir);
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value, void* context);
 
   virtual bool MakeCheckpoint(uint32_t group_id, uint64_t instance_id,
-                              const std::string& dir);
+                              const std::string& dir,
+                              const FinishCheckpointCallback& cb);
 
+  virtual bool GetCheckpoint(uint32_t group_id, uint64_t instance_id,
+                             const std::string& dir,
+                             std::vector<std::string>* files);
  private:
+  static constexpr const char* kMasterCheckpoint = "MASTER.db";
   void SetMasterState(const MasterState& state);
+
   Config* config_;
 
   mutable std::mutex mutex_;

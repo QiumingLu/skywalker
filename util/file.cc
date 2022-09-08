@@ -262,7 +262,9 @@ Status FileManager::GetChildren(const std::string& dir,
         result->push_back(entry->d_name);
       }
     } else {
-      result->push_back(entry->d_name);
+      if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+        result->push_back(entry->d_name);
+      }
     }
   }
   closedir(d);

@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "skywalker/cluster.h"
 #include "skywalker/options.h"
 
 namespace skywalker {

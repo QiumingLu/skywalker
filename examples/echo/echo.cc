@@ -28,9 +28,10 @@ int main(int argc, char** argv) {
 
   skywalker::GroupOptions g_options;
   g_options.use_master = true;
+  g_options.keep_checkpoint_count = 3;
   g_options.log_sync = true;
   g_options.sync_interval = 0;
-  g_options.keep_log_count = 1000;
+  g_options.keep_log_count = 100;
   g_options.log_storage_path = std::string(path);
 
   skywalker::Options options;
@@ -55,6 +56,8 @@ int main(int argc, char** argv) {
     }
   }
 
+  options.groups.push_back(g_options);
+  options.groups.push_back(g_options);
   options.groups.push_back(g_options);
 
   skywalker::Node* node = nullptr;

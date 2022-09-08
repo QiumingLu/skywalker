@@ -17,20 +17,32 @@
 #include "network/messager.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
+#include "skywalker/cluster.h"
 #include "storage/db.h"
+#include "util/runloop.h"
 
 namespace skywalker {
 
 class Config {
  public:
   Config(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
-         Network* network);
+         Network* network, Cluster* cluster);
   ~Config();
 
   bool Recover();
 
+  void SetIOLoop(RunLoop* io_loop) { io_loop_ = io_loop; }
+  RunLoop* GetIOLoop() const { return io_loop_; }
+
+  void SetLearnLoop(RunLoop* learn_loop) { learn_loop_ = learn_loop; }
+  RunLoop* GetLearnLoop() const { return learn_loop_; }
+
+  void SetCleanLoop(RunLoop* clean_loop) { clean_loop_ = clean_loop; }
+  RunLoop* GetCleanLoop() const { return clean_loop_; }
+
   uint64_t GetProposeTimeout() const { return propose_timeout_; }
 
+  Cluster* GetCluster() const { return cluster_; }
   DB* GetDB() const { return db_; }
   Messager* GetMessager() const { return messager_; }
   MachineManager* GetMachineManager() const { return machine_manager_; }
@@ -46,6 +58,7 @@ class Config {
   bool LogSync() const { return log_sync_; }
   uint32_t SyncInterval() const { return sync_interval_; }
   uint32_t KeepLogCount() const { return keep_log_count_; }
+  uint32_t KeepCheckpointCount() const { return keep_checkpoint_count_; }
 
   const std::string& LogStoragePath() const { return log_storage_path_; }
   const std::string& LogPath() const { return log_path_; }
@@ -74,7 +87,7 @@ class Config {
   uint32_t group_id_;
 
   uint64_t propose_timeout_;
-
+  uint32_t keep_checkpoint_count_;
   bool log_sync_;
   uint32_t sync_interval_;
   uint32_t keep_log_count_;
@@ -83,6 +96,7 @@ class Config {
   std::string checkpoint_path_;
   std::string temp_checkpoint_path_;
 
+  Cluster* cluster_;
   DB* db_;
   Messager* messager_;
   MachineManager* machine_manager_;
@@ -90,6 +104,10 @@ class Config {
   LogManager* log_manager_;
   MembershipMachine* membership_machine_;
   MasterMachine* master_machine_;
+
+  RunLoop* io_loop_;
+  RunLoop* learn_loop_;
+  RunLoop* clean_loop_;
 
   // No copying allowed
   Config(const Config&);

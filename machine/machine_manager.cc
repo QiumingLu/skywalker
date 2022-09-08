@@ -14,23 +14,24 @@
 
 namespace skywalker {
 
-std::string GetCheckpointPath(Config* config, uint64_t instance_id, bool temp) {
-  if (temp) {
-    return config->TempCheckpointPath();
-  } else {
-    return config->CheckpointPath() + "/Checkpoint-" + std::to_string(instance_id);
-  }
+std::string GetCheckpointPath(Config* config, uint64_t instance_id) {
+  return config->CheckpointPath() + "/checkpoint-" + std::to_string(instance_id);
 }
 
 std::string GetCheckpointPath(
-    Config* config, uint64_t instance_id, uint32_t machine_id, bool temp) {
-  if (temp) {
-    return config->TempCheckpointPath() + "/m" + std::to_string(machine_id); 
-  } else {
-    return config->CheckpointPath() +
-           "/Checkpoint-" + std::to_string(instance_id) +
-           "/m" + std::to_string(machine_id); 
-  }
+    Config* config, uint64_t instance_id, uint32_t machine_id) {
+  return config->CheckpointPath() +
+         "/checkpoint-" + std::to_string(instance_id) +
+         "/m" + std::to_string(machine_id);
+}
+
+std::string GetTempCheckpointPath(Config* config, uint64_t instance_id) {
+  return config->TempCheckpointPath();
+}
+
+std::string GetTempCheckpointPath(
+    Config* config, uint64_t instance_id, uint32_t machine_id) {
+  return config->TempCheckpointPath() + "/m" + std::to_string(machine_id);
 }
 
 bool DeleteTempCheckpoint(Config* config) {
@@ -53,6 +54,9 @@ bool DeleteTempCheckpoint(Config* config) {
     }
     FileManager::Instance()->DeleteDir(d);
   }
+  if (!FileManager::Instance()->FileExists(config->TempCheckpointPath())) {
+    FileManager::Instance()->CreateDir(config->TempCheckpointPath());
+  }
   return res;
 }
 
@@ -60,7 +64,8 @@ MachineManager::MachineManager(Config* config)
     : config_(config),
       generator_((unsigned)NowMillis()),
       distribution_(1, config_->KeepLogCount() / 2),
-      latest_checkpoint_instance_id_(0) {}
+      latest_checkpoint_instance_id_(0),
+      make_checkpoint_(false) {}
 
 void MachineManager::AddMachine(StateMachine* machine) {
   assert(machines_.find(machine->machine_id()) == machines_.end());
@@ -74,22 +79,29 @@ void MachineManager::RemoveMachine(StateMachine* machine) {
 bool MachineManager::Recover() {
   CleanCheckpoint();
   latest_checkpoint_instance_id_ = checkpoints_.empty() ? 0 : checkpoints_.back();
+  if (latest_checkpoint_instance_id_ == 0) {
+    return true;
+  }
 
   for (const auto& it : machines_) {
-    std::string dir;
-    std::vector<std::string> files;
-    if (!GetCheckpoint(latest_checkpoint_instance_id_, it.first, &dir, &files)) {
-      LOG_ERROR("Group %u - machine(id=%u) get checkpoint failed.",
-                config_->GetGroupId(), it.first);
-      return false;
+    std::string dir = GetCheckpointPath(config_,
+                                        latest_checkpoint_instance_id_,
+                                        it.first);
+    if (!FileManager::Instance()->FileExists(dir)) {
+      LOG_WARN("Group %u - machine(id=%u) instance(id=%llu) no has checkpoint.",
+               config_->GetGroupId(), it.first,
+               (unsigned long long)latest_checkpoint_instance_id_);
+      continue;
     }
     if (it.second->Recover(config_->GetGroupId(),
-                           latest_checkpoint_instance_id_, dir, files)) {
+                           latest_checkpoint_instance_id_, dir)) {
       LOG_INFO("Group %u - machine(id=%u) instance(id=%llu) recover success.",
-              config_->GetGroupId(), it.first, latest_checkpoint_instance_id_);
+              config_->GetGroupId(), it.first,
+              (unsigned long long)latest_checkpoint_instance_id_);
     } else {
       LOG_ERROR("Group %u - machine(id=%u) instance(id=%llu) recover failed.",
-                config_->GetGroupId(), it.first, latest_checkpoint_instance_id_);
+                config_->GetGroupId(), it.first,
+                (unsigned long long)latest_checkpoint_instance_id_);
       return false;
     }
   }
@@ -106,7 +118,8 @@ bool MachineManager::Execute(uint64_t instance_id, const PaxosValue& value,
                                  value.user_data(), context);
     std::string log = result ? "success" : "failed";
     LOG_INFO("Group %u - machine(id=%u) instance(id=%llu) execute %s.",
-             config_->GetGroupId(), value.machine_id(), instance_id, log.c_str());
+             config_->GetGroupId(), value.machine_id(),
+             (unsigned long long)instance_id, log.c_str());
   } else {
     LOG_ERROR("Group %u - machine(id=%u) is not existed.",
               config_->GetGroupId(), value.machine_id());
@@ -114,7 +127,7 @@ bool MachineManager::Execute(uint64_t instance_id, const PaxosValue& value,
   if (result) {
     MakeCheckpoint(instance_id);
   }
-  return false;
+  return result;
 }
 
 bool MachineManager::TryLockCheckpoint() {
@@ -138,6 +151,13 @@ uint64_t MachineManager::GetOldestCheckpointInstanceId() const {
 }
 
 bool MachineManager::MakeCheckpoint(uint64_t instance_id) {
+  if (make_checkpoint_) {
+    return false;
+  }
+  if (!config_->GetIOLoop()) {
+    return false;
+  }
+
   assert(instance_id > latest_checkpoint_instance_id_);
   uint64_t interval = instance_id - latest_checkpoint_instance_id_;
   if (interval < (config_->KeepLogCount() / 2 +  distribution_(generator_))) {
@@ -146,27 +166,57 @@ bool MachineManager::MakeCheckpoint(uint64_t instance_id) {
   if (!DeleteTempCheckpoint(config_)) {
     return false;
   }
-  bool result = true;
+
+  make_checkpoint_result_.clear();
   for (const auto& it : machines_) {
-    std::string dir = GetCheckpointPath(config_, instance_id, it.first, true);
+    std::string dir = GetTempCheckpointPath(config_, instance_id, it.first);
     Status status = FileManager::Instance()->CreateDir(dir);
     if (!status.ok()) {
       LOG_ERROR("Group %u - instance(id=%llu) create dir %s.",
-                config_->GetGroupId(), instance_id, status.ToString().c_str());
+                config_->GetGroupId(), (unsigned long long)instance_id,
+                status.ToString().c_str());
       return false;
     }
-    if (it.second->MakeCheckpoint(config_->GetGroupId(), instance_id, dir)) {
-      LOG_INFO("Group %u - machine(id=%u) instance(id=%llu) make checkpoint success.",
-               config_->GetGroupId(), it.first, instance_id);
-    } else {
-      LOG_ERROR("Group %u - machine(id=%u) instance(id=%llu) make checkpoint failed.",
-                config_->GetGroupId(), it.first, instance_id);
+    bool b = it.second->MakeCheckpoint(
+        config_->GetGroupId(), instance_id, dir,
+        [this](uint32_t machine_id, uint32_t group_id, uint64_t id, bool result){
+          FinishMakeCheckpoint(machine_id, group_id, id, result);
+        });
+    if (!b) {
       return false;
     }
+    make_checkpoint_result_.insert(it.first);
   }
-  UpdateCheckpoint(instance_id);
-  CleanCheckpoint();
-  return result;
+  if (!make_checkpoint_result_.empty()) {
+    make_checkpoint_ = true;
+  }
+  return true;
+}
+
+void MachineManager::FinishMakeCheckpoint(uint32_t machine_id, uint32_t group_id,
+                                          uint64_t instance_id, bool result) {
+  if (result) {
+    LOG_INFO("Group %u - machine(id=%u) instance(id=%llu) make checkpoint success.",
+            config_->GetGroupId(), machine_id, (unsigned long long)instance_id);
+  } else {
+    LOG_ERROR("Group %u - machine(id=%u) instance(id=%llu) make checkpoint failed.",
+              config_->GetGroupId(), machine_id, (unsigned long long)instance_id);
+  }
+  config_->GetIOLoop()->QueueInLoop([this, machine_id, instance_id, result]() {
+    if (!make_checkpoint_) {
+      return;
+    }
+    if (!result) {
+      make_checkpoint_ = false;
+      return;
+    }
+    make_checkpoint_result_.erase(machine_id);
+    if (make_checkpoint_result_.empty()) {
+      UpdateCheckpoint(instance_id);
+      CleanCheckpoint();
+      make_checkpoint_ = false;
+    }
+  });
 }
 
 bool MachineManager::GetCheckpoint(uint64_t instance_id,
@@ -179,20 +229,17 @@ bool MachineManager::GetCheckpoint(uint64_t instance_id,
   auto it = machines_.find(machine_id);
   if (it != machines_.end()) {
     assert(it->second != nullptr);
-    *dir = GetCheckpointPath(config_, instance_id, machine_id, false);
+    *dir = GetCheckpointPath(config_, instance_id, machine_id);
     if (!FileManager::Instance()->FileExists(*dir)) {
       LOG_WARN("Group %u - machine(id=%u) not has checkpoint.",
                config_->GetGroupId(), machine_id);
-      return false;
-    }
-    Status status = FileManager::Instance()->GetChildren(*dir, files, true);
-    if (status.ok()) {
       return true;
     }
-    LOG_ERROR("Group %u - machine(id=%u) checkpoint open failed %s.",
-              config_->GetGroupId(), machine_id, status.ToString().c_str());
+    if (it->second->GetCheckpoint(config_->GetGroupId(), instance_id, *dir, files)) {
+      return true;
+    }
   } else {
-    LOG_ERROR("Group %u - machine(id=%u) is not existed.",
+    LOG_WARN("Group %u - machine(id=%u) is not existed.",
               config_->GetGroupId(), machine_id);
   }
   return false;
@@ -200,8 +247,8 @@ bool MachineManager::GetCheckpoint(uint64_t instance_id,
 
 bool MachineManager::UpdateCheckpoint(uint64_t instance_id) {
   Status status = FileManager::Instance()->RenameFile(
-      GetCheckpointPath(config_, instance_id, true),
-      GetCheckpointPath(config_, instance_id, false));
+      GetTempCheckpointPath(config_, instance_id),
+      GetCheckpointPath(config_, instance_id));
   latest_checkpoint_instance_id_ = instance_id;
   return status.ok();
 }
@@ -225,25 +272,30 @@ void MachineManager::CleanCheckpoint() {
   } else {
     oldest_checkpoint_instance_id_ = checkpoints_.front();
   }
-  while (checkpoints_.size() > 5) {
+  while (checkpoints_.size() > config_->KeepCheckpointCount()) {
     oldest_checkpoint_instance_id_ = checkpoints_[1];
     dirs.clear();
-    std::string path = GetCheckpointPath(config_, checkpoints_.front(), false);
+    std::string path = GetCheckpointPath(config_, checkpoints_.front());
     FileManager::Instance()->GetChildren(path, &dirs);
     for (auto& dir : dirs) {
+      std::string d = path + "/" + dir;
       std::vector<std::string> files;
-      FileManager::Instance()->GetChildren(dir, &files, true);
+      FileManager::Instance()->GetChildren(d, &files, true);
       for (auto& file : files) {
-        FileManager::Instance()->DeleteFile(file);
+        FileManager::Instance()->DeleteFile(d + "/" + file);
       }
-      FileManager::Instance()->DeleteDir(dir);    
+      FileManager::Instance()->DeleteDir(d);
     }
     Status status = FileManager::Instance()->DeleteDir(path);
     if (!status.ok()) {
         LOG_ERROR("Group %u - checkpoint delete failed %s.",
                   config_->GetGroupId(), status.ToString().c_str());
-        FileManager::Instance()->RenameFile(
-          path, config_->CheckpointPath() + "/deletedcheckpoint");
+        status = FileManager::Instance()->RenameFile(
+            path, config_->CheckpointPath() + "/deletedcheckpoint");
+        if (!status.ok()) {
+          LOG_ERROR("Group %u - checkpoint rename failed %s.",
+                    config_->GetGroupId(), status.ToString().c_str());
+        }
     }
     std::swap(checkpoints_.front(), checkpoints_.back());
     checkpoints_.pop_back();

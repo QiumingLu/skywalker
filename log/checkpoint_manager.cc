@@ -4,7 +4,6 @@
 
 #include "log/checkpoint_manager.h"
 #include "paxos/config.h"
-#include "skywalker/checkpoint.h"
 #include "skywalker/logging.h"
 
 namespace skywalker {

@@ -48,10 +48,10 @@ void Learner::AskForLearn(bool add_timer) {
   msg->set_type(ASK_FOR_LEARN);
   msg->set_node_id(config_->GetNodeId());
   msg->set_instance_id(instance_id_);
-  messager_->BroadcastMessage(content);
+  messager_->BroadcastMessageForLearn(content);
 
   if (add_timer) {
-    AddLearnTimer((30 * 1000 + rand_.Uniform(10 * 1000)) * 1000);
+    AddLearnTimer(30 * 1000 + rand_.Uniform(10 * 1000));
   }
 }
 
@@ -78,10 +78,10 @@ void Learner::OnAskForLearn(const PaxosMessage& msg) {
 }
 
 void Learner::SendNowInstanceId(const PaxosMessage& msg) {
-  Content* content = new Content();
-  content->set_type(PAXOS_MESSAGE);
-  content->set_group_id(config_->GetGroupId());
-  PaxosMessage* reply_msg = content->mutable_paxos_msg();
+  Content content;
+  content.set_type(PAXOS_MESSAGE);
+  content.set_group_id(config_->GetGroupId());
+  PaxosMessage* reply_msg = content.mutable_paxos_msg();
   reply_msg->set_type(SEND_NOW_INSTANCE_ID);
   reply_msg->set_node_id(config_->GetNodeId());
   reply_msg->set_instance_id(msg.instance_id());
@@ -91,9 +91,8 @@ void Learner::SendNowInstanceId(const PaxosMessage& msg) {
 
   // in order to make it run in learn loop.
   uint64_t node_id = msg.node_id();
-  learn_loop_->QueueInLoop([this, node_id, content]() {
-    messager_->SendMessage(node_id, *content);
-    delete content;
+  config_->GetLearnLoop()->QueueInLoop([this, node_id, content = std::move(content)]() {
+    messager_->SendMessage(node_id, content);
   });
 }
 
@@ -129,7 +128,7 @@ void Learner::OnComfirmAskForLearn(const PaxosMessage& msg) {
   uint64_t node_id = msg.node_id();
   uint64_t from = msg.instance_id();
   uint64_t to = instance_id_;
-  learn_loop_->QueueInLoop(
+  config_->GetLearnLoop()->QueueInLoop(
       [node_id, from, to, this] { ASyncSend(node_id, from, to); });
 }
 
@@ -196,7 +195,7 @@ void Learner::AskForCheckpoint(const PaxosMessage& msg) {
 
 void Learner::OnAskForCheckpoint(const PaxosMessage& msg) {
   uint64_t node_id = msg.node_id();
-  learn_loop_->QueueInLoop([this, node_id] {
+  config_->GetLearnLoop()->QueueInLoop([this, node_id] {
     is_sending_checkpoint_ = true;
     SendCheckpoint(node_id);
     is_sending_checkpoint_ = false;
@@ -209,7 +208,7 @@ void Learner::SendCheckpoint(uint64_t node_id) {
 
 void Learner::OnSendCheckpoint(const CheckpointMessage& msg) {
   bool success = config_->GetCheckpointManager()->ReceiveCheckpoint(msg);
-  uint64_t timeout = success ? 120 * 1000 * 1000 : 1000;
+  uint64_t timeout = success ? 180 * 1000 : 10;
   RemoveLearnTimer();
   AddLearnTimer(timeout);
 }

@@ -56,8 +56,6 @@ void Instance::SetIOLoop(RunLoop* loop) {
   learner_.SetIOLoop(loop);
 }
 
-void Instance::SetLearnLoop(RunLoop* loop) { learner_.SetLearnLoop(loop); }
-
 void Instance::SyncData(bool add_timer) {
   io_loop_->QueueInLoop(
       [this, add_timer]() { learner_.AskForLearn(add_timer); });
@@ -91,13 +89,13 @@ void Instance::OnPropose(uint32_t machine_id, const std::string& value,
   proposer_.NewPropose(propose_value_);
 }
 
-void Instance::OnContent(const Content& c) {
-  switch (c.type()) {
+void Instance::OnContent(const Content& content) {
+  switch (content.type()) {
     case PAXOS_MESSAGE:
-      OnPaxosMessage(c.paxos_msg());
+      OnPaxosMessage(content.paxos_msg());
       break;
     case CHECKPOINT_MESSAGE:
-      OnCheckpointMessage(c.checkpoint_msg());
+      OnCheckpointMessage(content.checkpoint_msg());
       break;
     default:
       LOG_ERROR("Group %u - receive an invalid content.",
@@ -176,7 +174,8 @@ void Instance::CheckLearn() {
       } else {
         char msg[64];
         snprintf(msg, sizeof(msg), "machine(id=%u) execute value(id=%llu) failed.",
-                 learned_value.machine_id(), learned_value.value_id());
+                 learned_value.machine_id(),
+                 (unsigned long long)learned_value.value_id());
         status = Status::MachineError(msg);
       }
       propose_cb_(instance_id_, status, context_);

@@ -9,7 +9,6 @@
 
 #include "log/checkpoint_manager.h"
 #include "paxos/config.h"
-#include "skywalker/checkpoint.h"
 #include "skywalker/file.h"
 #include "skywalker/logging.h"
 
@@ -30,7 +29,8 @@ bool CheckpointReceiver::BeginToReceive(const CheckpointMessage& msg) {
 }
 
 bool CheckpointReceiver::ReceiveCheckpoint(const CheckpointMessage& msg) {
-  LOG_DEBUG("Group %u - sequence_id(%d==%d)", config_->GetGroupId(),
+  LOG_DEBUG("Group %u - instance(id=%llu) sequence_id(%d==%d)",
+            config_->GetGroupId(), (unsigned long long)msg.instance_id(),
             msg.sequence_id(), sequence_id_ + 1);
   bool res = ReceiveFiles(msg);
   return ComfirmReceive(msg, res);
@@ -49,7 +49,8 @@ bool CheckpointReceiver::ReceiveFiles(const CheckpointMessage& msg) {
     return false;
   }
 
-  std::string dir = GetCheckpointPath(config_, msg.instance_id(), msg.machine_id(), true);
+  std::string dir = GetTempCheckpointPath(
+      config_, msg.instance_id(), msg.machine_id());
   if (dirs_.find(msg.machine_id()) == dirs_.end()) {
     FileManager::Instance()->CreateDir(dir);
     bool exits = FileManager::Instance()->FileExists(dir);
@@ -88,7 +89,8 @@ bool CheckpointReceiver::EndToReceive(const CheckpointMessage& msg) {
   }
 
   if (config_->GetMachineManager()->UpdateCheckpoint(msg.instance_id())) {
-    LOG_INFO("Group %u - update checkpoint successful!", config_->GetGroupId());
+    LOG_INFO("Group %u - instance(id=%llu) update checkpoint successful!",
+             config_->GetGroupId(), (unsigned long long)msg.instance_id());
     LOG_WARN("Killing the process now...");
     // FIXME
     _exit(2);

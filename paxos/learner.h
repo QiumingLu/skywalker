@@ -26,7 +26,6 @@ class Learner {
   void SetInstanceId(uint64_t instance_id) { instance_id_ = instance_id; }
 
   void SetIOLoop(RunLoop* loop) { io_loop_ = loop; }
-  void SetLearnLoop(RunLoop* loop) { learn_loop_ = loop; }
 
   void AskForLearn(bool add_timer);
 
@@ -66,7 +65,6 @@ class Learner {
   Acceptor* acceptor_;
 
   RunLoop* io_loop_;
-  RunLoop* learn_loop_;
 
   uint64_t instance_id_;
   TimerId learn_timer_;

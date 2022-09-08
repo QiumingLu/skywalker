@@ -23,7 +23,8 @@ bool NodeImpl::StartWorking() {
   std::vector<Group*> groups;
   int i = 0;
   for (auto& g : options_.groups) {
-    std::unique_ptr<Group> group(new Group(options_.my.id, i, g, &network_));
+    std::unique_ptr<Group> group(
+        new Group(options_.my.id, i, g, &network_, options_.cluster));
     if (group->Recover()) {
       LOG_DEBUG("Group %u recover successful!", i);
       groups.push_back(group.get());
@@ -47,14 +48,36 @@ bool NodeImpl::StartWorking() {
     options_.callback_thread_size = static_cast<uint32_t>(groups.size());
   }
 
+  if (options_.learn_thread_size == 0) {
+    options_.learn_thread_size = 1;
+  } else if (options_.learn_thread_size > groups.size()) {
+    options_.learn_thread_size = static_cast<uint32_t>(groups.size());
+  }
+
+  if (options_.clean_thread_size == 0) {
+    options_.clean_thread_size = 1;
+  } else if (options_.clean_thread_size > groups.size()) {
+    options_.clean_thread_size = static_cast<uint32_t>(groups.size());
+  }
+
+  if (options_.master_thread_size > groups.size()) {
+    options_.master_thread_size = static_cast<uint32_t>(groups.size());
+  }
+
   assert(options_.io_thread_size != 0);
   assert(options_.callback_thread_size != 0);
-  pool_.Start(options_.io_thread_size, options_.callback_thread_size);
+  assert(options_.learn_thread_size != 0);
+  assert(options_.clean_thread_size != 0);
+  pool_.Start(options_.io_thread_size, options_.callback_thread_size,
+              options_.learn_thread_size, options_.clean_thread_size,
+              options_.master_thread_size);
 
   for (auto& g : groups) {
     g->SetNewMembershipCallback(options_.membership_cb);
     g->SetNewMasterCallback(options_.master_cb);
-    g->Start(pool_.GetNextIOLoop(), pool_.GetNextCallbackLoop());
+    g->Start(pool_.GetNextIOLoop(), pool_.GetNextCallbackLoop(),
+             pool_.GetNextLearnLoop(), pool_.GetNextCleanLoop(),
+             pool_.GetNextMasterLoop());
     g->StartGC();
   }
 
@@ -66,7 +89,7 @@ bool NodeImpl::StartWorking() {
   std::shuffle(groups.begin(), groups.end(),
                std::default_random_engine((unsigned)options_.my.id));
   for (auto& g : groups) {
-    g->SyncMaster();
+    g->Sync();
   }
 
   return true;
@@ -87,13 +110,11 @@ bool NodeImpl::Propose(uint32_t group_id, uint32_t machine_id,
                                       std::move(cb));
 }
 
-void NodeImpl::OnContent(std::unique_ptr<Content> c) {
-  // FIXME
-  // Maybe use a mutex?
+void NodeImpl::OnContent(Content&& content) {
   if (!stop_) {
-    uint32_t group_id = c->group_id();
+    uint32_t group_id = content.group_id();
     if (group_id < groups_.size()) {
-      groups_[group_id]->OnContent(std::move(c));
+      groups_[group_id]->OnContent(std::move(content));
     } else {
       LOG_DEBUG("Receive an invalid content, group_id=%u is invalid", group_id);
     }

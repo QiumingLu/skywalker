@@ -20,8 +20,7 @@ int JourneyDBMachine::Get(const std::string& key, std::string* value) {
 }
 
 bool JourneyDBMachine::Recover(uint32_t group_id, uint64_t instance_id,
-                               const std::string& dir,
-                               const std::vector<std::string>& files) {
+                               const std::string& dir) {
   return true;
 }
 
@@ -55,8 +54,15 @@ bool JourneyDBMachine::Execute(uint32_t groud_id, uint64_t instance_id,
 }
 
 bool JourneyDBMachine::MakeCheckpoint(uint32_t group_id, uint64_t instance_id,
-                                      const std::string& dir) {
+                                      const std::string& dir,
+                                      const FinishCheckpointCallback& cb) {
   return false;
+}
+
+bool JourneyDBMachine::GetCheckpoint(uint32_t group_id, uint64_t instance_id,
+                                     const std::string& dir,
+                                     std::vector<std::string>* files) {
+  return true;
 }
 
 }  // namespace journey

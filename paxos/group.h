@@ -18,7 +18,7 @@
 #include "paxos/config.h"
 #include "paxos/instance.h"
 #include "paxos/propose_queue.h"
-#include "paxos/schedule.h"
+#include "paxos/threadpool.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 
@@ -29,16 +29,17 @@ class Network;
 class Group {
  public:
   Group(uint64_t node_id, uint32_t group_id, const GroupOptions& options,
-        Network* network);
+        Network* network, Cluster* cluster);
   ~Group();
 
   bool Recover();
-  void Start(RunLoop* io_loop, RunLoop* callback_loop);
+  void Start(RunLoop* io_loop, RunLoop* callback_loop,
+             RunLoop* learn_loop, RunLoop* clean_loop, RunLoop* master_loop);
 
   void SetNewMembershipCallback(const NewMembershipCallback& cb);
   void SetNewMasterCallback(const NewMasterCallback& cb);
 
-  void SyncMaster();
+  void Sync();
 
   bool OnPropose(uint32_t machine_id, const std::string& value, void* context,
                  const ProposeCompleteCallback& cb);
@@ -46,7 +47,7 @@ class Group {
   bool OnPropose(uint32_t machine_id, const std::string& value, void* context,
                  ProposeCompleteCallback&& cb);
 
-  void OnContent(std::unique_ptr<Content> c);
+  void OnContent(Content&& content);
 
   bool ChangeMember(const std::vector<std::pair<Member, bool>>& value,
                     void* context, const ProposeCompleteCallback& cb);
@@ -86,6 +87,7 @@ class Group {
 
   ProposeQueue propose_queue_;
   RunLoop* io_loop_;
+  RunLoop* master_loop_;
 
   // No copying allowed
   Group(const Group&);

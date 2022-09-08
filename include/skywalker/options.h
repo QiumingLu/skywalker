@@ -16,6 +16,8 @@
 
 namespace skywalker {
 
+class Cluster;
+
 typedef std::function<void(uint32_t group_id)> NewMembershipCallback;
 
 typedef std::function<void(uint32_t group_id)> NewMasterCallback;
@@ -35,14 +37,17 @@ struct GroupOptions {
   // Default: true
   bool use_master;
 
-  // Default: 1000 * 1000 microseconds
+  // Default: 10 * 1000 ms
+  uint64_t master_lease_time;
+
+  // Default: 1000 ms
   uint64_t propose_timeout;
+
+  // Default: 3
+  uint32_t keep_checkpoint_count;
 
   // Default: true
   bool log_sync;
-
-  // Default: 10 * 1000 * 1000 microseconds
-  uint64_t master_lease_time;
 
   // Default: 5
   uint32_t sync_interval;
@@ -54,6 +59,8 @@ struct GroupOptions {
   std::string log_storage_path;
 
   std::vector<StateMachine*> machines;
+
+  // must be the same as the first time
   std::vector<Member> membership;
 
   GroupOptions();
@@ -66,11 +73,11 @@ struct Options {
   // |————————————————————————————————————————————--|
   // | network thread       |        N + 1          |
   // |                                              |
-  // | master thread        |          1            |
+  // | master thread        |          N            |
   // |                                              |
-  // | learn thread         |          1            |
+  // | learn thread         |          N            |
   // |                                              |
-  // | clean thread         |          1            |
+  // | clean thread         |          N            |
   // |                                              |
   // | io thread            |          N            |
   // |                                              |
@@ -79,7 +86,8 @@ struct Options {
   // | leveldb thread model |         0/1           |
   //  -----------------------------------------------
   // The skywalker's thread size is:
-  // 5 + net_thread_size + io_thread_size + callback_thread_size
+  // 2 + net_thread_size + io_thread_size + callback_thread_size +
+  // learn_thread_size + clean_thread_size + master_thread_size
 
   // Default: net_thread_size = 1
   uint32_t net_thread_size;
@@ -92,6 +100,18 @@ struct Options {
   // the callback_thread_size must be (0, groups.size()]
   uint32_t callback_thread_size;
 
+  // Default: 1
+  // the learn_thread_size must be (0, groups.size()]
+  uint32_t learn_thread_size;
+
+  // Default: 1
+  // the clean_thread_size must be (0, groups.size()]
+  uint32_t clean_thread_size;
+
+  // Default: 1
+  // the master_thread_size must be [0, groups.size()]
+  uint32_t master_thread_size;
+
   Member my;
 
   // the index of group options is group id.
@@ -102,6 +122,9 @@ struct Options {
 
   // The node may be not initialize completely when this callback.
   NewMasterCallback master_cb;
+
+  // The node will call it to get the cluster information.
+  Cluster* cluster;
 
   Options();
 };

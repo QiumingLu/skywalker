@@ -100,7 +100,7 @@ void Proposer::OnPrepareReply(const PaxosMessage& msg) {
                 config_->GetGroupId());
       preparing_ = false;
       RemoveRetryTimer();
-      AddRetryTimer((rand_.Uniform(15) + 15) * 1000);
+      AddRetryTimer(rand_.Uniform(15) + 15);
     }
   }
   SetMaxProposalId(msg);
@@ -151,7 +151,7 @@ void Proposer::OnAccpetReply(const PaxosMessage& msg) {
                 config_->GetGroupId());
       accepting_ = false;
       RemoveRetryTimer();
-      AddRetryTimer((rand_.Uniform(15) + 15) * 1000);
+      AddRetryTimer(rand_.Uniform(15) + 15);
     }
   }
 

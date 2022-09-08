@@ -124,6 +124,8 @@ bool Acceptor::ReadFromDB() {
   std::string s;
   res = config_->GetDB()->Get(instance_id_, &s);
   if (res != 0) {
+    LOG_ERROR("Group %u - read instance_id=%llu from db failed.",
+              config_->GetGroupId(), (unsigned long long)instance_id_);
     return false;
   }
 

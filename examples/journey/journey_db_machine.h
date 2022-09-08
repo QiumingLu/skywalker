@@ -22,15 +22,18 @@ class JourneyDBMachine : public skywalker::StateMachine {
   int Get(const std::string& key, std::string* value);
 
   virtual bool Recover(uint32_t group_id, uint64_t instance_id,
-                       const std::string& dir,
-                       const std::vector<std::string>& files);
+                       const std::string& dir);
 
   virtual bool Execute(uint32_t group_id, uint64_t instance_id,
                        const std::string& value, void* context = nullptr);
 
   virtual bool MakeCheckpoint(uint32_t group_id, uint64_t instance_id,
-                              const std::string& dir);
+                              const std::string& dir,
+                              const FinishCheckpointCallback& cb);
 
+  virtual bool GetCheckpoint(uint32_t group_id, uint64_t instance_id,
+                             const std::string& dir,
+                             std::vector<std::string>* files);
  private:
   JourneyDB db_;
 
