@@ -104,7 +104,7 @@ MasterState MasterMachine::GetMasterState() const {
 
 bool MasterMachine::GetMaster(uint64_t* node_id, uint64_t* version) const {
   std::lock_guard<std::mutex> lock(mutex_);
-  if (state_.lease_time() > NowMillis()) {
+  if (state_.lease_time() > NowMicros()) {
     *version = state_.version();
     *node_id = state_.node_id();
     return true;

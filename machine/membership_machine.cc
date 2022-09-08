@@ -73,6 +73,10 @@ bool MembershipMachine::Execute(uint32_t group_id, uint64_t instance_id,
   if (temp.ParseFromString(value)) {
     {
       std::lock_guard<std::mutex> lock(mutex_);
+      if (instance_id <= membership_->version()) {
+        return false;
+      }
+
       // Copy on write
       if (!membership_.unique()) {
         std::shared_ptr<Membership> new_membership(new Membership(*membership_));
