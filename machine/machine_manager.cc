@@ -249,7 +249,13 @@ bool MachineManager::UpdateCheckpoint(uint64_t instance_id) {
   Status status = FileManager::Instance()->RenameFile(
       GetTempCheckpointPath(config_, instance_id),
       GetCheckpointPath(config_, instance_id));
-  latest_checkpoint_instance_id_ = instance_id;
+  if (status.ok()) {
+    latest_checkpoint_instance_id_ = instance_id;
+  } else {
+    LOG_ERROR(
+        "Group %u - instance(id=%llu) rename faied %s.",
+        config_->GetGroupId(), (unsigned long long)instance_id, status.ToString().c_str());
+  }
   return status.ok();
 }
 

@@ -8,7 +8,6 @@
 #include <mutex>
 #include <queue>
 #include "skywalker/options.h"
-#include "skywalker/state_machine.h"
 #include "skywalker/status.h"
 #include "util/runloop.h"
 

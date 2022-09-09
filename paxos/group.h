@@ -7,7 +7,6 @@
 
 #include <stdint.h>
 #include <condition_variable>
-#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -18,7 +17,6 @@
 #include "paxos/config.h"
 #include "paxos/instance.h"
 #include "paxos/propose_queue.h"
-#include "paxos/threadpool.h"
 #include "proto/paxos.pb.h"
 #include "skywalker/options.h"
 
