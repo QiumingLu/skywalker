@@ -34,6 +34,7 @@ void Learner::OnNewChosenValue(const PaxosMessage& msg) {
     BallotNumber ballot(msg.proposal_id(), msg.node_id());
     if (ballot == b) {
       FinishLearnValue(acceptor_->GetAcceptedValue());
+      BroadcastMessageToFollower(b);
     }
   }
 }
@@ -178,6 +179,8 @@ void Learner::OnSendLearnedValue(const PaxosMessage& msg) {
   if (msg.instance_id() == instance_id_) {
     if (WriteToDB(msg)) {
       FinishLearnValue(msg.value());
+      BallotNumber b(msg.proposal_id(), msg.node_id());
+      BroadcastMessageToFollower(b);
     }
   }
 }
@@ -234,6 +237,23 @@ void Learner::FinishLearnValue(const PaxosValue& value) {
   learned_value_ = value;
   has_learned_ = true;
   LOG_INFO("Group %u - learn a new value.", config_->GetGroupId());
+}
+
+void Learner::BroadcastMessageToFollower(const BallotNumber& ballot) {
+  if (config_->GetCluster() &&
+      config_->GetCluster()->GetFollowers(config_->GetGroupId()).empty() == false) {
+    Content content;
+    content.set_type(PAXOS_MESSAGE);
+    content.set_group_id(config_->GetGroupId());
+    PaxosMessage* msg = content.mutable_paxos_msg();
+    msg->set_type(SEND_LEARNED_VALUE);
+    msg->set_node_id(config_->GetNodeId());
+    msg->set_instance_id(instance_id_);
+    msg->set_proposal_id(ballot.GetProposalId());
+    msg->set_proposal_node_id(ballot.GetNodeId());
+    msg->mutable_value()->CopyFrom(learned_value_);
+    messager_->BroadcastMessageToFollower(content);
+  }
 }
 
 void Learner::NextInstance() {

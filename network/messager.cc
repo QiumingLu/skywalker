@@ -31,7 +31,8 @@ void Messager::BroadcastMessage(const Content& content) {
 void Messager::BroadcastMessageForLearn(const Content& content) {
   if (config_->GetCluster()) {
     auto temp = std::make_shared<Membership>();
-    auto cluster_map = config_->GetCluster()->GetNewestMembership(config_->GetGroupId());
+    auto cluster_map = config_->GetCluster()->GetNewestMembership(
+        config_->GetGroupId());
     for (auto& it : cluster_map) {
       MemberMessage member;
       member.set_id(it.second.id);
@@ -47,5 +48,22 @@ void Messager::BroadcastMessageForLearn(const Content& content) {
   }
 }
 
+void Messager::BroadcastMessageToFollower(const Content& content) {
+  if (config_->GetCluster()) {
+    auto temp = std::make_shared<Membership>();
+    auto cluster_map = config_->GetCluster()->GetFollowers(
+        config_->GetGroupId());
+    for (auto& it : cluster_map) {
+      MemberMessage member;
+      member.set_id(it.second.id);
+      member.set_host(it.second.host);
+      member.set_port(it.second.port);
+      temp->mutable_members()->insert({member.id(), std::move(member)});
+    }
+    if (temp->members().size() > 0) {
+      network_->SendMessage(temp, content);
+    }
+  }
+}
 
 }  // namespace skywalker
